@@ -1,0 +1,24 @@
+name: Work item
+description: Committed work with a known scope. Ideas go in a Project draft instead.
+body:
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: The problem or need, and what prompted it.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What changes. What is out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: How we will know it is done.
+    validations:
+      required: true

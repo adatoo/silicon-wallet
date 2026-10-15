@@ -1,0 +1,26 @@
+# EditorConfig — https://editorconfig.org
+# Swift settings match .swift-format (4 spaces, 120 columns).
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.swift]
+indent_size = 4
+max_line_length = 120
+
+[*.{entitlements,plist,xcprivacy}]
+indent_style = tab
+
+[*.md]
+# Trailing whitespace is significant in Markdown (hard line break).
+trim_trailing_whitespace = false
+
+[*.pbxproj]
+indent_style = tab

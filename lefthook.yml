@@ -1,0 +1,26 @@
+# Git hooks (AGENTS.md: never skip them). Installed by `task setup`.
+pre-commit:
+  parallel: true
+  commands:
+    swift-format:
+      glob: '*.swift'
+      run: task fmt:check
+    actionlint:
+      glob: '.github/workflows/*.{yml,yaml}'
+      run: actionlint {staged_files}
+    shellcheck:
+      glob: '*.sh'
+      run: shellcheck {staged_files}
+    task-desc:
+      glob: 'Taskfile.yml'
+      run: python3 scripts/check-task-desc.py
+    version:
+      glob: '{VERSION,Config/Version.xcconfig}'
+      run: task version:check
+    gitleaks:
+      run: gitleaks git --staged --no-banner --redact .
+
+commit-msg:
+  commands:
+    subject:
+      run: scripts/check-commit-subject.sh {1}

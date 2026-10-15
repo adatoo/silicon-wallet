@@ -1,0 +1,17 @@
+name: merge
+
+# Turns on auto-merge (merge commit) for the owner's PRs; a `review` label holds one.
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    uses: adatoo/engineering-standards/.github/workflows/auto-merge.yml@v0.6.0
+    with:
+      client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
+      runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    secrets:
+      AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}

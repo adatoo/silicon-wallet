@@ -1,0 +1,225 @@
+# Silicon Wallet's commands: the only command surface, locally and in CI.
+#
+#   task            list the tasks
+#   task setup      once per clone: hooks and a tool check
+#   task ci         everything CI runs; run it before pushing
+#
+# Each `desc:` stays on one line with no colon followed by two spaces (checked by `task lint`).
+version: '3'
+
+set: [errexit, nounset, pipefail]
+silent: true
+
+vars:
+  DERIVED_DATA: '{{.ROOT_DIR}}/DerivedData'
+  SCHEME: SiliconWallet
+  CONFIGURATION: Debug
+  # Override with `task test:ios IOS_SIM='iPhone Air'`; see `xcrun simctl list devices available`.
+  IOS_SIM: iPhone 17
+  # CI builds unsigned; `task dev` signs locally so macOS will launch the app.
+  CODE_SIGNING_ALLOWED: 'NO'
+  PRETTY:
+    sh: 'command -v xcbeautify >/dev/null 2>&1 && echo "xcbeautify --quiet" || echo cat'
+  SWIFT_DIRS: App Tests Packages
+
+env:
+  # xcode-select often points at the Command Line Tools, which can't run xcodebuild.
+  # Use Xcode.app then, but leave an explicit DEVELOPER_DIR or a real Xcode selection alone.
+  DEVELOPER_DIR:
+    sh: |
+      if [ -n "${DEVELOPER_DIR:-}" ]; then
+        echo "$DEVELOPER_DIR"
+      elif xcode-select -p 2>/dev/null | grep -q CommandLineTools && [ -d /Applications/Xcode.app ]; then
+        echo /Applications/Xcode.app/Contents/Developer
+      else
+        xcode-select -p 2>/dev/null || true
+      fi
+
+tasks:
+  default:
+    desc: List the tasks
+    cmds:
+      - task --list
+
+  setup:
+    desc: Install the git hooks and check the tools (run once per clone)
+    cmds:
+      - lefthook install
+      - task: doctor
+      - echo "If you use direnv, run 'direnv allow' so gh uses the personal account."
+
+  doctor:
+    desc: Check the tools the tasks use
+    cmds:
+      - |
+        missing=0
+        check() { # tool  how-to-install  [optional]
+          if command -v "$1" > /dev/null 2>&1; then
+            printf '  ok       %-12s %s\n' "$1" "$(command -v "$1")"
+          elif [ "${3:-}" = optional ]; then
+            printf '  missing  %-12s optional (%s)\n' "$1" "$2"
+          else
+            printf '  MISSING  %-12s %s\n' "$1" "$2"
+            missing=1
+          fi
+        }
+        echo "Xcode: $DEVELOPER_DIR"
+        xcodebuild -version 2>&1 | sed 's/^/  /' || true
+        check task "brew install go-task"
+        check xcodegen "brew install xcodegen"
+        check lefthook "brew install lefthook"
+        check gitleaks "brew install gitleaks"
+        check actionlint "brew install actionlint"
+        check xcbeautify "brew install xcbeautify" optional
+        check gh "brew install gh" optional
+        exit $missing
+
+  generate:
+    desc: Regenerate SiliconWallet.xcodeproj and App/Info.plist from project.yml
+    cmds:
+      - xcodegen generate --quiet
+
+  generate:check:
+    desc: Fail if the committed Xcode project is out of date with project.yml
+    cmds:
+      - |
+        snapshot() { find SiliconWallet.xcodeproj -name '*.pbxproj' -o -name '*.xcscheme' | sort | xargs cat App/Info.plist | shasum; }
+        before="$(snapshot)"
+        xcodegen generate --quiet
+        if [ "$before" != "$(snapshot)" ]; then
+          echo "SiliconWallet.xcodeproj was out of date with project.yml; it has been regenerated, so commit it." >&2
+          exit 1
+        fi
+
+  version:sync:
+    desc: Write MARKETING_VERSION in Config/Version.xcconfig from VERSION
+    cmds:
+      - |
+        version="$(tr -d '[:space:]' < VERSION)"
+        printf '%s\n%s\n' "// Generated from VERSION by \`task version:sync\` (ADR-0003). Don't edit by hand." \
+          "MARKETING_VERSION = $version" > Config/Version.xcconfig
+
+  version:check:
+    desc: Fail if Config/Version.xcconfig doesn't match VERSION
+    cmds:
+      - |
+        version="$(tr -d '[:space:]' < VERSION)"
+        if ! grep -qx "MARKETING_VERSION = $version" Config/Version.xcconfig; then
+          echo "Config/Version.xcconfig doesn't match VERSION ($version); run: task version:sync" >&2
+          exit 1
+        fi
+
+  fmt:
+    desc: Format the Swift sources with swift-format
+    cmds:
+      - xcrun swift-format format --in-place --recursive --parallel {{.SWIFT_DIRS}}
+
+  fmt:check:
+    desc: Check the Swift sources are formatted
+    cmds:
+      - xcrun swift-format lint --strict --recursive --parallel {{.SWIFT_DIRS}}
+
+  lint:
+    desc: Lint the workflows, scripts, Taskfile and version files
+    cmds:
+      - actionlint
+      - shellcheck scripts/*.sh
+      - python3 scripts/check-task-desc.py
+      - task: version:check
+
+  secrets:
+    desc: Scan the whole history for committed secrets
+    cmds:
+      - gitleaks git --no-banner --redact .
+
+  test:kit:
+    desc: Run the SiliconWalletKit package tests
+    cmds:
+      - swift test --package-path Packages/SiliconWalletKit
+
+  build:macos:
+    desc: Build the app for macOS into ./DerivedData (unsigned)
+    cmds:
+      - task: xcodebuild
+        vars: {ACTION: build, DESTINATION: 'platform=macOS,arch=arm64'}
+
+  build:ios:
+    desc: Build the app for the iOS Simulator into ./DerivedData (unsigned)
+    cmds:
+      - task: xcodebuild
+        vars: {ACTION: build, DESTINATION: 'platform=iOS Simulator,name={{.IOS_SIM}}'}
+
+  test:macos:
+    desc: Run the app and package tests on macOS
+    cmds:
+      - task: xcodebuild
+        vars: {ACTION: test, DESTINATION: 'platform=macOS,arch=arm64'}
+
+  test:ios:
+    desc: Run the app and package tests on the iOS Simulator
+    cmds:
+      - task: xcodebuild
+        vars: {ACTION: test, DESTINATION: 'platform=iOS Simulator,name={{.IOS_SIM}}'}
+
+  xcodebuild:
+    internal: true
+    cmds:
+      - >-
+        xcodebuild -scheme {{.SCHEME}} -configuration {{.CONFIGURATION}} {{.ACTION}}
+        -derivedDataPath "{{.DERIVED_DATA}}"
+        -destination '{{.DESTINATION}}'
+        CODE_SIGNING_ALLOWED={{.CODE_SIGNING_ALLOWED}}
+        | {{.PRETTY}}
+
+  build:
+    desc: Build the app for macOS and the iOS Simulator
+    cmds:
+      - task: build:macos
+      - task: build:ios
+
+  test:
+    desc: Run every test, the package on its own and the app on both platforms
+    cmds:
+      - task: test:kit
+      - task: test:macos
+      - task: test:ios
+
+  dev:
+    desc: Build the macOS app ad-hoc signed (no iCloud) and open it
+    summary: |
+      An ad-hoc signature can't carry the iCloud and push entitlements, which need a
+      provisioning profile, so this build uses Config/Dev-macOS.entitlements (sandbox
+      and network only). Sync needs a team-signed build from Xcode.
+    cmds:
+      - >-
+        xcodebuild -scheme {{.SCHEME}} -configuration {{.CONFIGURATION}} build
+        -derivedDataPath "{{.DERIVED_DATA}}"
+        -destination 'platform=macOS,arch=arm64'
+        CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=
+        CODE_SIGN_ENTITLEMENTS=Config/Dev-macOS.entitlements
+        | {{.PRETTY}}
+      - open "{{.DERIVED_DATA}}/Build/Products/{{.CONFIGURATION}}/SiliconWallet.app"
+
+  ci:linux:
+    desc: The checks CI runs on Linux (lint and secrets)
+    cmds:
+      - task: lint
+      - task: secrets
+
+  ci:mac:
+    desc: The checks CI runs on the Mac (format, project, build and tests)
+    cmds:
+      - task: fmt:check
+      - task: generate:check
+      - task: test
+
+  ci:
+    desc: Full local CI parity; run it before pushing
+    cmds:
+      - task: ci:linux
+      - task: ci:mac
+
+  clean:
+    desc: Remove ./DerivedData and the package build folder
+    cmds:
+      - rm -rf "{{.DERIVED_DATA}}" Packages/SiliconWalletKit/.build

@@ -1,0 +1,18 @@
+name: tag
+
+# Tags each merge to main `vX.Y.Z` from VERSION, as the App so the tag can start release workflows.
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  tag:
+    uses: adatoo/engineering-standards/.github/workflows/tag-on-merge.yml@v0.6.0
+    with:
+      version-file: VERSION
+      client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
+      runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    secrets:
+      AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}

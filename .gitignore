@@ -1,0 +1,29 @@
+# Xcode and SwiftPM
+DerivedData/
+build/
+xcuserdata/
+*.xcuserstate
+*.moved-aside
+.swiftpm/
+.build/
+Packages/*/Package.resolved
+
+# Signing and secrets
+*.p8
+*.p12
+*.cer
+*.mobileprovision
+*.provisionprofile
+.env.local
+.envrc
+
+# Vault data never belongs in the repo, except fake fixtures under Fixtures/
+*.wallet
+!Fixtures/**/*.wallet
+
+# Release artefacts
+*.xcarchive
+*.ipa
+
+# macOS
+.DS_Store

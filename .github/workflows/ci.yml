@@ -1,0 +1,85 @@
+name: ci
+
+# Branch protection requires only `CI Gate`. Every job runs a `task`, so CI and
+# `task ci` can't drift apart.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the pinned tools
+        run: scripts/install-ci-tools.sh
+      - name: task ci:linux
+        run: task ci:linux
+
+  build-test:
+    name: build and test
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install task and xcodegen if missing
+        run: |
+          for tool in go-task:task xcodegen:xcodegen; do
+            command -v "${tool#*:}" > /dev/null || brew install "${tool%%:*}"
+          done
+      - name: task ci:mac
+        run: task ci:mac
+
+  version-bump:
+    if: github.event_name == 'pull_request'
+    uses: adatoo/engineering-standards/.github/workflows/version-bump.yml@v0.6.0
+    with:
+      version-file: VERSION
+      runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+
+  issue-link:
+    if: github.event_name == 'pull_request'
+    uses: adatoo/engineering-standards/.github/workflows/issue-link.yml@v0.6.0
+    with:
+      runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+
+  # The single required check. `always()` makes it run when a dependency fails
+  # or is skipped. It passes only if every job succeeded, apart from the PR-only
+  # jobs being skipped on a push to main.
+  ci-gate:
+    name: CI Gate
+    needs: [lint, build-test, version-bump, issue-link]
+    if: ${{ always() }}
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    permissions: {}
+    steps:
+      - name: Require every job to have succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          echo "$RESULTS" | python3 -c '
+          import json, os, sys
+          pr_only = {"version-bump", "issue-link"}
+          ok = lambda job, r: r == "success" or (r == "skipped" and job in pr_only and os.environ["EVENT"] != "pull_request")
+          failed = {k: v["result"] for k, v in json.load(sys.stdin).items() if not ok(k, v["result"])}
+          for job, result in failed.items():
+              print(f"::error::{job} did not pass (result={result})")
+          sys.exit(1 if failed else 0)'

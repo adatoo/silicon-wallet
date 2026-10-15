@@ -1,0 +1,3 @@
+# The reusable workflows live in a private repo, so actionlint can't read their inputs.
+self-hosted-runner:
+  labels: [docker-linux, mac-mini]
