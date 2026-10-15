@@ -146,8 +146,9 @@ tasks:
   build:ios:
     desc: Build the app for the iOS Simulator into ./DerivedData (unsigned)
     cmds:
+      # Generic, so the build needs no simulator device (the CI runner's user has none).
       - task: xcodebuild
-        vars: {ACTION: build, DESTINATION: 'platform=iOS Simulator,name={{.IOS_SIM}}'}
+        vars: {ACTION: build, DESTINATION: 'generic/platform=iOS Simulator'}
 
   test:macos:
     desc: Run the app and package tests on macOS
@@ -207,17 +208,24 @@ tasks:
       - task: secrets
 
   ci:mac:
-    desc: The checks CI runs on the Mac (format, project, build and tests)
+    desc: The checks CI runs on the Mac (format, project, package tests and builds)
+    summary: |
+      The Mac runner is a LaunchDaemon with no GUI session, so it has no testmanagerd and
+      can't run app-hosted tests (xcodebuild test). It runs the package tests with
+      `swift test` and builds both platforms; `task ci` adds the app-hosted tests locally.
     cmds:
       - task: fmt:check
       - task: generate:check
-      - task: test
+      - task: test:kit
+      - task: build
 
   ci:
-    desc: Full local CI parity; run it before pushing
+    desc: Full local CI parity plus the app-hosted tests; run it before pushing
     cmds:
       - task: ci:linux
       - task: ci:mac
+      - task: test:macos
+      - task: test:ios
 
   clean:
     desc: Remove ./DerivedData and the package build folder
