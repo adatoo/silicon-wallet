@@ -22,7 +22,9 @@ Every command is a `task`; run `task` to list them.
   `xcrun simctl list devices available`).
 - `task build`: both platforms. `task dev`: build and open the Mac app (ad-hoc signed, no iCloud).
 - `task fmt` / `task fmt:check`: swift-format (`.swift-format`).
-- `task ci`: everything CI runs. Run it before pushing.
+- `task ci`: everything CI runs, plus the app-hosted tests. Run it before pushing.
+  The Mac CI runner is headless (a LaunchDaemon, no GUI session), so CI runs only the
+  package tests and both builds (`task ci:mac`); `test:macos` and `test:ios` run locally.
 - A change is done only when the package tests and both platform builds pass.
 
 ## Code rules

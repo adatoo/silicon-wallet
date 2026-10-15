@@ -36,3 +36,5 @@ Minimum OS: iOS 26, iPadOS 26 and macOS 26.
 
 `Taskfile.yml` is the only command surface. CI (`.github/workflows/ci.yml`) runs `task ci:linux`
 on Linux and `task ci:mac` on the Mac runner, and the `CI Gate` job is the one required check.
+The Mac runner has no GUI session, so it can't run app-hosted tests: it runs the package tests
+and builds both platforms, and `task ci` adds the app-hosted tests locally.
