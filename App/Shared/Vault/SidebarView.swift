@@ -4,6 +4,7 @@ import SwiftUI
 /// The first column: All Entries, Favourites, then the groups.
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
+    @Environment(LockController.self) private var lock
     @Binding var editor: EditorTarget?
     @State private var groupToDelete: VaultGroup?
     @State private var showingSettings = false
@@ -42,6 +43,12 @@ struct SidebarView: View {
             #if os(iOS)
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Settings", systemImage: "gear") { showingSettings = true }
+                }
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Lock", systemImage: "lock") { lock.lockNow() }
+                }
+                if let sync = model.sync {
+                    ToolbarItem(placement: .topBarTrailing) { SyncStatusButton(sync: sync) }
                 }
             #endif
         }

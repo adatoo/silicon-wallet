@@ -1,0 +1,27 @@
+Silicon Wallet keeps your passwords, cards, bank details, licence keys and private notes in one encrypted vault, on your Mac, iPad and iPhone.
+
+YOUR VAULT, ENCRYPTED ON YOUR DEVICE
+Everything is encrypted before it's saved or synced, with a key made from your master password. Apple can't read it, and neither can anyone else. There's no account to create and nothing is collected.
+
+ORGANISED YOUR WAY
+• Groups with their own fields: give "Wi-Fi" a network and password, or "Membership" a number and renewal date
+• Favourites, notes and extra fields on any entry
+• Fast search that ignores case and accents, and never looks inside hidden fields
+• Attachments such as scans and PDFs, each encrypted with its own key
+
+SAFE TO USE EVERY DAY
+• Unlock with Face ID or Touch ID
+• Locks itself after a few minutes, when your Mac sleeps, and when you leave the app
+• Hidden fields stay hidden until you reveal them
+• Copied passwords clear themselves from the clipboard
+• A generator for strong passwords and easy-to-type passphrases
+• An access log of unlocks and failed attempts on each device
+
+ON ALL YOUR DEVICES
+Your vault syncs through your own iCloud account, end-to-end encrypted. Change an entry on your Mac and it's on your iPhone moments later.
+
+MOVING FROM ACRYLIC WALLET
+Silicon Wallet reads Acrylic Wallet's vault file directly: groups, field labels, entries, notes, favourites and attachments all come across. You don't need the old app installed.
+
+FREE AND OPEN SOURCE
+Silicon Wallet is free, with no ads, subscriptions or in-app purchases, and its source is open under the MIT Licence.

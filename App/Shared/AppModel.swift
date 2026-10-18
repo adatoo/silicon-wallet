@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SiliconWalletKit
+import SwiftUI
 
 /// What the sidebar has selected.
 enum SidebarItem: Hashable {
@@ -21,6 +22,8 @@ final class AppModel {
     let startupError: String?
 
     var sidebarSelection: SidebarItem? = .all
+    /// Which column a compact (iPhone) split view shows.
+    var compactColumn = NavigationSplitViewColumn.sidebar
     var entrySelection: VaultEntry.ID?
     var searchText = ""
     /// Whether the Acrylic Wallet import sheet is showing.
@@ -74,8 +77,32 @@ final class AppModel {
         do {
             try await DemoVault.fill(session)
             if arguments.contains("-Locked") { session.lock() }
+            applyScreenshotArguments(arguments)
         } catch {
             errorMessage = Self.describe(error)
+        }
+    }
+
+    /// Picks the screen for App Store screenshots (`task screenshots`):
+    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`.
+    private func applyScreenshotArguments(_ arguments: [String]) {
+        func value(after flag: String) -> String? {
+            guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
+            return arguments[index + 1]
+        }
+        if let sidebar = value(after: "-ScreenshotSidebar") {
+            if sidebar == "favorites" {
+                sidebarSelection = .favorites
+            } else if let group = session?.groups.first(where: { $0.name == sidebar }) {
+                sidebarSelection = .group(group.id)
+            }
+            compactColumn = .content
+        }
+        if let title = value(after: "-ScreenshotEntry"),
+            let entry = session?.entries.first(where: { $0.title == title })
+        {
+            entrySelection = entry.id
+            compactColumn = .detail
         }
     }
 

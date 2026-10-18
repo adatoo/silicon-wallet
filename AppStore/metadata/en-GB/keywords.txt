@@ -1,0 +1,1 @@
+password,manager,vault,secure,notes,encryption,import,private,sync,generator,cards,pin,licence

@@ -96,6 +96,17 @@ tasks:
     cmds:
       - swift scripts/make-icon.swift App/Resources/Assets.xcassets/AppIcon.appiconset
 
+  screenshots:
+    desc: Capture App Store screenshots from the iPhone and iPad simulators into AppStore/screenshots
+    summary: |
+      Builds for the simulator, then launches the fake demo vault on an iPhone 17 Pro Max (6.9")
+      and an iPad Pro 13-inch with a fixed status bar. Mac screenshots are taken by hand
+      (macOS needs Screen Recording permission to capture a window).
+    cmds:
+      - task: xcodebuild
+        vars: {ACTION: build, DESTINATION: 'generic/platform=iOS Simulator'}
+      - scripts/screenshots.sh "{{.DERIVED_DATA}}" AppStore/screenshots
+
   version:sync:
     desc: Write MARKETING_VERSION in Config/Version.xcconfig from VERSION
     cmds:

@@ -27,7 +27,7 @@ struct VaultView: View {
 
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView(columnVisibility: $columnVisibility) {
+        NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $model.compactColumn) {
             SidebarView(editor: $editor)
                 .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
         } content: {
@@ -41,15 +41,17 @@ struct VaultView: View {
                 ContentUnavailableView("No Entry Selected", systemImage: "key.horizontal")
             }
         }
-        .toolbar {
-            if let sync = model.sync {
-                ToolbarItem(placement: .primaryAction) { SyncStatusButton(sync: sync) }
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button("Lock", systemImage: "lock") { lock.lockNow() }
+        #if os(macOS)
+            .toolbar {
+                if let sync = model.sync {
+                    ToolbarItem(placement: .primaryAction) { SyncStatusButton(sync: sync) }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Lock", systemImage: "lock") { lock.lockNow() }
                     .help("Lock the vault")
+                }
             }
-        }
+        #endif
         .sheet(item: $editor) { target in
             NavigationStack {
                 switch target {

@@ -76,18 +76,18 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
 - **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.
-- **Screenshots**, automated through UI tests with obviously fake vault data, as `task screenshots`:
+- **Screenshots** (done, v0.12.0): `task screenshots` captures the iPhone and iPad sets from the simulators with the fake demo vault; Mac ones are taken by hand (AppStore/README.md). Sizes:
   - iPhone 6.9″ at 1320×2868 (required);
   - iPad 13″ at 2064×2752 (required, because the app runs on iPad);
   - Mac at 2880×1800 (16:10).
 
   Show 3 to 6 per platform: groups, entries, detail, generator, lock screen, sync.
-- **Listing metadata in English (UK)**, kept in the repo under `AppStore/metadata/`:
+- **Listing metadata in English (UK)** (done, v0.12.0), kept in the repo under `AppStore/metadata/en-GB/`, with review notes and the App Store Connect answers in `AppStore/`:
   - **Name:** Silicon Wallet. **Subtitle**, for example "Private, encrypted secrets".
   - **Promotional text**, a **description** and **keywords** (100 characters).
   - **Category:** Productivity, with Utilities as secondary.
   - **Copyright:** "© 2026 Arif Datoo".
-- **URLs:** a support URL and a **privacy policy URL**, both required. Host a small GitHub Pages site from `site/`, covering:
+- **URLs** (pages written, v0.12.0; publishing them is an owner action): a support URL and a **privacy policy URL**, both required. `site/` holds them; the metadata points at `https://adatoo.github.io/silicon-wallet/`, which works once GitHub Pages serves `site/` (Pages on a private repo needs a paid plan, so either enable it then or host `site/` elsewhere and update the two URL files). It covers:
   - the privacy policy: no data collected; iCloud data is end-to-end encrypted with a key Apple doesn't hold;
   - support and FAQ;
   - a link to the source.
