@@ -22,6 +22,10 @@ Every command is a `task`; run `task` to list them.
   `xcrun simctl list devices available`).
 - `task build`: both platforms. `task dev`: build and open the Mac app (ad-hoc signed, no iCloud).
 - `task fmt` / `task fmt:check`: swift-format (`.swift-format`).
+- `task icon`: redraw the app icon. `task screenshots`: App Store screenshots from the simulators.
+- `task release` (or `release:archive` / `release:upload` with `PLATFORM=ios|macos`): upload to
+  App Store Connect. The `release` workflow runs it for every version tag once the API key
+  secrets exist (docs/app-store-release.md, B0).
 - `task ci`: everything CI runs, plus the app-hosted tests. Run it before pushing.
   The Mac CI runner is headless (a LaunchDaemon, no GUI session), so CI runs only the
   package tests and both builds (`task ci:mac`); `test:macos` and `test:ios` run locally.

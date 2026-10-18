@@ -27,9 +27,14 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
      and Push Notifications. CloudKit pushes need no APNs certificate.
    - iCloud container `iCloud.com.datoos.silicon-wallet`, assigned to that App ID only.
      Containers can't be deleted, so don't create spares.
-3. **App Store Connect API key** (App Manager role):
-   - Store the `.p8` in the login keychain.
-   - Add it to GitHub as the Actions secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`. It is used for CI uploads and `-allowProvisioningUpdates`.
+3. **App Store Connect API key** (owner action; the release pipeline is ready for it):
+   - Users and Access ▸ Integrations ▸ App Store Connect API: make a team key with the **Admin**
+     role. The headless CI runner has no signing certificate, so Xcode uses cloud-managed
+     distribution signing, which needs Admin (or App Manager plus "Access to Cloud Managed
+     Distribution Certificate").
+   - Add it to GitHub as the Actions secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8` (the
+     `.p8` file's contents). For local uploads, set `ASC_KEY_PATH`, `ASC_KEY_ID` and
+     `ASC_ISSUER_ID`, or leave them unset to use the Xcode account.
 4. **Agreements and settings:**
    - Apple Developer Program License Agreement accepted 2026-10-18, and the App Store Connect
      agreements reviewed the same day.
@@ -46,7 +51,7 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
   - Never log secrets, and add a test that checks it.
 
 ## B2. Build steps 4 and 5: UI and lock UX → **internal TestFlight starts here**
-- **Release pipeline**, as `taskfiles/release.yml` plus `.github/workflows/release.yml`:
+- **Release pipeline** (done, v0.13.0): `task release:archive`, `release:upload` and `release` in `Taskfile.yml`, `Config/ExportOptions.plist`, Release entitlements with production pushes, and `.github/workflows/release.yml`, which skips with a notice until the key secrets exist. As designed:
   - **Trigger:** the `vX.Y.Z` tag that `tag.yml` pushes, using the App token so the tag can start workflows. There is also a manual `workflow_dispatch`.
   - **Mac job:** two steps per platform (iOS, macOS):
     - archive: `xcodebuild archive -scheme SiliconWallet -destination 'generic/platform=iOS'` (and `generic/platform=macOS`), with `-allowProvisioningUpdates` and the App Store Connect API key flags;
