@@ -23,6 +23,20 @@ enum AcrylicPropertyListText {
         return result
     }
 
+    /// Every quoted string after the first `=`: the items of Wallet's `"array" = ( "…", … );`
+    /// text, used for an entry's attachment list.
+    static func quotedStrings(afterEqualsIn text: String) -> [String] {
+        guard let equals = text.firstIndex(of: "=") else { return [] }
+        var chars = text[text.index(after: equals)...]
+        var result: [String] = []
+        while let open = chars.firstIndex(of: "\"") {
+            chars = chars[open...]
+            guard let value = nextQuotedString(&chars) else { break }
+            result.append(value)
+        }
+        return result
+    }
+
     private static func skipWhitespace(_ chars: inout Substring) {
         while let first = chars.first, first.isWhitespace {
             chars.removeFirst()

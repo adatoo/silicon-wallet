@@ -343,6 +343,43 @@ public final class VaultSession {
         try updateEntry(entry)
     }
 
+    // MARK: - Importing
+
+    /// Adds imported groups and entries, keeping their dates, with each attachment sealed under
+    /// its own new key. Everything is saved in one batch.
+    @discardableResult
+    public func importItems(_ plan: AcrylicImportPlan) throws -> (groups: Int, entries: Int, attachments: Int) {
+        try requireUnlocked()
+        let firstOrder = (groups.map(\.order).max() ?? -1) + 1
+        var newGroups = plan.groups
+        for index in newGroups.indices { newGroups[index].order = firstOrder + index }
+        let groupIDs = Set(newGroups.map(\.id))
+
+        var newEntries = plan.entries.filter { groupIDs.contains($0.groupID) }
+        var indexByEntryID: [UUID: Int] = [:]
+        for (index, entry) in newEntries.enumerated() { indexByEntryID[entry.id] = index }
+
+        var sealedFiles: [(UUID, Data)] = []
+        for attachment in plan.attachments {
+            guard let index = indexByEntryID[attachment.entryID] else { continue }
+            let fileKey = AttachmentSealer.generateFileKey()
+            let ref = AttachmentRef(
+                filename: attachment.filename, uti: attachment.uti, size: Int64(attachment.contents.count),
+                fileKey: fileKey.withUnsafeBytes { Data($0) }, sha256: Data(SHA256.hash(data: attachment.contents)))
+            sealedFiles.append(
+                (ref.id, try AttachmentSealer.seal(attachment.contents, attachmentID: ref.id, fileKey: fileKey)))
+            newEntries[index].attachments.append(ref)
+        }
+
+        for (id, ciphertext) in sealedFiles { try store.saveAttachment(id: id, ciphertext: ciphertext) }
+        try store.saveRecords(try newGroups.map(seal) + newEntries.map(seal))
+        groups += newGroups
+        entries += newEntries
+        sortGroups()
+        sortEntries()
+        return (newGroups.count, newEntries.count, sealedFiles.count)
+    }
+
     // MARK: - Sealing
 
     private func open(with key: SymmetricKey) throws {

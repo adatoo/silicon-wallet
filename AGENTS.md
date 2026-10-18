@@ -47,5 +47,5 @@ model and `VaultSession`, the SwiftData store, the SwiftUI UI, and lock UX.
 ## Do not
 - Copy anything from Acrylic Wallet (name, icon, artwork, code), or bundle/load its SQLite SEE library.
 - Use SwiftData's CloudKit integration — sync is `CKSyncEngine` only.
-- Build the Acrylic importer (field-template decoding, model mapping, UI) or export until the
-  user asks. `SiliconWalletKit/AcrylicImport` can already read `.wallet` files (DESIGN.md §9).
+- Build export or the AutoFill extension until the user asks (DESIGN.md §9). Acrylic import
+  exists (`SiliconWalletKit/AcrylicImport`, ADR-0005).

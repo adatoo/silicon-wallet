@@ -60,7 +60,15 @@ struct VaultView: View {
                 .frame(minWidth: 480, idealWidth: 540, minHeight: 480, idealHeight: 620)
             #endif
         }
-        .focusedSceneValue(\.vaultActions, VaultActions(newEntry: newEntry, newGroup: { editor = .newGroup }))
+        .sheet(isPresented: $model.isImportingAcrylic) {
+            NavigationStack { AcrylicImportView() }
+        }
+        .focusedSceneValue(
+            \.vaultActions,
+            VaultActions(
+                newEntry: newEntry, newGroup: { editor = .newGroup },
+                importAcrylic: { model.isImportingAcrylic = true })
+        )
         .onChange(of: model.session?.unreadableRecordCount) { _, count in
             if let count, count > 0 {
                 model.errorMessage =
@@ -78,6 +86,7 @@ struct VaultView: View {
 struct VaultActions {
     var newEntry: () -> Void
     var newGroup: () -> Void
+    var importAcrylic: () -> Void
 }
 
 extension FocusedValues {
@@ -96,6 +105,11 @@ struct VaultCommands: Commands {
                 .disabled(actions == nil)
             Button("New Group") { actions?.newGroup() }
                 .keyboardShortcut("n", modifiers: [.command, .shift])
+                .disabled(actions == nil)
+        }
+        CommandGroup(after: .newItem) {
+            Divider()
+            Button("Import from Acrylic Wallet…") { actions?.importAcrylic() }
                 .disabled(actions == nil)
         }
         CommandMenu("Vault") {
