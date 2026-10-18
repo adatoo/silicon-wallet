@@ -15,14 +15,17 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 1. **Reserve the name.** In App Store Connect, create the app record *Silicon Wallet*:
    - platforms iOS and macOS, one record, so the purchase is universal;
    - primary language English (UK);
-   - bundle ID `com.adatoo.silicon-wallet`, SKU `silicon-wallet`.
+   - bundle ID `com.datoos.silicon-wallet`, SKU `silicon-wallet`.
 
    This tests early whether the name is taken or rejected. Pick a fallback name now, for example "Silicon Vault" or "Silicon Keyring", per DESIGN.md §10.
-2. **Developer portal setup:**
-   - Sign in to Xcode (Settings → Accounts) with the team's Apple ID. Without it, signed builds
-     fail with "No Accounts", which is why `task dev` is ad-hoc signed without iCloud for now.
-   - Register the App ID with the iCloud (CloudKit) and Push Notifications capabilities.
-   - Create the container `iCloud.com.adatoo.silicon-wallet`. A first signed Xcode build with automatic signing does this too.
+   App Store Connect blocks new apps until the Account Holder accepts the updated Apple
+   Developer Program License Agreement (seen 2026-10-18).
+2. **Developer portal setup** (done 2026-10-18, team QKAYS6D525):
+   - Xcode is signed in (Settings → Accounts) with the team's Apple ID.
+   - App ID "Silicon Wallet", `com.datoos.silicon-wallet` (explicit), with iCloud (CloudKit)
+     and Push Notifications. CloudKit pushes need no APNs certificate.
+   - iCloud container `iCloud.com.datoos.silicon-wallet`, assigned to that App ID only.
+     Containers can't be deleted, so don't create spares.
 3. **App Store Connect API key** (App Manager role):
    - Store the `.p8` in the login keychain.
    - Add it to GitHub as the Actions secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`. It is used for CI uploads and `-allowProvisioningUpdates`.

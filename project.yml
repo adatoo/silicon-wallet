@@ -2,7 +2,7 @@
 # `task generate` rewrites the project from it, and both are committed.
 name: SiliconWallet
 options:
-  bundleIdPrefix: com.adatoo
+  bundleIdPrefix: com.datoos
   deploymentTarget:
     iOS: "26.0"
     macOS: "26.0"
@@ -78,7 +78,7 @@ targets:
         # settled (docs/app-store-release.md, B5). Until then App Store Connect asks per build.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.adatoo.silicon-wallet
+        PRODUCT_BUNDLE_IDENTIFIER: com.datoos.silicon-wallet
         PRODUCT_NAME: SiliconWallet
         TARGETED_DEVICE_FAMILY: "1,2"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -100,7 +100,7 @@ targets:
       - target: SiliconWallet
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.adatoo.silicon-wallet.tests
+        PRODUCT_BUNDLE_IDENTIFIER: com.datoos.silicon-wallet.tests
         GENERATE_INFOPLIST_FILE: YES
         # XcodeGen writes the iOS host path; a macOS app keeps its binary under Contents/MacOS.
         "TEST_HOST[sdk=macosx*]": $(BUILT_PRODUCTS_DIR)/SiliconWallet.app/Contents/MacOS/SiliconWallet
