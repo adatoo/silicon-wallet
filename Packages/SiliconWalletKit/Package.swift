@@ -8,10 +8,15 @@ let package = Package(
     products: [
         .library(name: "SiliconWalletKit", targets: ["SiliconWalletKit"])
     ],
+    dependencies: [
+        // Argon2id only (ADR-0006). An exact pin; check its licence (ISC) before bumping.
+        .package(url: "https://github.com/jedisct1/swift-sodium.git", exact: "0.11.0")
+    ],
     targets: [
         .target(
             name: "SiliconWalletKit",
-            exclude: ["Crypto/.gitkeep", "Model/.gitkeep", "Store/.gitkeep", "Sync/.gitkeep", "Vault/.gitkeep"],
+            dependencies: [.product(name: "Clibsodium", package: "swift-sodium")],
+            exclude: ["Model/.gitkeep", "Store/.gitkeep", "Sync/.gitkeep", "Vault/.gitkeep"],
             swiftSettings: [.treatAllWarnings(as: .error)],
             linkerSettings: [.linkedLibrary("sqlite3")]
         ),

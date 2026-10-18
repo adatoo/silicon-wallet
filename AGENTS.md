@@ -41,10 +41,11 @@ Every command is a `task`; run `task` to list them.
 - Crypto and Vault code requires unit tests, including wrong-password and tampered-ciphertext cases.
 
 ## Build order
-Follow DESIGN.md §8. Current step: 1 (crypto in SiliconWalletKit). The Acrylic Wallet
-migration spike (issue #1) runs alongside it; see DESIGN.md §9.
+Follow DESIGN.md §8. Current step: 2 (domain model and `VaultSession`). Step 1, the crypto
+in `SiliconWalletKit/Crypto`, is done (ADR-0006).
 
 ## Do not
 - Copy anything from Acrylic Wallet (name, icon, artwork, code), or bundle/load its SQLite SEE library.
 - Use SwiftData's CloudKit integration — sync is `CKSyncEngine` only.
-- Start import/export work beyond the migration spike until the user asks (DESIGN.md §9).
+- Build the Acrylic importer (field-template decoding, model mapping, UI) or export until the
+  user asks. `SiliconWalletKit/AcrylicImport` can already read `.wallet` files (DESIGN.md §9).
