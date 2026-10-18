@@ -154,6 +154,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 - Password generator (random characters and word-based): `PasswordGenerator`, with a built-in
   list of about 1,660 common words (about 10.7 bits each; six words by default).
 - Access log (encrypted, local per device): unlocks, failed attempts, exports.
+  `AccessLog` seals it under the vault key, capped at 1,000 events. Failed attempts happen while
+  locked, so they wait in a pending file of event kinds and times only (no names, nothing
+  typed) and are sealed in at the next unlock. Shown in Settings ▸ Access Log.
+- Delete Vault (Settings, needs the master password): from iCloud and every device (deletes the
+  zone), or this device only. A zone deleted on purpose elsewhere (`.deleted`, `.purged`) removes
+  the vault here too; `.encryptedDataReset` re-uploads it.
 - Screenshot / screen-recording privacy cover on iOS app switcher.
 - Never log secrets. No plaintext ever written to disk, iCloud, caches or crash logs.
 

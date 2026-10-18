@@ -34,6 +34,7 @@ final class AppModel {
         self.startupError = startupError
         if let session, let sync {
             sync.onRemoteChanges = { [weak session] in try? session?.reload() }
+            sync.onVaultDeletedRemotely = { [weak session] in session?.vaultWasDeletedElsewhere() }
             sync.onConflict = { [weak session] losing in
                 session?.keepConflictCopy(of: losing, deviceName: DeviceName.current)
             }
@@ -52,7 +53,7 @@ final class AppModel {
             }
             let directory = try SwiftDataVaultStore.defaultDirectory()
             let store = SyncedVaultStore(base: try SwiftDataVaultStore(directory: directory))
-            let session = try VaultSession(store: store)
+            let session = try VaultSession(store: store, accessLog: AccessLog(directory: directory))
             let sync =
                 CloudEntitlement.isAvailable
                 ? VaultSync(

@@ -52,6 +52,8 @@ public final class VaultSession {
     public private(set) var unreadableRecordCount = 0
 
     @ObservationIgnored private let store: any VaultStore
+    /// The device's access log, if this session keeps one (DESIGN.md §5).
+    @ObservationIgnored public let accessLog: AccessLog?
     @ObservationIgnored private var vaultKey: SymmetricKey?
     @ObservationIgnored private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -60,8 +62,9 @@ public final class VaultSession {
     }()
     @ObservationIgnored private let decoder = JSONDecoder()
 
-    public init(store: any VaultStore) throws {
+    public init(store: any VaultStore, accessLog: AccessLog? = nil) throws {
         self.store = store
+        self.accessLog = accessLog
         self.state = try store.loadMeta() == nil ? .noVault : .locked
     }
 
@@ -94,6 +97,7 @@ public final class VaultSession {
             try store.saveRecords(starters.map(seal))
             groups = starters
         }
+        accessLog?.record(AccessEvent(kind: .vaultCreated), key: key)
     }
 
     /// Unlocks with the master password. Argon2id runs off the main actor.
@@ -104,16 +108,22 @@ public final class VaultSession {
         do {
             key = try VaultKey.unwrap(meta.wrappedVaultKey, kek: kek)
         } catch CryptoError.authenticationFailed {
+            accessLog?.recordWhileLocked(.failedUnlock)
             throw VaultError.wrongPassword
         }
         try open(with: key)
+        accessLog?.record(AccessEvent(kind: .unlockedWithPassword), key: key)
     }
 
     /// Unlocks with a vault key already held, from the biometric Keychain item (DESIGN.md §5).
     public func unlock(vaultKey key: SymmetricKey) throws {
         let meta = try requireMeta()
-        guard VaultKey.verify(key, check: meta.keyCheck) else { throw VaultError.wrongPassword }
+        guard VaultKey.verify(key, check: meta.keyCheck) else {
+            accessLog?.recordWhileLocked(.failedUnlock)
+            throw VaultError.wrongPassword
+        }
         try open(with: key)
+        accessLog?.record(AccessEvent(kind: .unlockedWithBiometrics), key: key)
     }
 
     /// The unlocked vault key, for the biometric Keychain item only. Nil while locked.
@@ -144,6 +154,7 @@ public final class VaultSession {
         meta.wrappedVaultKey = try VaultKey.wrap(key, kek: newKEK)
         meta.modified = .now
         try store.saveMeta(meta)
+        accessLog?.record(AccessEvent(kind: .passwordChanged), key: key)
     }
 
     /// Checks the master password without changing anything, for re-authentication prompts.
@@ -160,9 +171,17 @@ public final class VaultSession {
         try open(with: key)
     }
 
+    /// Forgets the vault after sync removed it because it was deleted on another device.
+    public func vaultWasDeletedElsewhere() {
+        lock()
+        accessLog?.clear()
+        state = .noVault
+    }
+
     /// Deletes the vault, and everything in it, from this device.
     public func deleteVault() throws {
         try store.deleteAll()
+        accessLog?.clear()
         lock()
         state = .noVault
     }
@@ -348,6 +367,20 @@ public final class VaultSession {
         try updateEntry(entry)
     }
 
+    // MARK: - Access log
+
+    /// Records something the app did, such as exporting an attachment. Ignored while locked.
+    public func recordAccess(_ kind: AccessEvent.Kind, detail: String? = nil) {
+        guard let vaultKey else { return }
+        accessLog?.record(AccessEvent(kind: kind, detail: detail), key: vaultKey)
+    }
+
+    /// This device's access log, newest first. Empty while locked.
+    public func accessEvents() -> [AccessEvent] {
+        guard let vaultKey, let accessLog else { return [] }
+        return accessLog.load(key: vaultKey)
+    }
+
     // MARK: - Conflicts
 
     /// Keeps the losing side of a sync conflict as a new entry titled
@@ -411,6 +444,11 @@ public final class VaultSession {
         entries += newEntries
         sortGroups()
         sortEntries()
+        if let vaultKey {
+            accessLog?.record(
+                AccessEvent(kind: .imported, detail: "\(newEntries.count) entries, \(newGroups.count) groups"),
+                key: vaultKey)
+        }
         return (newGroups.count, newEntries.count, sealedFiles.count)
     }
 
