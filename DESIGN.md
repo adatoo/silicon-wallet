@@ -3,7 +3,7 @@
 A free, open-source secrets manager for macOS, iPadOS and iOS, built in Swift/SwiftUI.
 It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unmaintained).
 
-Status: design agreed; project set up (v0.1.0). Next: build step 1, with the Acrylic migration spike alongside.
+Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307). Next: build step 1, with the Acrylic migration spike alongside.
 
 ## 1. Goals
 
