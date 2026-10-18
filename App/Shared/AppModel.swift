@@ -1,0 +1,132 @@
+import Foundation
+import Observation
+import SiliconWalletKit
+
+/// What the sidebar has selected.
+enum SidebarItem: Hashable {
+    case all
+    case favorites
+    case group(UUID)
+}
+
+/// The app's state: the vault session plus what the UI has selected. Views only ever reach the
+/// vault through `session` (DESIGN.md §3).
+@MainActor
+@Observable
+final class AppModel {
+    let session: VaultSession?
+    /// Why the vault couldn't be opened at launch, if it couldn't.
+    let startupError: String?
+
+    var sidebarSelection: SidebarItem? = .all
+    var entrySelection: VaultEntry.ID?
+    var searchText = ""
+    /// The message for the error alert; nil when none is showing.
+    var errorMessage: String?
+
+    init(session: VaultSession?, startupError: String? = nil) {
+        self.session = session
+        self.startupError = startupError
+    }
+
+    /// The real vault in Application Support, or an in-memory one for UI tests and screenshots
+    /// (launch argument `-InMemoryVault`, plus `-DemoVault` to fill it with fake entries).
+    static func launch(arguments: [String] = ProcessInfo.processInfo.arguments) -> AppModel {
+        do {
+            if arguments.contains("-InMemoryVault") {
+                let session = try VaultSession(store: SwiftDataVaultStore.inMemory())
+                return AppModel(session: session)
+            }
+            let store = try SwiftDataVaultStore(directory: SwiftDataVaultStore.defaultDirectory())
+            return AppModel(session: try VaultSession(store: store))
+        } catch {
+            return AppModel(session: nil, startupError: error.localizedDescription)
+        }
+    }
+
+    /// Fills an in-memory vault with `DemoVault` when launched with `-DemoVault`.
+    func prepareDemoIfRequested(arguments: [String] = ProcessInfo.processInfo.arguments) async {
+        guard arguments.contains("-InMemoryVault"), arguments.contains("-DemoVault"), let session,
+            session.state == .noVault
+        else { return }
+        do {
+            try await DemoVault.fill(session)
+            if arguments.contains("-Locked") { session.lock() }
+        } catch {
+            errorMessage = Self.describe(error)
+        }
+    }
+
+    // MARK: - Derived lists
+
+    var selectedGroup: VaultGroup? {
+        guard case .group(let id) = sidebarSelection else { return nil }
+        return session?.group(id: id)
+    }
+
+    /// The entries the middle column shows: the sidebar's scope, filtered by the search text.
+    var visibleEntries: [VaultEntry] {
+        guard let session else { return [] }
+        let scoped: [VaultEntry]
+        switch sidebarSelection ?? .all {
+        case .all: scoped = session.search(searchText)
+        case .favorites: scoped = session.search(searchText).filter(\.isFavorite)
+        case .group(let id): scoped = session.search(searchText, inGroup: id)
+        }
+        return scoped
+    }
+
+    var selectedEntry: VaultEntry? {
+        entrySelection.flatMap { session?.entry(id: $0) }
+    }
+
+    func title(for item: SidebarItem) -> String {
+        switch item {
+        case .all: "All Entries"
+        case .favorites: "Favourites"
+        case .group(let id): session?.group(id: id)?.name ?? "Group"
+        }
+    }
+
+    // MARK: - Actions
+
+    /// Runs a vault change, turning any error into the alert.
+    func perform(_ change: () throws -> Void) {
+        do {
+            try change()
+        } catch {
+            errorMessage = Self.describe(error)
+        }
+    }
+
+    func lock() {
+        entrySelection = nil
+        searchText = ""
+        session?.lock()
+    }
+
+    func deleteGroup(_ id: UUID) {
+        perform { try session?.deleteGroup(id: id) }
+        if sidebarSelection == .group(id) { sidebarSelection = .all }
+        if let entrySelection, session?.entry(id: entrySelection) == nil { self.entrySelection = nil }
+    }
+
+    func deleteEntry(_ id: UUID) {
+        perform { try session?.deleteEntry(id: id) }
+        if entrySelection == id { entrySelection = nil }
+    }
+
+    static func describe(_ error: Error) -> String {
+        switch error {
+        case VaultError.wrongPassword: "That password is wrong."
+        case VaultError.locked: "The vault is locked."
+        case VaultError.notFound: "That item no longer exists."
+        case VaultError.unknownGroup: "Choose a group for this entry."
+        case VaultError.attachmentUnavailable: "This attachment isn't on this device yet."
+        case VaultError.attachmentCorrupt: "This attachment is damaged and can't be opened."
+        case VaultError.unsupportedFormat:
+            "This vault was made by a newer version of Silicon Wallet. Update the app to open it."
+        default: error.localizedDescription
+        }
+    }
+}
