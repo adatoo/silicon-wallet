@@ -5,7 +5,7 @@ It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unm
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
 Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
-(crypto), 2 (model, `VaultSession`) and 3 (local store) done. Next: build step 4.
+(crypto), 2 (model, `VaultSession`), 3 (local store) and 4 (UI) done. Next: build step 5.
 
 ## 1. Goals
 
@@ -65,6 +65,11 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - Mac and iPad show all three columns. iPhone collapses to drill-down navigation.
 - Toolbar: lock toggle, sync status, search. Bottom/toolbar actions: add group, add entry, edit.
 - Original look and icon. Do not copy Acrylic's artwork.
+- Sidebar: All Entries, Favourites, then the groups (drag to reorder). Moving an entry to
+  another group keeps every value: matching labels move across, the rest become extra fields.
+- Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌃⌘L lock.
+- Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
+  filled with obviously fake entries, for UI tests and screenshots.
 
 ## 4. Data model (plaintext, in memory only)
 
