@@ -5,7 +5,7 @@ It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unm
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
 Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
-(crypto) and 2 (model, `VaultSession`) done. Next: build step 3.
+(crypto), 2 (model, `VaultSession`) and 3 (local store) done. Next: build step 4.
 
 ## 1. Goals
 
@@ -144,12 +144,15 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 ## 6. Local storage
 
 - SwiftData container, **no CloudKit option**, in the app's sandbox container.
-- `@Model` types are ciphertext envelopes only:
-  - `VaultMetaRecord` (KDF params, salt, wrapped vault key, format version)
-  - `GroupRecord` (id, modified, ciphertext, cloudKit system fields)
-  - `EntryRecord` (id, modified, ciphertext, system fields; groupID lives inside the ciphertext)
-  - `AttachmentRecord` (id, entryID inside ciphertext only, size, local file state, system fields)
-- Attachment ciphertext stored as files under `Application Support/Attachments/<uuid>.bin`.
+- `@Model` types are ciphertext envelopes only (`SiliconWalletKit/Store`, `SwiftDataVaultStore`):
+  - `VaultMetaRecord`: format version and the encoded `VaultMeta` (KDF params, salt, wrapped
+    vault key, key check), plus CloudKit system fields.
+  - `SealedRecordModel`: one table for groups and entries. Its columns are id, kind, modified,
+    schema version, ciphertext and system fields; an entry's groupID lives inside its ciphertext.
+  - `AttachmentRecord` (id, size, local file state, system fields; the owning entry is known
+    only inside that entry's ciphertext).
+- The store is `Application Support/Vault/Vault.store`. Attachment ciphertext is stored as
+  files under `Application Support/Vault/Attachments/<uuid>.bin`.
 - File protection: `.complete` on iOS.
 
 ## 7. iCloud sync (CKSyncEngine)
