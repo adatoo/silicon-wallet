@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-10-18
+
+### Added
+
+- `SiliconWalletKit` can decrypt Acrylic Wallet 3.5 `.wallet` files natively: the format
+  (AES-256-OFB, no per-file salt) was recovered by black-box known-plaintext analysis of fake
+  fixtures, with no SEE licence, no disassembly and no Acrylic code (ADR-0005).
+
 ## [0.1.3] - 2026-10-18
 
 ### Changed

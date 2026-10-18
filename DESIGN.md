@@ -3,7 +3,9 @@
 A free, open-source secrets manager for macOS, iPadOS and iOS, built in Swift/SwiftUI.
 It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unmaintained).
 
-Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307). Next: build step 1, with the Acrylic migration spike alongside.
+Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
+Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005). Next: build
+step 1.
 
 ## 1. Goals
 
@@ -169,26 +171,27 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 
 ## 9. Later phases
 
-- **Import from Acrylic Wallet**. The route is being decided by a time-boxed spike (issue #1),
-  recorded in ADR-0005 when it finishes. What is known so far:
-  - Wallet.app 3.5 is Intel-only, so it needs Rosetta, which runs general apps only up to
-    macOS 27. Any route that runs Wallet.app stops working on new Macs from macOS 28 (autumn 2027).
-  - Wallet itself exports CSV, TSV, XML and an encrypted database. CSV and TSV lose field labels
-    and groups. Whether XML keeps everything we need is the spike's first question; if it does,
-    importing Wallet's XML export is the v1 importer.
+- **Import from Acrylic Wallet**. The route is decided (issue #1, ADR-0005): **Silicon Wallet
+  reads `.wallet` files natively**, no SEE licence and no copy of Wallet.app needed.
   - A `.wallet` file is a SQLite database encrypted with the commercial SQLite Encryption
-    Extension (SEE): 1024-byte pages, no per-page nonce. SEE has no open-source edition, and no
-    open-source library reads its format. The long-term options for people who only have the
-    file are a clean-room reader (the spike's second track: black-box analysis of fake vaults
-    only, with no disassembly) or our own SEE licence (US$2,000, one-off).
-  - The spike works only on fake vaults made in a separate macOS account, never on a real vault.
-
-  The original two-step route, kept as a fallback: (a) The user decrypts their `.wallet` file locally
-  with the MIT-licensed `pascal-wegner/acrylic-wallet-decrypt` tool, which uses the SQLite SEE
-  library inside their own Wallet.app, to get a plain SQLite file (tables include
-  `ZWALLETITEM`, `ZWALLETCATEGORY`, `ZWALLETITEMFIELD`). (b) Silicon Wallet imports that SQLite
-  file, recreating groups, field labels and entries, then prompts to securely delete it.
-  Silicon Wallet never ships or loads Acrylic's code. Verify against a Wallet 3.5 test vault first.
+    Extension (SEE). Black-box known-plaintext analysis of fake fixtures (no disassembly,
+    no SEE source, no Acrylic code) recovered the scheme in full: AES-256-OFB, key =
+    `"W7f@" + password` repeated/truncated to 32 bytes, per-page IV = the page number as a
+    little-endian `UInt32` zero-padded to 16 bytes, no per-file salt. See ADR-0005 and
+    `Fixtures/AcrylicWallet/README.md` for how this was found.
+  - `SiliconWalletKit`'s `AcrylicImport` module (`AcrylicWalletReader`) implements this with
+    CommonCrypto and the system `libsqlite3`, decrypting only into memory, and is unit-tested
+    against every fixture in `Fixtures/AcrylicWallet/`.
+  - Still to do, before this becomes a real importer: decode the `NSKeyedArchiver`-encoded
+    field templates (`defaultheaders`/`extraheaders`) to recover field labels, map groups and
+    entries into Silicon Wallet's own `Group`/`Entry`/`FieldTemplate` model, and build the
+    importer UI (export the file, review, confirm, securely delete). Wallet's CSV/TSV exports
+    remain a secondary, lossy fallback (no field labels, groups or attachments).
+  - Wallet.app 3.5 is Intel-only and needs Rosetta, which runs general apps only up to macOS 27
+    (autumn 2027). Reading `.wallet` natively, rather than depending on Wallet.app, is what
+    keeps import working after that.
+  - Fixtures are fake vaults made on a Mac that never held a real vault; the real vault is
+    never touched by this code.
 - Export: encrypted backup file plus optional plaintext CSV/JSON with warnings.
 - Password AutoFill extension (iOS, iPadOS, macOS).
 - Widgets / Apple Watch (maybe).
