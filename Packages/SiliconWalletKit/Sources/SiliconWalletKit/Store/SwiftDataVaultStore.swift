@@ -51,6 +51,10 @@ public final class SwiftDataVaultStore: VaultStore {
 
     // MARK: - Meta
 
+    func metaModel() throws -> VaultMetaRecord? {
+        try context.fetch(FetchDescriptor<VaultMetaRecord>()).first
+    }
+
     public func loadMeta() throws -> VaultMeta? {
         guard let record = try context.fetch(FetchDescriptor<VaultMetaRecord>()).first else { return nil }
         return try decoder.decode(VaultMeta.self, from: record.payload)
@@ -76,7 +80,7 @@ public final class SwiftDataVaultStore: VaultStore {
     public func saveRecords(_ records: [SealedRecord]) throws {
         guard !records.isEmpty else { return }
         for record in records {
-            if let existing = try model(id: record.id) {
+            if let existing = try recordModel(id: record.id) {
                 existing.update(from: record)
             } else {
                 context.insert(SealedRecordModel(record))
@@ -88,12 +92,12 @@ public final class SwiftDataVaultStore: VaultStore {
     public func deleteRecords(ids: [UUID]) throws {
         guard !ids.isEmpty else { return }
         for id in ids {
-            if let existing = try model(id: id) { context.delete(existing) }
+            if let existing = try recordModel(id: id) { context.delete(existing) }
         }
         try context.save()
     }
 
-    private func model(id: UUID) throws -> SealedRecordModel? {
+    func recordModel(id: UUID) throws -> SealedRecordModel? {
         var descriptor = FetchDescriptor<SealedRecordModel>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
@@ -117,7 +121,7 @@ public final class SwiftDataVaultStore: VaultStore {
         #else
             try ciphertext.write(to: attachmentURL(id), options: .atomic)
         #endif
-        if let record = try attachmentRecord(id: id) {
+        if let record = try attachmentModel(id: id) {
             record.size = Int64(ciphertext.count)
             record.isLocal = true
         } else {
@@ -130,12 +134,12 @@ public final class SwiftDataVaultStore: VaultStore {
         guard !ids.isEmpty else { return }
         for id in ids {
             try? FileManager.default.removeItem(at: attachmentURL(id))
-            if let record = try attachmentRecord(id: id) { context.delete(record) }
+            if let record = try attachmentModel(id: id) { context.delete(record) }
         }
         try context.save()
     }
 
-    private func attachmentRecord(id: UUID) throws -> AttachmentRecord? {
+    func attachmentModel(id: UUID) throws -> AttachmentRecord? {
         var descriptor = FetchDescriptor<AttachmentRecord>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first

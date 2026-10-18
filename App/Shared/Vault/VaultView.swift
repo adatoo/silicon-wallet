@@ -42,6 +42,9 @@ struct VaultView: View {
             }
         }
         .toolbar {
+            if let sync = model.sync {
+                ToolbarItem(placement: .primaryAction) { SyncStatusButton(sync: sync) }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button("Lock", systemImage: "lock") { lock.lockNow() }
                     .help("Lock the vault")

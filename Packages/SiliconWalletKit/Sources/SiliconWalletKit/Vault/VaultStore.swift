@@ -51,6 +51,7 @@ public final class InMemoryVaultStore: VaultStore {
     public private(set) var meta: VaultMeta?
     public private(set) var records: [UUID: SealedRecord] = [:]
     public private(set) var attachments: [UUID: Data] = [:]
+    var systemFieldsByItem: [SyncItem: Data] = [:]
 
     public init() {}
 
@@ -62,18 +63,25 @@ public final class InMemoryVaultStore: VaultStore {
         for record in records { self.records[record.id] = record }
     }
     public func deleteRecords(ids: [UUID]) throws {
-        for id in ids { records[id] = nil }
+        for id in ids {
+            records[id] = nil
+            systemFieldsByItem[.record(id)] = nil
+        }
     }
 
     public func loadAttachment(id: UUID) throws -> Data? { attachments[id] }
     public func saveAttachment(id: UUID, ciphertext: Data) throws { attachments[id] = ciphertext }
     public func deleteAttachments(ids: [UUID]) throws {
-        for id in ids { attachments[id] = nil }
+        for id in ids {
+            attachments[id] = nil
+            systemFieldsByItem[.attachment(id)] = nil
+        }
     }
 
     public func deleteAll() throws {
         meta = nil
         records = [:]
         attachments = [:]
+        systemFieldsByItem = [:]
     }
 }

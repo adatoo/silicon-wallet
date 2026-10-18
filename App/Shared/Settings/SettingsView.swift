@@ -71,6 +71,17 @@ struct SettingsView: View {
                 Text("Copied values are also cleared when the vault locks, if nothing else has been copied since.")
             }
 
+            Section("iCloud Sync") {
+                if let sync = model.sync {
+                    Label(sync.status.summary, systemImage: sync.status.symbol)
+                    Button("Sync Now") { Task { await sync.syncNow() } }
+                } else {
+                    Label(
+                        "Sync is off in this build. Signed App Store and TestFlight builds sync through iCloud.",
+                        systemImage: "icloud.slash")
+                }
+            }
+
             Section("Vault") {
                 Button("Change Master Password…") { changingPassword = true }
                     .disabled(!isUnlocked)

@@ -5,8 +5,8 @@ It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unm
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
 Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
-(crypto), 2 (model, `VaultSession`), 3 (local store), 4 (UI) and 5 (lock UX) done. Next: build
-step 6.
+(crypto), 2 (model, `VaultSession`), 3 (local store), 4 (UI), 5 (lock UX) and 6 (sync) done. Next:
+build step 7.
 
 ## 1. Goals
 
@@ -184,6 +184,21 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 - New device: fetch `VaultMeta`, ask for the master password, unwrap the vault key, then sync.
 - Sync engine state serialization persisted locally; account-change and zone-deleted
   events handled (e.g. sign-out → keep local data, pause sync, show status).
+- **As built** (`SiliconWalletKit/Sync`): `SyncedVaultStore` wraps the local store and queues
+  every change `VaultSession` makes, so the session doesn't know sync exists; `VaultSync` writes
+  fetched records to the underlying store and asks the session to reload. Each record keeps its
+  CloudKit system fields. Plain fields are only `modified`, `schemaVersion`/`formatVersion` and
+  an attachment's size; payloads are in `encryptedValues`, attachments are `CKAsset`s of their
+  sealed files.
+  - Conflict copies need the vault key, so they're made only while the vault is unlocked;
+    while locked, the later version simply wins. A tie goes to the server.
+  - `zoneNotFound`/`unknownItem` re-upload the item; a deleted zone re-uploads everything.
+  - First run waits (up to 20 s) for iCloud's first fetch before offering to create a vault, so
+    a new device joins the existing vault instead of starting a second one.
+  - v1 downloads attachments with the rest of the vault rather than on demand; on-demand
+    download and the "Keep all attachments offline" setting are later work.
+  - Sync runs only in builds signed with the iCloud entitlement; ad-hoc `task dev` builds,
+    tests and the demo vault stay local.
 
 ## 8. Build order
 
