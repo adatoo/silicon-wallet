@@ -16,7 +16,7 @@ let package = Package(
         .target(
             name: "SiliconWalletKit",
             dependencies: [.product(name: "Clibsodium", package: "swift-sodium")],
-            exclude: ["Model/.gitkeep", "Store/.gitkeep", "Sync/.gitkeep", "Vault/.gitkeep"],
+            exclude: ["Store/.gitkeep", "Sync/.gitkeep"],
             swiftSettings: [.treatAllWarnings(as: .error)],
             linkerSettings: [.linkedLibrary("sqlite3")]
         ),

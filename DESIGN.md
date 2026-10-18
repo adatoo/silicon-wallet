@@ -4,8 +4,8 @@ A free, open-source secrets manager for macOS, iPadOS and iOS, built in Swift/Sw
 It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unmaintained).
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
-Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build step 1
-(crypto) done. Next: build step 2.
+Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
+(crypto) and 2 (model, `VaultSession`) done. Next: build step 3.
 
 ## 1. Goals
 
@@ -69,14 +69,14 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 ## 4. Data model (plaintext, in memory only)
 
 ```swift
-struct FieldTemplate { id: UUID; label: String; kind: FieldKind; isConcealed: Bool; order: Int }
+struct FieldTemplate { id: UUID; label: String; kind: FieldKind; isConcealed: Bool }  // order = array order
 enum FieldKind { text, password, number, date, url, email, phone, multiline }
 
-struct Group {
-  id: UUID; name: String; icon: String; fields: [FieldTemplate]; order: Int
+struct VaultGroup {   // "Vault" prefix avoids clashing with SwiftUI's Group
+  id: UUID; name: String; icon: String; fields: [FieldTemplate]; order: Int; modified: Date
 }
 
-struct Entry {
+struct VaultEntry {
   id: UUID; groupID: UUID; title: String
   values: [UUID: String]          // FieldTemplate.id -> value
   extraFields: [CustomField]      // per-entry fields not in the group template
@@ -92,6 +92,11 @@ struct AttachmentRef {
 ```
 
 Field labels live on the group, so "Gate Information" can have `side gate`, `main gate`, `other`.
+
+The code is in `SiliconWalletKit/Model`. `VaultMeta` (KDF parameters, wrapped vault key, a
+key check that proves a biometric-held vault key belongs to this vault, format version) is the
+only unencrypted vault data. New vaults start with editable groups: Logins, Credit Cards, Bank
+Accounts, Software Licences and Secure Notes.
 
 ## 5. Security
 

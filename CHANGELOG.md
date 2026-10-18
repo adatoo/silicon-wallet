@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-18
+
+### Added
+
+- Vaults: create one with a master password, lock and unlock it, and change the password
+  without re-encrypting anything.
+- Groups with their own field templates, entries with extra fields, notes, favourites and
+  attachments, and search that ignores case and accents but never looks inside concealed
+  fields.
+- New vaults start with Logins, Credit Cards, Bank Accounts, Software Licences and Secure Notes
+  groups, all editable.
+
 ## [0.2.0] - 2026-10-18
 
 ### Added
