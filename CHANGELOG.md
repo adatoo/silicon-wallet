@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-10-18
+
+### Changed
+
+- The App Store name "Silicon Wallet" is reserved for iPhone, iPad and Mac, and the release
+  roadmap records the App Store Connect record.
+
 ## [0.1.2] - 2026-10-18
 
 ### Changed
