@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-10-18
+
+### Added
+
+- Silicon Wallet has its own icon: a silicon chip with a keyhole, with dark and tinted versions
+  on iPhone and iPad. The app's accent colour matches it.
+
 ## [0.7.0] - 2026-10-18
 
 ### Added

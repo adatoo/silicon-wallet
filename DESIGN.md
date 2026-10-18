@@ -65,7 +65,8 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - `NavigationSplitView` with three columns: **Groups | Entries | Detail**.
 - Mac and iPad show all three columns. iPhone collapses to drill-down navigation.
 - Toolbar: lock toggle, sync status, search. Bottom/toolbar actions: add group, add entry, edit.
-- Original look and icon. Do not copy Acrylic's artwork.
+- Original look and icon. Do not copy Acrylic's artwork. The icon (a silicon chip with a keyhole,
+  teal to navy) is drawn by `scripts/make-icon.swift`; run `task icon` after changing it.
 - Sidebar: All Entries, Favourites, then the groups (drag to reorder). Moving an entry to
   another group keeps every value: matching labels move across, the rest become extra fields.
 - Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌃⌘L lock.

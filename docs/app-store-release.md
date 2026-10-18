@@ -75,7 +75,7 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 - Add `CONTRIBUTING.md`, and enable private vulnerability reporting.
 
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
-- **App icon:** an original `.icon` from Icon Composer, with Liquid Glass light, dark and tinted variants for iOS 26 and macOS 26, and nothing resembling Acrylic or Apple Wallet.
+- **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.
 - **Screenshots**, automated through UI tests with obviously fake vault data, as `task screenshots`:
   - iPhone 6.9″ at 1320×2868 (required);
   - iPad 13″ at 2064×2752 (required, because the app runs on iPad);

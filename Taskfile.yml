@@ -91,6 +91,11 @@ tasks:
           exit 1
         fi
 
+  icon:
+    desc: Redraw the app icon PNGs from scripts/make-icon.swift
+    cmds:
+      - swift scripts/make-icon.swift App/Resources/Assets.xcassets/AppIcon.appiconset
+
   version:sync:
     desc: Write MARKETING_VERSION in Config/Version.xcconfig from VERSION
     cmds:
