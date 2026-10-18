@@ -114,7 +114,10 @@ struct AttachmentPreviewView: View {
             isPresented: $exporting, document: AttachmentDocument(contents: contents ?? Data()),
             contentType: UTType(attachment.uti) ?? .data, defaultFilename: attachment.filename
         ) { result in
-            if case .failure(let error) = result { problem = error.localizedDescription }
+            switch result {
+            case .success: model.session?.recordAccess(.exported, detail: attachment.filename)
+            case .failure(let error): problem = error.localizedDescription
+            }
         }
         .task { load() }
         .onDisappear {

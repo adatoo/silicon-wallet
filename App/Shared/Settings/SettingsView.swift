@@ -7,6 +7,9 @@ struct SettingsView: View {
     @Environment(LockController.self) private var lock
     @Environment(\.dismiss) private var dismiss
     @State private var changingPassword = false
+    @State private var showingLog = false
+    @State private var deletingVault = false
+    @State private var showingAbout = false
 
     private static let autoLockChoices = [1, 2, 5, 10, 15, 30, 60, 0]
     private static let clipboardChoices = [15, 30, 60, 120, 300, 0]
@@ -92,6 +95,8 @@ struct SettingsView: View {
                     #endif
                 }
                 .disabled(!isUnlocked)
+                Button("Access Log…") { showingLog = true }
+                    .disabled(!isUnlocked)
                 Button("Lock Now") {
                     lock.lockNow()
                     dismiss()
@@ -100,7 +105,13 @@ struct SettingsView: View {
             }
 
             Section {
+                Button("Delete Vault…", role: .destructive) { deletingVault = true }
+                    .disabled(!isUnlocked)
+            }
+
+            Section {
                 LabeledContent("Version", value: Self.version)
+                Button("About Silicon Wallet…") { showingAbout = true }
             }
         }
         .formStyle(.grouped)
@@ -117,6 +128,23 @@ struct SettingsView: View {
         #endif
         .sheet(isPresented: $changingPassword) {
             NavigationStack { ChangePasswordView() }
+        }
+        .sheet(isPresented: $showingLog) {
+            NavigationStack {
+                AccessLogView().toolbar {
+                    ToolbarItem(placement: .confirmationAction) { Button("Done") { showingLog = false } }
+                }
+            }
+        }
+        .sheet(isPresented: $deletingVault) {
+            NavigationStack { DeleteVaultView() }
+        }
+        .sheet(isPresented: $showingAbout) {
+            NavigationStack {
+                AboutView().toolbar {
+                    ToolbarItem(placement: .confirmationAction) { Button("Done") { showingAbout = false } }
+                }
+            }
         }
     }
 

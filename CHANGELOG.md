@@ -5,6 +5,16 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-10-18
+
+### Added
+
+- An access log in Settings shows when your vault was unlocked (and how), failed attempts,
+  password changes, imports and saved copies. It's encrypted and stays on this device.
+- Delete Vault, protected by your master password: remove it from iCloud and all your devices,
+  or from this device only.
+- An About screen with the version, licence and privacy summary.
+
 ## [0.10.0] - 2026-10-18
 
 ### Added

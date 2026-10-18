@@ -27,6 +27,9 @@ public final class VaultSync: CKSyncEngineDelegate {
     /// Called with the local version of a record that lost a conflict, so the session can keep
     /// it as a conflict copy (DESIGN.md §7).
     @ObservationIgnored public var onConflict: (@MainActor (SealedRecord) -> Void)?
+    /// Called when the vault was deleted in iCloud on purpose (from another device, or from
+    /// iCloud settings), after the local copy has been removed too.
+    @ObservationIgnored public var onVaultDeletedRemotely: (@MainActor () -> Void)?
 
     @ObservationIgnored private let store: SyncedVaultStore
     @ObservationIgnored private var base: any SyncBackingStore { store.base }
@@ -81,8 +84,16 @@ public final class VaultSync: CKSyncEngineDelegate {
     /// Deletes the vault's zone from iCloud: every synced record on every device's next sync.
     public func deleteFromICloud() async throws {
         guard let engine else { return }
+        engine.state.remove(pendingRecordZoneChanges: engine.state.pendingRecordZoneChanges)
         engine.state.add(pendingDatabaseChanges: [.deleteZone(SyncRecordMapping.zoneID)])
         try await engine.sendChanges()
+    }
+
+    private func reuploadEverything(_ engine: CKSyncEngine) {
+        let items = (try? base.allSyncItems()) ?? []
+        for item in items { try? base.setSystemFields(nil, for: item) }
+        engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: SyncRecordMapping.zoneID))])
+        enqueue(items.map { .save($0) })
     }
 
     func enqueue(_ changes: [SyncChange]) {
@@ -117,13 +128,19 @@ public final class VaultSync: CKSyncEngineDelegate {
             }
 
         case .fetchedDatabaseChanges(let changes):
-            if changes.deletions.contains(where: { $0.zoneID == SyncRecordMapping.zoneID }) {
-                // The zone was deleted in iCloud (for example, from Settings). This device still
-                // has the vault, so upload it again.
-                for item in (try? base.allSyncItems()) ?? [] { try? base.setSystemFields(nil, for: item) }
-                syncEngine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: SyncRecordMapping.zoneID))]
-                )
-                enqueue(((try? base.allSyncItems()) ?? []).map { .save($0) })
+            for deletion in changes.deletions where deletion.zoneID == SyncRecordMapping.zoneID {
+                switch deletion.reason {
+                case .encryptedDataReset:
+                    // iCloud Keychain was reset, so CloudKit's encrypted fields are gone. This
+                    // device still has the vault, so upload it again.
+                    reuploadEverything(syncEngine)
+                case .deleted, .purged:
+                    // Deleted on purpose, from another device or from iCloud settings.
+                    try? base.deleteAll()
+                    onVaultDeletedRemotely?()
+                @unknown default:
+                    reuploadEverything(syncEngine)
+                }
             }
 
         case .fetchedRecordZoneChanges(let changes):
