@@ -19,6 +19,8 @@ enum Envelope {
         case vaultKey = "vault-key"
         case record
         case attachment
+        /// An empty value sealed under the vault key, to check a key without a password.
+        case keyCheck = "key-check"
     }
 
     static func associatedData(_ purpose: Purpose, id: UUID?) -> Data {

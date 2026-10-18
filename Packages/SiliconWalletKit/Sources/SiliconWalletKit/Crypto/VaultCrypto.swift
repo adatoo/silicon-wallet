@@ -21,6 +21,16 @@ public enum VaultKey {
         guard raw.count == 32 else { throw CryptoError.authenticationFailed }
         return SymmetricKey(data: raw)
     }
+
+    /// A small sealed value that proves a key is this vault's vault key, so a key from the
+    /// biometric Keychain item can be checked before it's trusted.
+    public static func makeCheck(for vaultKey: SymmetricKey) throws -> Data {
+        try Envelope.seal(Data(), key: vaultKey, purpose: .keyCheck, id: nil)
+    }
+
+    public static func verify(_ vaultKey: SymmetricKey, check: Data) -> Bool {
+        (try? Envelope.open(check, key: vaultKey, purpose: .keyCheck, id: nil)) != nil
+    }
 }
 
 /// Seals each Group and Entry payload under the vault key, with its record ID as associated
