@@ -6,6 +6,7 @@
 | [0002](./0002-mit-licence.md) | MIT licence | Accepted |
 | [0003](./0003-version-source.md) | `VERSION` is the version source; CI sets build numbers | Accepted |
 | [0004](./0004-ckSyncEngine-sync.md) | Sync through `CKSyncEngine`, not SwiftData's CloudKit integration | Accepted |
+| [0005](./0005-acrylic-import-route.md) | Acrylic Wallet import reads `.wallet` files natively; no SEE licence needed | Accepted |
 
 ## How to add or change an ADR
 

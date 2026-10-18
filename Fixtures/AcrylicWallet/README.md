@@ -53,7 +53,13 @@ Bytes 0 to 15 are identical in every file whose password is `fakepass` (a, b, g 
 exports), and differ for every other password, c and d included. So the first block is
 `SQLite format 3\0` encrypted under a key that depends only on the password:
 - there is no per-file salt;
-- c and d differ, so the key isn't the first 12 characters of the password.
+- c and d differ, but only in their last two characters, so they don't show whether long
+  passwords are truncated.
+
+Comparing whole pages shows the same pattern. Files with the same password have matching
+ciphertext wherever their contents match, down to single bytes, and files with different
+passwords never match. So the encryption depends only on the password and the page, with
+no per-file or per-write randomness.
 
 ## Caveats
 

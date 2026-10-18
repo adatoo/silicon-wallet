@@ -12,7 +12,8 @@ let package = Package(
         .target(
             name: "SiliconWalletKit",
             exclude: ["Crypto/.gitkeep", "Model/.gitkeep", "Store/.gitkeep", "Sync/.gitkeep", "Vault/.gitkeep"],
-            swiftSettings: [.treatAllWarnings(as: .error)]
+            swiftSettings: [.treatAllWarnings(as: .error)],
+            linkerSettings: [.linkedLibrary("sqlite3")]
         ),
         .testTarget(
             name: "SiliconWalletKitTests",
