@@ -74,6 +74,13 @@ struct SettingsView: View {
             Section("Vault") {
                 Button("Change Master Password…") { changingPassword = true }
                     .disabled(!isUnlocked)
+                Button("Import from Acrylic Wallet…") {
+                    model.isImportingAcrylic = true
+                    #if os(iOS)
+                        dismiss()
+                    #endif
+                }
+                .disabled(!isUnlocked)
                 Button("Lock Now") {
                     lock.lockNow()
                     dismiss()

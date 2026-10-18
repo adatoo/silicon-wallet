@@ -28,7 +28,8 @@ public final class AcrylicWalletReader {
                 icon: row.text("icon"),
                 order: row.int64("order"),
                 uuid: row.text("uuid") ?? "",
-                defaultHeadersArchive: row.blob("defaultheaders")
+                defaultHeadersArchive: row.blob("defaultheaders"),
+                lastUpdated: row.text("datelastupdated")
             )
         }
     }
@@ -41,9 +42,12 @@ public final class AcrylicWalletReader {
                 parentGroupUUID: row.text("parent"),
                 notes: row.text("notes") ?? "",
                 fieldValues: AcrylicPropertyListText.parseFlatStringDictionary(row.text("infodictionary") ?? ""),
-                extraHeadersText: row.text("extraheaders"),
+                extraHeadersText: row.isText("extraheaders") ? row.text("extraheaders") : nil,
+                extraHeadersArchive: row.isText("extraheaders") ? nil : row.blob("extraheaders"),
                 isStarred: row.int64("star") != 0,
-                uuid: row.text("uuid") ?? ""
+                uuid: row.text("uuid") ?? "",
+                fileUUIDs: AcrylicPropertyListText.quotedStrings(afterEqualsIn: row.text("files") ?? ""),
+                lastUpdated: row.text("datelastupdated")
             )
         }
     }
@@ -135,6 +139,11 @@ public final class AcrylicWalletReader {
         func int64(_ column: String) -> Int64 {
             guard let index = columnIndexByName[column] else { return 0 }
             return sqlite3_column_int64(statement, index)
+        }
+
+        func isText(_ column: String) -> Bool {
+            guard let index = columnIndexByName[column] else { return false }
+            return sqlite3_column_type(statement, index) == SQLITE_TEXT
         }
 
         func text(_ column: String) -> String? {

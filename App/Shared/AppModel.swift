@@ -21,6 +21,8 @@ final class AppModel {
     var sidebarSelection: SidebarItem? = .all
     var entrySelection: VaultEntry.ID?
     var searchText = ""
+    /// Whether the Acrylic Wallet import sheet is showing.
+    var isImportingAcrylic = false
     /// The message for the error alert; nil when none is showing.
     var errorMessage: String?
 

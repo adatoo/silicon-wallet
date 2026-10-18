@@ -8,6 +8,7 @@ struct SetupView: View {
     @State private var password = ""
     @State private var confirmation = ""
     @State private var isWorking = false
+    @State private var movingFromAcrylic = false
     @FocusState private var focus: Field?
 
     private enum Field { case password, confirmation }
@@ -47,6 +48,8 @@ struct SetupView: View {
                     .focused($focus, equals: .confirmation)
                     .onSubmit(create)
                 PasswordStrengthView(password: password)
+                Toggle("I'm moving from Acrylic Wallet", isOn: $movingFromAcrylic)
+                    .padding(.top, 4)
             }
             .textFieldStyle(.roundedBorder)
             .frame(maxWidth: 360)
@@ -78,8 +81,9 @@ struct SetupView: View {
         isWorking = true
         Task {
             do {
-                try await session.createVault(password: password)
+                try await session.createVault(password: password, starterGroups: !movingFromAcrylic)
                 lock.didUnlockWithPassword()
+                if movingFromAcrylic { model.isImportingAcrylic = true }
             } catch {
                 model.errorMessage = AppModel.describe(error)
             }

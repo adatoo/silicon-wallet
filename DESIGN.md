@@ -208,11 +208,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   - `SiliconWalletKit`'s `AcrylicImport` module (`AcrylicWalletReader`) implements this with
     CommonCrypto and the system `libsqlite3`, decrypting only into memory, and is unit-tested
     against every fixture in `Fixtures/AcrylicWallet/`.
-  - Still to do, before this becomes a real importer: decode the `NSKeyedArchiver`-encoded
-    field templates (`defaultheaders`/`extraheaders`) to recover field labels, map groups and
-    entries into Silicon Wallet's own `Group`/`Entry`/`FieldTemplate` model, and build the
-    importer UI (export the file, review, confirm, securely delete). Wallet's CSV/TSV exports
-    remain a secondary, lossy fallback (no field labels, groups or attachments).
+  - **Built (2026-10-18):** `AcrylicImporter` maps groups, field templates, entries, notes,
+    favourites, dates and attachments into Silicon Wallet's model (ADR-0005), and the app has
+    "Import from Acrylic Wallet…" (File menu, Settings, the empty vault, and a setup option
+    that skips the starter groups). Choose the file, enter its old password, check the preview,
+    import. The old file is never changed or deleted; the summary suggests deleting it once
+    checked. Wallet's CSV/TSV exports remain a secondary, lossy fallback.
   - Wallet.app 3.5 is Intel-only and needs Rosetta, which runs general apps only up to macOS 27
     (autumn 2027). Reading `.wallet` natively, rather than depending on Wallet.app, is what
     keeps import working after that.

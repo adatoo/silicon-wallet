@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */; };
 		09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C60B119316E39F124349191 /* GroupEditorView.swift */; };
 		0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */; };
 		3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244D550D93A11FBA8C5076F4 /* SidebarView.swift */; };
@@ -52,6 +53,7 @@
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
+		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
 		71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRecognizer.swift; sourceTree = "<group>"; };
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FieldKind+UI.swift"; sourceTree = "<group>"; };
@@ -123,6 +125,14 @@
 				D52C311423E961E1F9CA85AB /* SiliconWalletTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		4AC72763302BB4D34DFA0B57 /* Import */ = {
+			isa = PBXGroup;
+			children = (
+				62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */,
+			);
+			path = Import;
 			sourceTree = "<group>";
 		};
 		66DE250C10EA9989D8BAD766 /* iOS */ = {
@@ -230,6 +240,7 @@
 				A66EC933A0C2F7CEBB604522 /* RootView.swift */,
 				C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */,
 				E1E992965D3AD287745A5FCE /* Editors */,
+				4AC72763302BB4D34DFA0B57 /* Import */,
 				EAE29A74E559CB253052989F /* Lock */,
 				E486CAD3DD5D1CFA2EC0F230 /* Settings */,
 				8F2A8D09C6546EB663E3AAE6 /* Support */,
@@ -346,6 +357,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */,
 				F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */,
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,

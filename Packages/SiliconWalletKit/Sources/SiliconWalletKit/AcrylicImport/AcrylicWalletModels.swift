@@ -12,6 +12,8 @@ public struct AcrylicGroup: Sendable, Equatable {
     public let order: Int64
     public let uuid: String
     public let defaultHeadersArchive: Data?
+    /// Wallet's own timestamp text, such as `2026-10-18 12:32:45 +0100`.
+    public let lastUpdated: String?
 }
 
 /// An entry ("item") from an Acrylic Wallet file's `entries` table.
@@ -27,8 +29,13 @@ public struct AcrylicEntry: Sendable, Equatable {
     public let notes: String
     public let fieldValues: [String: String]
     public let extraHeadersText: String?
+    /// The entry's own extra field definitions, an `NSKeyedArchiver` array like the group's.
+    public let extraHeadersArchive: Data?
     public let isStarred: Bool
     public let uuid: String
+    /// UUIDs of this entry's attachments in the `files` table.
+    public let fileUUIDs: [String]
+    public let lastUpdated: String?
 }
 
 /// An attachment from an Acrylic Wallet file's `files` table.

@@ -1,6 +1,6 @@
 # ADR-0005: Acrylic Wallet import reads `.wallet` files natively; no SEE licence needed
 
-- **Status:** Accepted (2026-10-18)
+- **Status:** Accepted (2026-10-18; importer added the same day)
 
 ## Context
 
@@ -65,16 +65,18 @@ disassembly and no Acrylic code (per issue #1's stop rule, which never had to tr
 ## Scope of this decision
 
 `AcrylicWalletReader` reads the container (groups, entries, attachments) and the entries'
-field *values*, which are stored as flat `"field-UUID" = "value";` text. It does **not** yet
-decode:
+field *values*, which are stored as flat `"field-UUID" = "value";` text. `AcrylicImporter`
+(added 2026-10-18, at the owner's request) maps it into Silicon Wallet's model:
 
-- `defaultheaders`/`extraheaders`, the `NSKeyedArchiver`-encoded field *templates* (type,
-  title, section per field) needed to label each value and build a `Group`/`FieldTemplate`
-  (DESIGN.md §4);
-- mapping any of this into Silicon Wallet's own encrypted vault.
-
-That mapping, plus the importer UI and the "export, review, delete" flow, is later work under
-DESIGN.md §9, once the main app exists to import into.
+- `defaultheaders`/`extraheaders` are `NSKeyedArchiver` arrays of `{Type, UUID, Title, Section,
+  Content-Type}`, decoded with only Foundation's plist classes allowed. `Type` 1 is a web
+  address, 2 a user name, 3 a password; `Content-Type` 1 marks a secure field. Labels naming a
+  secret (PIN, security code, CVV, card or account number) are concealed too.
+- Values match fields by UUID; any value without a definition becomes an extra field, so
+  nothing is dropped. An entry's `files` column lists its attachments' UUIDs in the `files`
+  table. Favourites (`star`) and Wallet's `datelastupdated` dates come across.
+- `VaultSession.importItems` saves it all in one batch, sealing each attachment under its own
+  new key. The app's import sheet reads the chosen file once into memory and never writes it.
 
 ## Consequences
 
@@ -86,7 +88,5 @@ DESIGN.md §9, once the main app exists to import into.
   They are system libraries, not new third-party SPM dependencies, so AGENTS.md's dependency
   rule (ask before adding anything beyond libsodium/swift-sodium) doesn't apply; noted here for
   visibility anyway.
-- This reader is test-only proven; it has not yet been exercised against a real vault. Before
-  it ships, run it (read-only) against a real `.wallet` backup copy and confirm
-  `PRAGMA integrity_check` and sane row counts, without this changing the "never touch the live
-  vault from a spike" rule for fixtures.
+- The reader and importer are proven against the fake fixtures only. The owner checks a real
+  vault by importing it into the app; the code only reads the file it's given.
