@@ -122,6 +122,7 @@ struct FieldInput: View {
     let isConcealed: Bool
     @Binding var value: String
     @State private var isRevealed = false
+    @State private var generating = false
 
     var body: some View {
         LabeledContent(label.isEmpty ? kind.displayName : label) {
@@ -147,6 +148,17 @@ struct FieldInput: View {
                     .labelStyle(.iconOnly)
                     .buttonStyle(.borderless)
                 }
+                if kind == .password {
+                    Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .help("Generate a password")
+                }
+            }
+        }
+        .sheet(isPresented: $generating) {
+            NavigationStack {
+                GeneratorView { value = $0 }
             }
         }
     }

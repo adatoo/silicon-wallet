@@ -4,6 +4,8 @@ import SwiftUI
 /// Chooses the screen for the vault's state: first-run setup, unlock, or the vault itself.
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(LockController.self) private var lock
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         @Bindable var model = model
@@ -20,6 +22,19 @@ struct RootView: View {
                     description: Text(model.startupError ?? "Unknown error."))
             }
         }
+        #if os(iOS)
+            .background(ActivityRecognizerInstaller { lock.recordActivity() })
+            .overlay {
+                if scenePhase != .active { PrivacyCover() }
+            }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background: lock.didEnterBackground()
+                case .active: lock.didBecomeActive()
+                default: break
+                }
+            }
+        #endif
         .task { await model.prepareDemoIfRequested() }
         .alert(
             "Something Went Wrong",

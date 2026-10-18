@@ -1,12 +1,14 @@
 import SiliconWalletKit
 import SwiftUI
 
-/// The locked screen: the master password unlocks the vault.
+/// The locked screen: the master password, or Face ID / Touch ID when allowed, unlocks the vault.
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
+    @Environment(LockController.self) private var lock
     @State private var password = ""
     @State private var isWorking = false
     @State private var failed = false
+    @State private var triedBiometrics = false
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -31,20 +33,45 @@ struct UnlockView: View {
                     .accessibilityHidden(!failed)
             }
 
-            Button(action: unlock) {
-                if isWorking {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Text("Unlock").frame(minWidth: 120)
+            HStack(spacing: 12) {
+                Button(action: unlock) {
+                    if isWorking {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Text("Unlock").frame(minWidth: 120)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(password.isEmpty || isWorking)
+                .keyboardShortcut(.defaultAction)
+
+                if lock.canUnlockWithBiometrics {
+                    Button("Unlock with \(lock.biometricKind.name)", systemImage: lock.biometricKind.symbol) {
+                        Task { await lock.unlockWithBiometrics() }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.bordered)
+                    .help("Unlock with \(lock.biometricKind.name)")
                 }
             }
-            .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(password.isEmpty || isWorking)
-            .keyboardShortcut(.defaultAction)
+
+            if let notice = lock.notice {
+                Text(notice)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 360)
+            }
         }
         .padding(32)
-        .onAppear { isFocused = true }
+        .onAppear {
+            isFocused = true
+            if !triedBiometrics, lock.canUnlockWithBiometrics {
+                triedBiometrics = true
+                Task { await lock.unlockWithBiometrics() }
+            }
+        }
     }
 
     private func unlock() {
@@ -55,6 +82,7 @@ struct UnlockView: View {
             do {
                 try await session.unlock(password: password)
                 password = ""
+                lock.didUnlockWithPassword()
             } catch VaultError.wrongPassword {
                 failed = true
                 password = ""
