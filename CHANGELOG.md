@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-10-18
+
+### Added
+
+- The app: create a vault with a master password (with a strength meter), unlock it, and
+  browse it in three columns: groups, entries and details.
+- Add, edit, reorder and delete groups, each with its own icon and field template.
+- Add, edit, favourite, search and delete entries. Move an entry to another group and every
+  value comes with it.
+- Concealed values stay hidden until you reveal them, and copy without showing.
+- Keyboard shortcuts on the Mac: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌃⌘L lock.
+
 ## [0.4.0] - 2026-10-18
 
 ### Added
