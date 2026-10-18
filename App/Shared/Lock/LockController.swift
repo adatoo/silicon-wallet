@@ -32,6 +32,7 @@ final class LockController {
         self.model = model
         self.settings = settings
         Clipboard.clearAfter = settings.clipboardSeconds
+        TemporaryPreviews.removeAll()
     }
 
     /// Starts watching for activity and system events. Call once, at launch.
@@ -75,6 +76,7 @@ final class LockController {
     /// Locks the vault and clears anything we left on the clipboard.
     func lockNow() {
         Clipboard.clearIfOurs()
+        TemporaryPreviews.removeAll()
         model.lock()
     }
 

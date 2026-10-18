@@ -139,3 +139,40 @@ private func freshSettings() -> LockSettings {
     lock.didUnlockWithPassword()
     #expect(settings.lastPasswordUnlock != nil)
 }
+
+// MARK: - Attachments
+
+@Test func attachmentKindsComeFromTheirType() {
+    #expect(AttachmentKind(uti: "public.png") == .image)
+    #expect(AttachmentKind(uti: "public.jpeg") == .image)
+    #expect(AttachmentKind(uti: "com.adobe.pdf") == .pdf)
+    #expect(AttachmentKind(uti: "public.plain-text") == .text)
+    #expect(AttachmentKind(uti: "public.json") == .text)
+    #expect(AttachmentKind(uti: "public.data") == .other)
+    #expect(AttachmentKind(uti: "not a type") == .other)
+}
+
+@MainActor
+@Test func temporaryPreviewsAreCleanedUp() throws {
+    let first = try TemporaryPreviews.write(Data("fake".utf8), filename: "fake/name.txt")
+    let second = try TemporaryPreviews.write(Data("fake".utf8), filename: "")
+    #expect(FileManager.default.fileExists(atPath: first.path))
+    #expect(first.lastPathComponent == "fake-name.txt")
+    #expect(second.lastPathComponent == "Attachment")
+
+    TemporaryPreviews.remove(first)
+    #expect(!FileManager.default.fileExists(atPath: first.path))
+    #expect(FileManager.default.fileExists(atPath: second.path))
+
+    TemporaryPreviews.removeAll()
+    #expect(!FileManager.default.fileExists(atPath: TemporaryPreviews.directory.path))
+}
+
+@MainActor
+@Test func lockingDeletesTemporaryPreviews() async throws {
+    let model = try await makeModel()
+    let lock = LockController(model: model, settings: freshSettings())
+    let url = try TemporaryPreviews.write(Data("fake".utf8), filename: "fake.bin")
+    lock.lockNow()
+    #expect(!FileManager.default.fileExists(atPath: url.path))
+}

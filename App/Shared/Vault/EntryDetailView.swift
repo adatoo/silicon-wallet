@@ -47,13 +47,7 @@ struct EntryDetailView: View {
                 }
             }
 
-            if !entry.attachments.isEmpty {
-                Section("Attachments") {
-                    ForEach(entry.attachments) { attachment in
-                        AttachmentRow(entryID: entry.id, attachment: attachment)
-                    }
-                }
-            }
+            AttachmentsSection(entry: entry)
 
             Section {
                 LabeledContent("Created", value: entry.created.formatted(date: .abbreviated, time: .shortened))
@@ -163,25 +157,6 @@ struct FieldValueRow: View {
             Text(row.value)
                 .font(row.isConcealed || row.kind == .password ? .body.monospaced() : .body)
                 .textSelection(.enabled)
-        }
-    }
-}
-
-/// An attachment's name and size. Opening it arrives with the attachment work (build step 7).
-struct AttachmentRow: View {
-    let entryID: UUID
-    let attachment: AttachmentRef
-
-    var body: some View {
-        Label {
-            VStack(alignment: .leading) {
-                Text(attachment.filename)
-                Text(attachment.size.formatted(.byteCount(style: .file)))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        } icon: {
-            Image(systemName: "paperclip")
         }
     }
 }
