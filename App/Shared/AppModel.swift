@@ -15,6 +15,8 @@ enum SidebarItem: Hashable {
 @Observable
 final class AppModel {
     let session: VaultSession?
+    /// iCloud sync, when this build can use it (DESIGN.md §7).
+    let sync: VaultSync?
     /// Why the vault couldn't be opened at launch, if it couldn't.
     let startupError: String?
 
@@ -26,9 +28,16 @@ final class AppModel {
     /// The message for the error alert; nil when none is showing.
     var errorMessage: String?
 
-    init(session: VaultSession?, startupError: String? = nil) {
+    init(session: VaultSession?, sync: VaultSync? = nil, startupError: String? = nil) {
         self.session = session
+        self.sync = sync
         self.startupError = startupError
+        if let session, let sync {
+            sync.onRemoteChanges = { [weak session] in try? session?.reload() }
+            sync.onConflict = { [weak session] losing in
+                session?.keepConflictCopy(of: losing, deviceName: DeviceName.current)
+            }
+        }
     }
 
     /// The real vault in Application Support, or an in-memory one for UI tests and screenshots
@@ -41,8 +50,16 @@ final class AppModel {
                 let session = try VaultSession(store: SwiftDataVaultStore.inMemory())
                 return AppModel(session: session)
             }
-            let store = try SwiftDataVaultStore(directory: SwiftDataVaultStore.defaultDirectory())
-            return AppModel(session: try VaultSession(store: store))
+            let directory = try SwiftDataVaultStore.defaultDirectory()
+            let store = SyncedVaultStore(base: try SwiftDataVaultStore(directory: directory))
+            let session = try VaultSession(store: store)
+            let sync =
+                CloudEntitlement.isAvailable
+                ? VaultSync(
+                    store: store, containerIdentifier: CloudEntitlement.containerIdentifier,
+                    stateURL: directory.appendingPathComponent("SyncState.json"))
+                : nil
+            return AppModel(session: session, sync: sync)
         } catch {
             return AppModel(session: nil, startupError: error.localizedDescription)
         }

@@ -5,6 +5,21 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-10-18
+
+### Added
+
+- iCloud sync: your vault, including attachments, stays the same on your Mac, iPad and iPhone.
+  Everything is encrypted before it leaves the device, so Apple can't read it.
+- A new device finds the vault you already have in iCloud and asks for your master password.
+- If two devices change the same entry at once, the later change wins and the other is kept as
+  a "conflict copy", so nothing is lost.
+- A sync indicator in the toolbar (tap to sync now) and sync status in Settings.
+
+### Changed
+
+- Attachments are limited to 100 MB each.
+
 ## [0.8.0] - 2026-10-18
 
 ### Added

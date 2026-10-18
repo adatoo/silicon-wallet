@@ -21,6 +21,8 @@ public enum VaultError: Error, Equatable, Sendable {
     case attachmentUnavailable
     /// An attachment opened, but its contents don't match the hash its entry recorded.
     case attachmentCorrupt
+    /// Attachments are limited to `VaultSession.maximumAttachmentSize` (DESIGN.md §7).
+    case attachmentTooLarge
 }
 
 /// The single way into a vault (DESIGN.md §3). Plaintext groups and entries exist only here,
@@ -37,6 +39,8 @@ public final class VaultSession {
 
     /// The record schema written by this build, stored in the clear with each record.
     public static let recordSchemaVersion = 1
+    /// The largest attachment accepted: 100 MB (DESIGN.md §7).
+    public static let maximumAttachmentSize = 100 * 1024 * 1024
 
     public private(set) var state: State
     /// Every group, by `order`.
@@ -306,6 +310,7 @@ public final class VaultSession {
     public func addAttachment(to entryID: UUID, filename: String, uti: String, contents: Data) throws -> AttachmentRef {
         try requireUnlocked()
         guard var entry = entry(id: entryID) else { throw VaultError.notFound }
+        guard contents.count <= Self.maximumAttachmentSize else { throw VaultError.attachmentTooLarge }
         let fileKey = AttachmentSealer.generateFileKey()
         let ref = AttachmentRef(
             filename: filename, uti: uti, size: Int64(contents.count),
@@ -341,6 +346,35 @@ public final class VaultSession {
         guard entry.attachments.contains(where: { $0.id == attachmentID }) else { throw VaultError.notFound }
         entry.attachments.removeAll { $0.id == attachmentID }
         try updateEntry(entry)
+    }
+
+    // MARK: - Conflicts
+
+    /// Keeps the losing side of a sync conflict as a new entry titled
+    /// "<title> (conflict copy, <device>, <date>)" (DESIGN.md §7). Needs the vault unlocked;
+    /// while locked the later version simply wins. The copy doesn't share the attachments,
+    /// which stay with the winning version.
+    @discardableResult
+    public func keepConflictCopy(of record: SealedRecord, deviceName: String, at date: Date = .now) -> VaultEntry? {
+        guard let vaultKey, record.kind == .entry,
+            let plaintext = try? RecordSealer.open(record.ciphertext, recordID: record.id, key: vaultKey),
+            var copy = try? decoder.decode(VaultEntry.self, from: plaintext),
+            group(id: copy.groupID) != nil
+        else { return nil }
+
+        let stamp = date.formatted(date: .abbreviated, time: .shortened)
+        copy.id = UUID()
+        copy.title = "\(copy.title) (conflict copy, \(deviceName), \(stamp))"
+        if !copy.attachments.isEmpty {
+            let names = copy.attachments.map(\.filename).joined(separator: ", ")
+            copy.notes += (copy.notes.isEmpty ? "" : "\n\n") + "Attachments kept on the other version: \(names)"
+            copy.attachments = []
+        }
+        copy.modified = date
+        guard (try? store.saveRecords([seal(copy)])) != nil else { return nil }
+        entries.append(copy)
+        sortEntries()
+        return copy
     }
 
     // MARK: - Importing

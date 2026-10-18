@@ -2,6 +2,11 @@ import SwiftUI
 
 @main
 struct SiliconWalletApp: App {
+    #if os(iOS)
+        @UIApplicationDelegateAdaptor(PushRegistration.self) private var push
+    #else
+        @NSApplicationDelegateAdaptor(PushRegistration.self) private var push
+    #endif
     @State private var model: AppModel
     @State private var lock: LockController
 
@@ -16,7 +21,10 @@ struct SiliconWalletApp: App {
             RootView()
                 .environment(model)
                 .environment(lock)
-                .onAppear { lock.start() }
+                .onAppear {
+                    lock.start()
+                    model.sync?.start()
+                }
         }
         #if os(macOS)
             .defaultSize(width: 1100, height: 700)

@@ -16,6 +16,7 @@
 		491161B5F7820AF3FD05DC77 /* SiliconWalletKit in Frameworks */ = {isa = PBXBuildFile; productRef = C5B581495F022687EF5EF44F /* SiliconWalletKit */; };
 		4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 303469DF1EEEF616BB78704E /* AppModel.swift */; };
 		50655948D274569F8CA7A5EB /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66EC933A0C2F7CEBB604522 /* RootView.swift */; };
+		52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */; };
 		6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
@@ -26,7 +27,9 @@
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
 		D2E8F03BB82956CD144E8566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF419223A81F08132A022785 /* Assets.xcassets */; };
+		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
 		EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD892512A872BD9135E5CCB /* EntryListView.swift */; };
+		EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */; };
 		EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */; };
 		F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772BFA3C071751268172F197 /* EntryDetailView.swift */; };
 		F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */; platformFilters = (ios, ); };
@@ -56,8 +59,10 @@
 		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
 		71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRecognizer.swift; sourceTree = "<group>"; };
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
+		7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudEntitlement.swift; sourceTree = "<group>"; };
 		7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FieldKind+UI.swift"; sourceTree = "<group>"; };
 		879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		92875FCE2F36955F82E985E1 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
 		98444000E2A9EC613E31BAD8 /* DemoVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVault.swift; sourceTree = "<group>"; };
 		9CB2125A7AC56544D3361520 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
 		A66EC933A0C2F7CEBB604522 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -70,6 +75,7 @@
 		CAB149914236D589EFCCE77B /* SiliconWallet.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SiliconWallet.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordStrengthView.swift; sourceTree = "<group>"; };
 		D3E475C8A883A3E78561DBC0 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistration.swift; sourceTree = "<group>"; };
 		D52C311423E961E1F9CA85AB /* SiliconWalletTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiliconWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E01D039A8E7DBF0A040A5C2C /* LockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockController.swift; sourceTree = "<group>"; };
 		EF419223A81F08132A022785 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -174,9 +180,12 @@
 			isa = PBXGroup;
 			children = (
 				05AAF8DA641C137E55BC0347 /* Clipboard.swift */,
+				7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */,
 				98444000E2A9EC613E31BAD8 /* DemoVault.swift */,
 				7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */,
 				CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */,
+				D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */,
+				92875FCE2F36955F82E985E1 /* SyncStatusView.swift */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -361,6 +370,7 @@
 				F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */,
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,
+				EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */,
 				42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */,
 				F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */,
 				A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */,
@@ -371,11 +381,13 @@
 				99D61EAE32634493A8A75F68 /* LockController.swift in Sources */,
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,
+				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
 				4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */,
 				3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */,
 				B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */,
+				DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */,
 				8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */,
 				FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */,
 			);

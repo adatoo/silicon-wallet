@@ -15,7 +15,15 @@ struct SetupView: View {
 
     static let minimumLength = 8
 
+    /// iCloud may already hold a vault from another device; creating a new one would split them.
+    private var checkingICloud: Bool {
+        guard let sync = model.sync else { return false }
+        return !sync.hasCompletedFirstFetch && !gaveUpWaiting
+    }
+    @State private var gaveUpWaiting = false
+
     private var problem: String? {
+        if checkingICloud { return "Checking iCloud for a vault from your other devices…" }
         if password.count < Self.minimumLength { return "Use at least \(Self.minimumLength) characters." }
         if confirmation.isEmpty { return "Type the password again to confirm it." }
         if password != confirmation { return "The passwords don't match." }
@@ -74,6 +82,11 @@ struct SetupView: View {
         .padding(32)
         .frame(maxWidth: 520)
         .onAppear { focus = .password }
+        .task {
+            // Don't wait for ever if iCloud is slow; offline setup is fine.
+            try? await Task.sleep(for: .seconds(20))
+            gaveUpWaiting = true
+        }
     }
 
     private func create() {
