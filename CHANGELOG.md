@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-10-18
+
+### Added
+
+- Attachments: add files (or photos on iPhone and iPad, or drop files on the Mac) to any
+  entry, view images, PDFs and text right in the app, open anything else in Quick Look, and
+  save a copy when you need one. Each attachment is encrypted with its own key.
+
 ## [0.9.0] - 2026-10-18
 
 ### Added

@@ -5,8 +5,8 @@ It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unm
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
 Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
-(crypto), 2 (model, `VaultSession`), 3 (local store), 4 (UI), 5 (lock UX) and 6 (sync) done. Next:
-build step 7.
+(crypto), 2 (model, `VaultSession`), 3 (local store), 4 (UI), 5 (lock UX), 6 (sync) and 7
+(attachments) done. Next: build step 8.
 
 ## 1. Goals
 
@@ -142,6 +142,10 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   screen lock. On iOS when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
   preview files, clear our own clipboard items.
+- Attachments: images, PDFs and text preview from memory. Other types open in Quick Look from
+  a decrypted temporary file (complete file protection on iOS), deleted when the preview
+  closes, on lock and at launch. "Save a Copy…" writes an unencrypted copy where the person
+  chooses.
 
 ### Everyday protections
 - Concealed fields hidden until revealed.

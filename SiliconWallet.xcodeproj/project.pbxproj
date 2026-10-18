@@ -16,6 +16,7 @@
 		491161B5F7820AF3FD05DC77 /* SiliconWalletKit in Frameworks */ = {isa = PBXBuildFile; productRef = C5B581495F022687EF5EF44F /* SiliconWalletKit */; };
 		4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 303469DF1EEEF616BB78704E /* AppModel.swift */; };
 		50655948D274569F8CA7A5EB /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66EC933A0C2F7CEBB604522 /* RootView.swift */; };
+		5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */; };
 		52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */; };
 		6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
@@ -34,6 +35,7 @@
 		F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772BFA3C071751268172F197 /* EntryDetailView.swift */; };
 		F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */; platformFilters = (ios, ); };
 		F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05AAF8DA641C137E55BC0347 /* Clipboard.swift */; };
+		FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */; };
 		FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5CF27647D2249ED8F21191 /* VaultView.swift */; };
 /* End PBXBuildFile section */
 
@@ -48,9 +50,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentPreviewView.swift; sourceTree = "<group>"; };
 		05AAF8DA641C137E55BC0347 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		150E755B7E5B799C04F5B072 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		244D550D93A11FBA8C5076F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsSection.swift; sourceTree = "<group>"; };
 		303469DF1EEEF616BB78704E /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		381402974B9CD0061C4ADFF8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
@@ -160,6 +164,15 @@
 			path = Vault;
 			sourceTree = "<group>";
 		};
+		7188C2907580D57EC6196376 /* Attachments */ = {
+			isa = PBXGroup;
+			children = (
+				0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */,
+				264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */,
+			);
+			path = Attachments;
+			sourceTree = "<group>";
+		};
 		76AFDEFA9873459E4D317B7A /* Config */ = {
 			isa = PBXGroup;
 			children = (
@@ -248,6 +261,7 @@
 				303469DF1EEEF616BB78704E /* AppModel.swift */,
 				A66EC933A0C2F7CEBB604522 /* RootView.swift */,
 				C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */,
+				7188C2907580D57EC6196376 /* Attachments */,
 				E1E992965D3AD287745A5FCE /* Editors */,
 				4AC72763302BB4D34DFA0B57 /* Import */,
 				EAE29A74E559CB253052989F /* Lock */,
@@ -369,6 +383,8 @@
 				061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */,
 				F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */,
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
+				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
+				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,
 				EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */,
 				42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */,
