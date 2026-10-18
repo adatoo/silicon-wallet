@@ -5,6 +5,17 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-10-18
+
+### Added
+
+- Import from Acrylic Wallet: choose your `.wallet` file (or a Wallet Database export), enter
+  its old password, check the preview and import. Groups, field labels, entries, notes,
+  favourites, dates and attachments all come across, and nothing is uploaded or saved
+  unencrypted. You don't need Wallet installed.
+- Setting up a new vault? Choose "I'm moving from Acrylic Wallet" to start empty and import
+  straight away.
+
 ## [0.6.0] - 2026-10-18
 
 ### Added
