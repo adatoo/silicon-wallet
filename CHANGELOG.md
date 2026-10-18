@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-10-18
+
+### Added
+
+- Unlock with Face ID or Touch ID. Your master password is still needed after a restart and
+  at least every 7 days (you can change this).
+- The vault locks itself after 5 minutes without use, when your Mac sleeps or its screen locks,
+  and when you leave the app on iPhone and iPad. The app switcher shows a cover, not your vault.
+- Copied values clear themselves from the clipboard after a minute, and when the vault locks.
+- A password generator for random characters or easy-to-type word passphrases.
+- Settings for locking, the clipboard and biometrics, and a way to change your master password.
+
 ## [0.5.0] - 2026-10-18
 
 ### Added
