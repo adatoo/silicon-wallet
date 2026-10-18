@@ -6,6 +6,7 @@ struct SidebarView: View {
     @Environment(AppModel.self) private var model
     @Binding var editor: EditorTarget?
     @State private var groupToDelete: VaultGroup?
+    @State private var showingSettings = false
 
     var body: some View {
         @Bindable var model = model
@@ -38,7 +39,17 @@ struct SidebarView: View {
                 Button("New Group", systemImage: "folder.badge.plus") { editor = .newGroup }
                     .help("New group")
             }
+            #if os(iOS)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Settings", systemImage: "gear") { showingSettings = true }
+                }
+            #endif
         }
+        #if os(iOS)
+            .sheet(isPresented: $showingSettings) {
+                NavigationStack { SettingsView() }
+            }
+        #endif
         .confirmationDialog(
             "Delete \(groupToDelete?.name ?? "this group")?", isPresented: deleteBinding, titleVisibility: .visible,
             presenting: groupToDelete

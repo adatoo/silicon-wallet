@@ -5,7 +5,8 @@ It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unm
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
 Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build steps 1
-(crypto), 2 (model, `VaultSession`), 3 (local store) and 4 (UI) done. Next: build step 5.
+(crypto), 2 (model, `VaultSession`), 3 (local store), 4 (UI) and 5 (lock UX) done. Next: build
+step 6.
 
 ## 1. Goals
 
@@ -132,6 +133,10 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 - Face ID / Touch ID: the vault key is stored in the Keychain with
   `.biometryCurrentSet`, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, never synced.
   Require the master password after a restart, and after a configurable period (default 7 days).
+  The vault key is checked against `VaultMeta.keyCheck` before use; a key that doesn't match
+  (or an item invalidated by a biometry change) turns biometric unlock off. Settings: lock after
+  inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing,
+  biometrics and the re-entry period; stored in `UserDefaults`, never anything secret.
 - Auto-lock: after inactivity (default 5 min). On macOS also on sleep, screensaver and
   screen lock. On iOS when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
@@ -141,7 +146,8 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 - Concealed fields hidden until revealed.
 - Copy to clipboard with auto-clear (default 60 s). On iOS use local-only, expiring pasteboard
   items. On macOS mark items as concealed / transient.
-- Password generator (random characters and word-based).
+- Password generator (random characters and word-based): `PasswordGenerator`, with a built-in
+  list of about 1,660 common words (about 10.7 bits each; six words by default).
 - Access log (encrypted, local per device): unlocks, failed attempts, exports.
 - Screenshot / screen-recording privacy cover on iOS app switcher.
 - Never log secrets. No plaintext ever written to disk, iCloud, caches or crash logs.
@@ -156,8 +162,8 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
     schema version, ciphertext and system fields; an entry's groupID lives inside its ciphertext.
   - `AttachmentRecord` (id, size, local file state, system fields; the owning entry is known
     only inside that entry's ciphertext).
-- The store is `Application Support/Vault/Vault.store`. Attachment ciphertext is stored as
-  files under `Application Support/Vault/Attachments/<uuid>.bin`.
+- The store is `Application Support/com.datoos.silicon-wallet/Vault/Vault.store`. Attachment
+  ciphertext is stored as files under `…/Vault/Attachments/<uuid>.bin`.
 - File protection: `.complete` on iOS.
 
 ## 7. iCloud sync (CKSyncEngine)

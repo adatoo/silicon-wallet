@@ -21,6 +21,7 @@ enum EditorTarget: Identifiable {
 /// The unlocked vault: Groups | Entries | Detail (DESIGN.md §3).
 struct VaultView: View {
     @Environment(AppModel.self) private var model
+    @Environment(LockController.self) private var lock
     @State private var editor: EditorTarget?
     @State private var columnVisibility = NavigationSplitViewVisibility.all
 
@@ -42,7 +43,7 @@ struct VaultView: View {
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Lock", systemImage: "lock") { model.lock() }
+                Button("Lock", systemImage: "lock") { lock.lockNow() }
                     .help("Lock the vault")
             }
         }
@@ -85,6 +86,7 @@ extension FocusedValues {
 
 struct VaultCommands: Commands {
     let model: AppModel
+    let lock: LockController
     @FocusedValue(\.vaultActions) private var actions
 
     var body: some Commands {
@@ -97,7 +99,7 @@ struct VaultCommands: Commands {
                 .disabled(actions == nil)
         }
         CommandMenu("Vault") {
-            Button("Lock") { model.lock() }
+            Button("Lock") { lock.lockNow() }
                 .keyboardShortcut("l", modifiers: [.command, .control])
                 .disabled(model.session?.isUnlocked != true)
         }

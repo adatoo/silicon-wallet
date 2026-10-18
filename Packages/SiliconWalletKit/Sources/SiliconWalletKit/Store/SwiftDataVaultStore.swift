@@ -39,11 +39,13 @@ public final class SwiftDataVaultStore: VaultStore {
         try FileManager.default.createDirectory(at: attachmentsDirectory, withIntermediateDirectories: true)
     }
 
-    /// `Application Support/Vault`, inside the app's sandbox container.
+    /// `Application Support/com.datoos.silicon-wallet/Vault`. In the sandboxed app this is inside
+    /// its own container; the bundle-ID folder keeps unsandboxed development builds apart too.
     public static func defaultDirectory() throws -> URL {
         try FileManager.default.url(
             for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true
         )
+        .appendingPathComponent("com.datoos.silicon-wallet", isDirectory: true)
         .appendingPathComponent("Vault", isDirectory: true)
     }
 

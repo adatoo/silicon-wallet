@@ -4,6 +4,7 @@ import SwiftUI
 /// First run: choose the master password that protects the new vault.
 struct SetupView: View {
     @Environment(AppModel.self) private var model
+    @Environment(LockController.self) private var lock
     @State private var password = ""
     @State private var confirmation = ""
     @State private var isWorking = false
@@ -78,6 +79,7 @@ struct SetupView: View {
         Task {
             do {
                 try await session.createVault(password: password)
+                lock.didUnlockWithPassword()
             } catch {
                 model.errorMessage = AppModel.describe(error)
             }

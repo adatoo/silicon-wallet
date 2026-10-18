@@ -22,6 +22,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID unlocks your vault without typing your master password.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2026 Arif Datoo. MIT Licence.</string>
 	<key>UIApplicationSceneManifest</key>

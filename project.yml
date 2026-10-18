@@ -59,6 +59,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSApplicationCategoryType: public.app-category.productivity
+        NSFaceIDUsageDescription: Face ID unlocks your vault without typing your master password.
         NSHumanReadableCopyright: "Copyright © 2026 Arif Datoo. MIT Licence."
         # CKSyncEngine is woken by CloudKit pushes (DESIGN.md §7). Ignored on macOS.
         UIBackgroundModes: [remote-notification]

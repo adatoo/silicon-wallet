@@ -41,8 +41,8 @@ Every command is a `task`; run `task` to list them.
 - Crypto and Vault code requires unit tests, including wrong-password and tampered-ciphertext cases.
 
 ## Build order
-Follow DESIGN.md §8. Current step: 5 (lock UX). Steps 1 (crypto, ADR-0006), 2 (the model and
-`VaultSession`), 3 (the SwiftData store) and 4 (the SwiftUI UI) are done.
+Follow DESIGN.md §8. Current step: 6 (CloudKit sync). Steps 1–5 are done: crypto (ADR-0006), the
+model and `VaultSession`, the SwiftData store, the SwiftUI UI, and lock UX.
 
 ## Do not
 - Copy anything from Acrylic Wallet (name, icon, artwork, code), or bundle/load its SQLite SEE library.

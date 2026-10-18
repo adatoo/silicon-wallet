@@ -84,3 +84,58 @@ private func makeModel() async throws -> AppModel {
     #expect(FieldKind.phone.link(for: "+44 20 0000 0000")?.absoluteString == "tel:+442000000000")
     #expect(FieldKind.text.link(for: "anything") == nil)
 }
+
+// MARK: - Locking
+
+@MainActor
+private func freshSettings() -> LockSettings {
+    let suite = "SiliconWalletTests-\(UUID().uuidString)"
+    return LockSettings(defaults: UserDefaults(suiteName: suite)!)
+}
+
+@MainActor
+@Test func lockSettingsHaveSafeDefaultsAndPersist() throws {
+    let suite = "SiliconWalletTests-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    let settings = LockSettings(defaults: defaults)
+    #expect(settings.autoLockMinutes == 5)
+    #expect(settings.clipboardSeconds == 60)
+    #expect(settings.backgroundGraceSeconds == 0)
+    #expect(settings.lockOnSleep)
+    #expect(!settings.biometricsEnabled)
+    #expect(settings.passwordReentryDays == 7)
+
+    settings.autoLockMinutes = 15
+    settings.clipboardSeconds = 0
+    #expect(LockSettings(defaults: defaults).autoLockMinutes == 15)
+    #expect(LockSettings(defaults: defaults).clipboardSeconds == 0)
+}
+
+@MainActor
+@Test func backgroundingLocksAtOnceByDefault() async throws {
+    let model = try await makeModel()
+    let lock = LockController(model: model, settings: freshSettings())
+    lock.didEnterBackground()
+    #expect(model.session?.state == .locked)
+}
+
+@MainActor
+@Test func aShortTripToTheBackgroundKeepsTheVaultOpenWithAGracePeriod() async throws {
+    let model = try await makeModel()
+    let settings = freshSettings()
+    settings.backgroundGraceSeconds = 300
+    let lock = LockController(model: model, settings: settings)
+    lock.didEnterBackground()
+    lock.didBecomeActive()
+    #expect(model.session?.state == .unlocked)
+}
+
+@MainActor
+@Test func biometricsAreOfferedOnlyWhenEnabledAndRecent() async throws {
+    let model = try await makeModel()
+    let settings = freshSettings()
+    let lock = LockController(model: model, settings: settings)
+    #expect(!lock.canUnlockWithBiometrics)
+    lock.didUnlockWithPassword()
+    #expect(settings.lastPasswordUnlock != nil)
+}

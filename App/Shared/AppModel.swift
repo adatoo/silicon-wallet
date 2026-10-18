@@ -33,7 +33,9 @@ final class AppModel {
     /// (launch argument `-InMemoryVault`, plus `-DemoVault` to fill it with fake entries).
     static func launch(arguments: [String] = ProcessInfo.processInfo.arguments) -> AppModel {
         do {
-            if arguments.contains("-InMemoryVault") {
+            // Hosted unit tests run the app too; they must never touch a real vault.
+            let underTest = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+            if arguments.contains("-InMemoryVault") || underTest {
                 let session = try VaultSession(store: SwiftDataVaultStore.inMemory())
                 return AppModel(session: session)
             }
