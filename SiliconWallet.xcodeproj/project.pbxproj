@@ -344,7 +344,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.adatoo.silicon-wallet.tests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.datoos.silicon-wallet.tests";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
@@ -366,7 +366,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.adatoo.silicon-wallet.tests";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.datoos.silicon-wallet.tests";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
@@ -393,7 +393,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.adatoo.silicon-wallet";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.datoos.silicon-wallet";
 				PRODUCT_NAME = SiliconWallet;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -420,7 +420,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.adatoo.silicon-wallet";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.datoos.silicon-wallet";
 				PRODUCT_NAME = SiliconWallet;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";

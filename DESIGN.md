@@ -27,7 +27,7 @@ Status: design agreed; project set up (v0.1.0). Next: build step 1, with the Acr
 | Decision | Choice |
 |---|---|
 | Minimum OS | iOS 26 / iPadOS 26 / macOS 26 |
-| Bundle ID | `com.adatoo.silicon-wallet` |
+| Bundle ID | `com.datoos.silicon-wallet` |
 | Key derivation | Argon2id (via libsodium / swift-sodium) |
 | Symmetric crypto | AES-256-GCM (CryptoKit) |
 | Local store | SwiftData, **local only** (no SwiftData CloudKit integration) |

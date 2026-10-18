@@ -29,7 +29,7 @@ silicon-wallet/
 ## Platforms
 
 One app target with `supportedDestinations: [iOS, macOS]` and one bundle ID,
-`com.adatoo.silicon-wallet`, so the App Store sells it as a single universal purchase.
+`com.datoos.silicon-wallet`, so the App Store sells it as a single universal purchase.
 Minimum OS: iOS 26, iPadOS 26 and macOS 26.
 
 ## Commands and CI
