@@ -6,6 +6,9 @@ struct EntryListView: View {
     @Environment(AppModel.self) private var model
     @Binding var editor: EditorTarget?
     @State private var entryToDelete: VaultEntry?
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
         @Bindable var model = model
@@ -47,6 +50,10 @@ struct EntryListView: View {
         }
         .searchable(text: $model.searchText, prompt: "Search")
         .navigationTitle(model.title(for: model.sidebarSelection ?? .all))
+        #if os(iOS)
+            // A compact split view's content column drops its large title, so show it inline.
+            .toolbarTitleDisplayMode(horizontalSizeClass == .compact ? .inline : .automatic)
+        #endif
         .toolbar {
             ToolbarItem {
                 Button("New Entry", systemImage: "plus") { editor = .newEntry(groupID: model.selectedGroup?.id) }
