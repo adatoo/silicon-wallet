@@ -12,14 +12,15 @@ App Store primary language is English (UK).
 Each item below becomes an issue or PR when its turn comes. The steps are DESIGN.md §8's build order, with release work threaded in early so that nothing blocks at the end.
 
 ## B0. Apple accounts and identifiers (owner actions, start now and in parallel)
-1. **Reserve the name.** In App Store Connect, create the app record *Silicon Wallet*:
+1. **Reserve the name** (done 2026-10-18). The App Store Connect record *Silicon Wallet*:
+   - Apple ID **6824181307**;
    - platforms iOS and macOS, one record, so the purchase is universal;
-   - primary language English (UK);
+   - primary language English (U.K.);
    - bundle ID `com.datoos.silicon-wallet`, SKU `silicon-wallet`.
 
-   This tests early whether the name is taken or rejected. Pick a fallback name now, for example "Silicon Vault" or "Silicon Keyring", per DESIGN.md §10.
-   App Store Connect blocks new apps until the Account Holder accepts the updated Apple
-   Developer Program License Agreement (seen 2026-10-18).
+   The name was free. Keep "Silicon Vault" or "Silicon Keyring" as fallbacks in case App
+   Review objects to it (DESIGN.md §10). App Store Connect blocks new apps whenever an
+   updated Apple Developer Program License Agreement is waiting for the Account Holder.
 2. **Developer portal setup** (done 2026-10-18, team QKAYS6D525):
    - Xcode is signed in (Settings → Accounts) with the team's Apple ID.
    - App ID "Silicon Wallet", `com.datoos.silicon-wallet` (explicit), with iCloud (CloudKit)
@@ -30,9 +31,10 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
    - Store the `.p8` in the login keychain.
    - Add it to GitHub as the Actions secrets `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`. It is used for CI uploads and `-allowProvisioningUpdates`.
 4. **Agreements and settings:**
-   - Accept the Free Apps agreement.
-   - Make the **EU Digital Services Act trader status** declaration. As a free, non-commercial individual, "non-trader" is likely; confirm.
-   - Set availability to all territories at a price of Free.
+   - Apple Developer Program License Agreement accepted 2026-10-18, and the App Store Connect
+     agreements reviewed the same day.
+   - **EU Digital Services Act** trader declaration submitted 2026-10-18 (in review then).
+   - Still to do: set availability to all territories at a price of Free.
 5. **Check the Mac mini runner** has Xcode 27 or later and the iOS 26 simulator runtime. If not, CI falls back to hosted `macos-26`.
 
 ## B1. Build steps 1 to 3: SiliconWalletKit (crypto, vault, store)
