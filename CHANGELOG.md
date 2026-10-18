@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-18
+
+### Added
+
+- The encryption at the heart of every vault: your master password is stretched with Argon2id
+  into a key that unlocks a random vault key, and each group, entry and attachment is sealed
+  with AES-256-GCM under its own ID, so nothing can be read or swapped without the password.
+- Passwords with accented letters unlock the same vault however they were typed.
+
 ## [0.1.4] - 2026-10-18
 
 ### Added

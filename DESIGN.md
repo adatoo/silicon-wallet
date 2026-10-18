@@ -4,8 +4,8 @@ A free, open-source secrets manager for macOS, iPadOS and iOS, built in Swift/Sw
 It replaces Acrylic Software's *Wallet* (last version 3.5, 2017; Intel-only, unmaintained).
 
 Status: design agreed; project set up; App Store name reserved (Apple ID 6824181307); Acrylic
-Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005). Next: build
-step 1.
+Wallet's `.wallet` format reverse-engineered, no SEE licence needed (ADR-0005); build step 1
+(crypto) done. Next: build step 2.
 
 ## 1. Goals
 
@@ -98,6 +98,8 @@ Field labels live on the group, so "Gate Information" can have `side gate`, `mai
 ### Key hierarchy
 1. **Master password** → Argon2id (random 16-byte salt; parameters stored with the vault,
    tuned to about 0.5 s on the slowest supported device; starting point 64 MiB, 3 iterations) → **KEK**.
+   libsodium's `crypto_pwhash` (ADR-0006). The password is normalised to Unicode NFC first, so
+   precomposed and decomposed forms of the same password unlock the same vault.
 2. **Vault key**: random 256-bit key generated at vault creation. Stored only wrapped
    (AES-GCM) under the KEK. Changing the master password re-wraps the vault key only.
 3. **Record encryption**: every Group and Entry is serialised (Codable → binary plist/JSON)
@@ -105,6 +107,11 @@ Field labels live on the group, so "Gate Information" can have `side gate`, `mai
    (AAD), so ciphertext can't be swapped between records.
 4. **Attachments**: each file is sealed with its own random file key. That key is stored inside
    the owning Entry's encrypted payload.
+5. **Sealed-value format** (`SiliconWalletKit/Crypto/Envelope.swift`), used for the wrapped
+   vault key, records and attachments: `version (1 byte) ‖ nonce (12) ‖ ciphertext ‖ tag (16)`.
+   The nonce is random. The associated data is the version, a purpose label (`vault-key`,
+   `record`, `attachment`) and, for records and attachments, the owning ID. So a sealed value
+   can't be opened as a different kind of value or under a different ID.
 
 ### What is stored unencrypted
 Record ID, record type, modified timestamp, schema version, ciphertext length.
