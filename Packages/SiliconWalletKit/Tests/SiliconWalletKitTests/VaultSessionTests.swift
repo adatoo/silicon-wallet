@@ -124,13 +124,15 @@ private enum Make {
     try session.reorderGroups([b.id, a.id])
     #expect(session.groups.map(\.id) == [b.id, a.id])
 
-    try session.deleteGroup(id: b.id)
+    try session.moveGroupToTrash(id: b.id)
     #expect(session.groups.map(\.id) == [a.id])
+    try session.deleteGroupPermanently(id: b.id)
+    #expect(session.deletedGroups.isEmpty)
     #expect(store.records[b.id] == nil)
 }
 
 @MainActor
-@Test func deletingAGroupDeletesItsEntriesAndAttachments() async throws {
+@Test func deletingAGroupForGoodDeletesItsEntriesAndAttachments() async throws {
     let (session, store) = try await Make.session()
     let doomed = try session.addGroup(VaultGroup(name: "Fake Doomed"))
     let kept = try session.addGroup(VaultGroup(name: "Fake Kept"))
@@ -139,8 +141,11 @@ private enum Make {
     let ref = try session.addAttachment(
         to: e1.id, filename: "a.txt", uti: "public.plain-text", contents: Data("x".utf8))
 
-    try session.deleteGroup(id: doomed.id)
+    try session.moveGroupToTrash(id: doomed.id)
     #expect(session.entries.map(\.title) == ["Fake 2"])
+    #expect(store.attachments[ref.id] != nil)
+    try session.deleteGroupPermanently(id: doomed.id)
+    #expect(session.deletedEntries.isEmpty)
     #expect(store.records[e1.id] == nil)
     #expect(store.attachments[ref.id] == nil)
 }
@@ -161,8 +166,11 @@ private enum Make {
     #expect(session.favorites.map(\.id) == [entry.id])
     #expect(try #require(session.entry(id: entry.id)).modified >= entry.modified)
 
-    try session.deleteEntry(id: entry.id)
+    try session.moveEntryToTrash(id: entry.id)
     #expect(session.entries.isEmpty)
+    #expect(session.deletedEntries.map(\.id) == [entry.id])
+    try session.deleteEntryPermanently(id: entry.id)
+    #expect(session.deletedEntries.isEmpty)
     #expect(store.records[entry.id] == nil)
 }
 

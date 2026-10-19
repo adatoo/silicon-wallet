@@ -11,10 +11,12 @@ public struct VaultGroup: Codable, Hashable, Identifiable, Sendable {
     public var fields: [FieldTemplate]
     public var order: Int
     public var modified: Date
+    /// When the group was moved to Recently Deleted; nil while it's in use.
+    public var deleted: Date?
 
     public init(
         id: UUID = UUID(), name: String, icon: String = "folder", fields: [FieldTemplate] = [], order: Int = 0,
-        modified: Date = .now
+        modified: Date = .now, deleted: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -22,6 +24,7 @@ public struct VaultGroup: Codable, Hashable, Identifiable, Sendable {
         self.fields = fields
         self.order = order
         self.modified = modified
+        self.deleted = deleted
     }
 }
 
@@ -39,11 +42,13 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
     public var attachments: [AttachmentRef]
     public var created: Date
     public var modified: Date
+    /// When the entry was moved to Recently Deleted; nil while it's in use.
+    public var deleted: Date?
 
     public init(
         id: UUID = UUID(), groupID: UUID, title: String, values: [UUID: String] = [:],
         extraFields: [CustomField] = [], notes: String = "", isFavorite: Bool = false,
-        attachments: [AttachmentRef] = [], created: Date = .now, modified: Date = .now
+        attachments: [AttachmentRef] = [], created: Date = .now, modified: Date = .now, deleted: Date? = nil
     ) {
         self.id = id
         self.groupID = groupID
@@ -55,6 +60,7 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
         self.attachments = attachments
         self.created = created
         self.modified = modified
+        self.deleted = deleted
     }
 }
 

@@ -41,12 +41,23 @@ public final class VaultSession {
     public static let recordSchemaVersion = 1
     /// The largest attachment accepted: 100 MB (DESIGN.md §7).
     public static let maximumAttachmentSize = 100 * 1024 * 1024
+    /// How long groups and entries stay in Recently Deleted before they're deleted for good.
+    public static let trashRetention: TimeInterval = 30 * 24 * 60 * 60
+
+    /// When an item moved to Recently Deleted at `deletedAt` will be deleted for good.
+    public static func purgeDate(forDeletedAt deletedAt: Date) -> Date {
+        deletedAt.addingTimeInterval(trashRetention)
+    }
 
     public private(set) var state: State
-    /// Every group, by `order`.
+    /// Every group in use, by `order`. Groups in Recently Deleted are in `deletedGroups`.
     public private(set) var groups: [VaultGroup] = []
-    /// Every entry, by title.
+    /// Every entry in use, by title. Entries in Recently Deleted are in `deletedEntries`.
     public private(set) var entries: [VaultEntry] = []
+    /// Groups in Recently Deleted, most recently deleted first.
+    public private(set) var deletedGroups: [VaultGroup] = []
+    /// Entries in Recently Deleted, most recently deleted first.
+    public private(set) var deletedEntries: [VaultEntry] = []
     /// Records that failed to open when the vault was unlocked or reloaded. They are left
     /// untouched in the store; a non-zero count means tampering or a damaged store.
     public private(set) var unreadableRecordCount = 0
@@ -90,6 +101,8 @@ public final class VaultSession {
         vaultKey = key
         groups = []
         entries = []
+        deletedGroups = []
+        deletedEntries = []
         unreadableRecordCount = 0
         state = .unlocked
         if starterGroups {
@@ -134,6 +147,8 @@ public final class VaultSession {
         vaultKey = nil
         groups = []
         entries = []
+        deletedGroups = []
+        deletedEntries = []
         unreadableRecordCount = 0
         if state == .unlocked { state = .locked }
     }
@@ -196,6 +211,7 @@ public final class VaultSession {
         var group = group
         group.order = (groups.map(\.order).max() ?? -1) + 1
         group.modified = .now
+        group.deleted = nil
         try store.saveRecords([seal(group)])
         groups.append(group)
         return group
@@ -206,20 +222,31 @@ public final class VaultSession {
         guard let index = groups.firstIndex(where: { $0.id == group.id }) else { throw VaultError.notFound }
         var group = group
         group.modified = .now
+        group.deleted = nil
         try store.saveRecords([seal(group)])
         groups[index] = group
         sortGroups()
     }
 
-    /// Deletes a group with all its entries and their attachments.
-    public func deleteGroup(id: UUID) throws {
+    /// Moves a group and every entry in it to Recently Deleted, all with the same deletion date,
+    /// so restoring the group brings back exactly the entries deleted with it.
+    public func moveGroupToTrash(id: UUID) throws {
         try requireUnlocked()
-        guard groups.contains(where: { $0.id == id }) else { throw VaultError.notFound }
-        let doomed = entries.filter { $0.groupID == id }
-        try store.deleteRecords(ids: [id] + doomed.map(\.id))
-        try store.deleteAttachments(ids: doomed.flatMap { $0.attachments.map(\.id) })
+        guard var group = group(id: id) else { throw VaultError.notFound }
+        let now = Date.now
+        group.deleted = now
+        group.modified = now
+        var trashed = entries(inGroup: id)
+        for index in trashed.indices {
+            trashed[index].deleted = now
+            trashed[index].modified = now
+        }
+        try store.saveRecords([try seal(group)] + (try trashed.map(seal)))
         groups.removeAll { $0.id == id }
         entries.removeAll { $0.groupID == id }
+        deletedGroups.append(group)
+        deletedEntries += trashed
+        sortTrash()
     }
 
     /// Puts the groups in the given order (for drag-to-reorder).
@@ -253,6 +280,7 @@ public final class VaultSession {
         var entry = entry
         entry.created = .now
         entry.modified = entry.created
+        entry.deleted = nil
         try store.saveRecords([seal(entry)])
         entries.append(entry)
         sortEntries()
@@ -265,6 +293,7 @@ public final class VaultSession {
         guard group(id: entry.groupID) != nil else { throw VaultError.unknownGroup }
         var entry = entry
         entry.modified = .now
+        entry.deleted = nil
         let removed = Set(entries[index].attachments.map(\.id)).subtracting(entry.attachments.map(\.id))
         try store.saveRecords([seal(entry)])
         try store.deleteAttachments(ids: Array(removed))
@@ -272,12 +301,17 @@ public final class VaultSession {
         sortEntries()
     }
 
-    public func deleteEntry(id: UUID) throws {
+    /// Moves an entry to Recently Deleted. Its attachments stay until it's deleted for good.
+    public func moveEntryToTrash(id: UUID) throws {
         try requireUnlocked()
-        guard let entry = entry(id: id) else { throw VaultError.notFound }
-        try store.deleteRecords(ids: [id])
-        try store.deleteAttachments(ids: entry.attachments.map(\.id))
+        guard var entry = entry(id: id) else { throw VaultError.notFound }
+        let now = Date.now
+        entry.deleted = now
+        entry.modified = now
+        try store.saveRecords([seal(entry)])
         entries.removeAll { $0.id == id }
+        deletedEntries.append(entry)
+        sortTrash()
     }
 
     public func setFavorite(_ isFavorite: Bool, entryID: UUID) throws {
@@ -286,17 +320,119 @@ public final class VaultSession {
         try updateEntry(entry)
     }
 
+    // MARK: - Recently Deleted
+
+    public func deletedGroup(id: UUID) -> VaultGroup? { deletedGroups.first { $0.id == id } }
+
+    public func deletedEntry(id: UUID) -> VaultEntry? { deletedEntries.first { $0.id == id } }
+
+    /// Takes an entry out of Recently Deleted. If its group is in Recently Deleted too, the group
+    /// comes back with it (but not the group's other entries).
+    public func restoreEntry(id: UUID) throws {
+        try requireUnlocked()
+        guard var entry = deletedEntry(id: id) else { throw VaultError.notFound }
+        let now = Date.now
+        var restoredGroup: VaultGroup?
+        if group(id: entry.groupID) == nil {
+            guard var group = deletedGroup(id: entry.groupID) else { throw VaultError.unknownGroup }
+            group.deleted = nil
+            group.modified = now
+            restoredGroup = group
+        }
+        entry.deleted = nil
+        entry.modified = now
+        try store.saveRecords((try restoredGroup.map { [try seal($0)] } ?? []) + [try seal(entry)])
+        if let restoredGroup {
+            deletedGroups.removeAll { $0.id == restoredGroup.id }
+            groups.append(restoredGroup)
+            sortGroups()
+        }
+        deletedEntries.removeAll { $0.id == id }
+        entries.append(entry)
+        sortEntries()
+    }
+
+    /// Takes a group out of Recently Deleted with the entries deleted along with it. Entries
+    /// deleted on their own before the group stay in Recently Deleted.
+    public func restoreGroup(id: UUID) throws {
+        try requireUnlocked()
+        guard var group = deletedGroup(id: id), let deletedAt = group.deleted else { throw VaultError.notFound }
+        let now = Date.now
+        group.deleted = nil
+        group.modified = now
+        var restored = deletedEntries.filter { $0.groupID == id && $0.deleted == deletedAt }
+        for index in restored.indices {
+            restored[index].deleted = nil
+            restored[index].modified = now
+        }
+        try store.saveRecords([try seal(group)] + (try restored.map(seal)))
+        let restoredIDs = Set(restored.map(\.id))
+        deletedGroups.removeAll { $0.id == id }
+        deletedEntries.removeAll { restoredIDs.contains($0.id) }
+        groups.append(group)
+        entries += restored
+        sortGroups()
+        sortEntries()
+    }
+
+    /// Deletes an entry in Recently Deleted for good, with its attachments.
+    public func deleteEntryPermanently(id: UUID) throws {
+        try requireUnlocked()
+        guard deletedEntry(id: id) != nil else { throw VaultError.notFound }
+        try deletePermanently(groupIDs: [], entryIDs: [id])
+    }
+
+    /// Deletes a group in Recently Deleted for good, with the entries of it that are in Recently
+    /// Deleted. An entry still in use (one added on another device as the group was deleted, say)
+    /// is left alone.
+    public func deleteGroupPermanently(id: UUID) throws {
+        try requireUnlocked()
+        guard deletedGroup(id: id) != nil else { throw VaultError.notFound }
+        try deletePermanently(groupIDs: [id], entryIDs: deletedEntries.filter { $0.groupID == id }.map(\.id))
+    }
+
+    /// Deletes everything in Recently Deleted for good.
+    public func emptyTrash() throws {
+        try requireUnlocked()
+        try deletePermanently(groupIDs: deletedGroups.map(\.id), entryIDs: deletedEntries.map(\.id))
+    }
+
+    /// Deletes for good whatever has been in Recently Deleted for `trashRetention` or longer,
+    /// with any remaining entries of an expired group. Runs on every unlock and reload; the
+    /// deletion date is inside the ciphertext, so this can only happen while unlocked.
+    @discardableResult
+    public func purgeExpiredItems(now: Date = .now) throws -> Int {
+        try requireUnlocked()
+        let isExpired = { (deleted: Date?) in deleted.map { Self.purgeDate(forDeletedAt: $0) <= now } ?? false }
+        let groupIDs = Set(deletedGroups.filter { isExpired($0.deleted) }.map(\.id))
+        let entryIDs = deletedEntries.filter { isExpired($0.deleted) || groupIDs.contains($0.groupID) }.map(\.id)
+        guard !groupIDs.isEmpty || !entryIDs.isEmpty else { return 0 }
+        try deletePermanently(groupIDs: Array(groupIDs), entryIDs: entryIDs)
+        return groupIDs.count + entryIDs.count
+    }
+
+    private func deletePermanently(groupIDs: [UUID], entryIDs: [UUID]) throws {
+        let doomedEntries = Set(entryIDs)
+        let doomedGroups = Set(groupIDs)
+        let attachments = deletedEntries.filter { doomedEntries.contains($0.id) }.flatMap { $0.attachments.map(\.id) }
+        try store.deleteRecords(ids: groupIDs + entryIDs)
+        try store.deleteAttachments(ids: attachments)
+        deletedGroups.removeAll { doomedGroups.contains($0.id) }
+        deletedEntries.removeAll { doomedEntries.contains($0.id) }
+    }
+
     // MARK: - Search
 
-    /// Entries matching every word of `query`, optionally within one group. Matches titles,
-    /// notes, attachment names, and the labels and values of fields that aren't concealed,
-    /// ignoring case and diacritics. Concealed values are never searched.
-    public func search(_ query: String, inGroup groupID: UUID? = nil) -> [VaultEntry] {
-        let scope = groupID.map { entries(inGroup: $0) } ?? entries
+    /// Entries matching every word of `query`, optionally within one group, or among the entries
+    /// in Recently Deleted. Matches titles, notes, attachment names, and the labels and values of
+    /// fields that aren't concealed, ignoring case and diacritics. Concealed values are never
+    /// searched.
+    public func search(_ query: String, inGroup groupID: UUID? = nil, inTrash: Bool = false) -> [VaultEntry] {
+        let scope = inTrash ? deletedEntries : groupID.map { entries(inGroup: $0) } ?? entries
         let words = Self.fold(query).split(whereSeparator: \.isWhitespace).map(String.init)
         guard !words.isEmpty else { return scope }
 
-        let groupsByID = Dictionary(uniqueKeysWithValues: groups.map { ($0.id, $0) })
+        let groupsByID = Dictionary((groups + deletedGroups).map { ($0.id, $0) }) { first, _ in first }
         return scope.filter { entry in
             let haystack = Self.fold(searchableText(entry, group: groupsByID[entry.groupID]))
             return words.allSatisfy { haystack.contains($0) }
@@ -392,7 +528,7 @@ public final class VaultSession {
         guard let vaultKey, record.kind == .entry,
             let plaintext = try? RecordSealer.open(record.ciphertext, recordID: record.id, key: vaultKey),
             var copy = try? decoder.decode(VaultEntry.self, from: plaintext),
-            group(id: copy.groupID) != nil
+            copy.deleted == nil, group(id: copy.groupID) != nil
         else { return nil }
 
         let stamp = date.formatted(date: .abbreviated, time: .shortened)
@@ -462,6 +598,8 @@ public final class VaultSession {
 
         var openedGroups: [VaultGroup] = []
         var openedEntries: [VaultEntry] = []
+        var openedDeletedGroups: [VaultGroup] = []
+        var openedDeletedEntries: [VaultEntry] = []
         var unreadable = 0
         for record in try store.loadRecords() {
             guard record.schemaVersion <= Self.recordSchemaVersion,
@@ -473,13 +611,21 @@ public final class VaultSession {
             switch record.kind {
             case .group:
                 if let group = try? decoder.decode(VaultGroup.self, from: plaintext), group.id == record.id {
-                    openedGroups.append(group)
+                    if group.deleted == nil {
+                        openedGroups.append(group)
+                    } else {
+                        openedDeletedGroups.append(group)
+                    }
                 } else {
                     unreadable += 1
                 }
             case .entry:
                 if let entry = try? decoder.decode(VaultEntry.self, from: plaintext), entry.id == record.id {
-                    openedEntries.append(entry)
+                    if entry.deleted == nil {
+                        openedEntries.append(entry)
+                    } else {
+                        openedDeletedEntries.append(entry)
+                    }
                 } else {
                     unreadable += 1
                 }
@@ -489,10 +635,15 @@ public final class VaultSession {
         vaultKey = key
         groups = openedGroups
         entries = openedEntries
+        deletedGroups = openedDeletedGroups
+        deletedEntries = openedDeletedEntries
         unreadableRecordCount = unreadable
         state = .unlocked
         sortGroups()
         sortEntries()
+        sortTrash()
+        // A purge that fails now is tried again at the next unlock or reload.
+        _ = try? purgeExpiredItems()
     }
 
     private func seal(_ group: VaultGroup) throws -> SealedRecord {
@@ -525,6 +676,11 @@ public final class VaultSession {
 
     private func sortEntries() {
         entries.sort { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+    }
+
+    private func sortTrash() {
+        deletedGroups.sort { ($0.deleted ?? .distantPast) > ($1.deleted ?? .distantPast) }
+        deletedEntries.sort { ($0.deleted ?? .distantPast) > ($1.deleted ?? .distantPast) }
     }
 
     private nonisolated static func deriveKEK(password: String, kdf: KDFParameters) async throws -> SymmetricKey {

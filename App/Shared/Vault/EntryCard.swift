@@ -53,7 +53,8 @@ struct EntryCard: View {
 }
 
 /// An entry opened from the card view: the same detail as the list's third column, in a sheet.
-/// It follows edits and sync changes, and closes if the entry is deleted.
+/// It follows edits and sync changes, and closes if the entry is deleted. From Recently Deleted
+/// it shows the deleted entry, read-only.
 struct EntrySheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -61,7 +62,7 @@ struct EntrySheet: View {
     @State private var editor: EditorTarget?
 
     var body: some View {
-        let entry = model.session?.entry(id: entryID)
+        let entry = model.entryToShow(id: entryID)
         NavigationStack {
             Group {
                 if let entry {

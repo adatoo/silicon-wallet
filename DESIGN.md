@@ -70,11 +70,12 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - The lock screen has a backdrop: a blurred close-up of a circuit board in the icon's colours,
   original artwork drawn by `scripts/make-backdrop.py` (`task backdrop`), with the form on a
   frosted card. Only the lock screen has it; the vault screens keep the system backgrounds.
-- Sidebar: All Entries, Favourites, then the groups (drag to reorder). In the editors, drag to
-  reorder a group's fields, an entry's extra fields and its attachments (the entry editor lists
-  them for this; adding and removing stay in the entry view). iOS editors stay in edit mode for
-  the reorder controls; the Mac rows have a drag handle. Moving an entry to another group keeps
-  every value: matching labels move across, the rest become extra fields.
+- Sidebar: All Entries, Favourites, the groups (drag to reorder), then Recently Deleted while
+  it has anything in it (§5). In the editors, drag to reorder a group's fields, an entry's extra
+  fields and its attachments (the entry editor lists them for this; adding and removing stay in
+  the entry view). iOS editors stay in edit mode for the reorder controls; the Mac rows have a
+  drag handle. Moving an entry to another group keeps every value: matching labels move across,
+  the rest become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
@@ -101,6 +102,7 @@ enum FieldKind { text, password, number, date, url, email, phone, multiline }
 
 struct VaultGroup {   // "Vault" prefix avoids clashing with SwiftUI's Group
   id: UUID; name: String; icon: String; fields: [FieldTemplate]; order: Int; modified: Date
+  deleted: Date?                  // in Recently Deleted since (§5)
 }
 
 struct VaultEntry {
@@ -109,7 +111,7 @@ struct VaultEntry {
   extraFields: [CustomField]      // per-entry fields not in the group template
   notes: String; isFavorite: Bool
   attachments: [AttachmentRef]
-  created: Date; modified: Date
+  created: Date; modified: Date; deleted: Date?
 }
 
 struct AttachmentRef {
@@ -183,6 +185,16 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   `AccessLog` seals it under the vault key, capped at 1,000 events. Failed attempts happen while
   locked, so they wait in a pending file of event kinds and times only (no names, nothing
   typed) and are sealed in at the next unlock. Shown in Settings ▸ Access Log.
+- Recently Deleted: deleting an entry or a group moves it there, with no confirmation for an
+  entry. A group takes its entries with it, all with the same deletion date; recovering the
+  group brings back exactly those, and recovering one of them brings back the group (alone). Each
+  item can be recovered or deleted now (with its attachments, from every device), and Delete
+  All empties it. Anything deleted 30 days ago or more is deleted for good at the next unlock or
+  reload on any device (`VaultSession.purgeExpiredItems`). The mark is `deleted: Date?` inside
+  each group's and entry's ciphertext, so moving in and out is an ordinary save that syncs and
+  resolves like any edit, and only the final deletion is a CloudKit delete. A deleted entry is
+  shown read-only. Builds from before Recently Deleted ignore the mark and show those items as
+  in use.
 - Delete Vault (Settings, needs the master password): from iCloud and every device (deletes the
   zone), or this device only. A zone deleted on purpose elsewhere (`.deleted`, `.purged`) removes
   the vault here too; `.encryptedDataReset` re-uploads it.

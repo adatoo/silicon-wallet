@@ -51,10 +51,44 @@ private func makeModel() async throws -> AppModel {
 
     model.sidebarSelection = .group(cards.id)
     model.entrySelection = card.id
-    model.deleteGroup(cards.id)
+    model.moveGroupToTrash(cards.id)
 
     #expect(model.sidebarSelection == .all)
     #expect(model.entrySelection == nil)
+    #expect(model.errorMessage == nil)
+}
+
+@MainActor
+@Test func recentlyDeletedListsTrashedEntriesUntilItsEmpty() async throws {
+    let model = try await makeModel()
+    let session = try #require(model.session)
+    let bank = try #require(session.entries.first { $0.title == "Example Bank" })
+    let shop = try #require(session.entries.first { $0.title == "Example Shop" })
+
+    model.entrySelection = bank.id
+    model.moveEntryToTrash(bank.id)
+    model.moveEntryToTrash(shop.id)
+    #expect(model.entrySelection == nil)
+    #expect(model.visibleEntries.map(\.title) == ["Example Card"])
+    #expect(!model.isTrashEmpty)
+
+    model.sidebarSelection = .recentlyDeleted
+    #expect(model.title(for: .recentlyDeleted) == "Recently Deleted")
+    #expect(Set(model.visibleEntries.map(\.title)) == ["Example Bank", "Example Shop"])
+    model.searchText = "fake.user"
+    #expect(model.visibleEntries.map(\.title) == ["Example Bank"])
+    model.searchText = ""
+
+    // A deleted entry shows, read-only, while Recently Deleted is selected.
+    model.entrySelection = bank.id
+    #expect(model.selectedEntry?.id == bank.id)
+    model.restoreEntry(bank.id)
+    #expect(model.entrySelection == nil)
+    #expect(session.entry(id: bank.id) != nil)
+
+    model.deleteEntryPermanently(shop.id)
+    #expect(model.isTrashEmpty)
+    #expect(model.sidebarSelection == .all)
     #expect(model.errorMessage == nil)
 }
 

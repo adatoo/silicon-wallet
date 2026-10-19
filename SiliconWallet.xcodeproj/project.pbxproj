@@ -29,6 +29,7 @@
 		B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */; };
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
+		CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */; };
 		D2E8F03BB82956CD144E8566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF419223A81F08132A022785 /* Assets.xcassets */; };
 		D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */; };
 		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
@@ -67,6 +68,7 @@
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
 		4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManagementViews.swift; sourceTree = "<group>"; };
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
+		6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyDeletedView.swift; sourceTree = "<group>"; };
 		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
 		71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRecognizer.swift; sourceTree = "<group>"; };
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
@@ -175,6 +177,7 @@
 				31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */,
 				772BFA3C071751268172F197 /* EntryDetailView.swift */,
 				ACD892512A872BD9135E5CCB /* EntryListView.swift */,
+				6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */,
 				244D550D93A11FBA8C5076F4 /* SidebarView.swift */,
 				AF5CF27647D2249ED8F21191 /* VaultView.swift */,
 			);
@@ -421,6 +424,7 @@
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,
 				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
+				CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
 				4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */,

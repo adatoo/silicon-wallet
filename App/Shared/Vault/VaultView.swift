@@ -34,7 +34,7 @@ struct VaultView: View {
                 NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $model.compactColumn) {
                     sidebar
                 } content: {
-                    EntryListView(editor: $editor)
+                    entries
                         .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 480)
                 } detail: {
                     if let entry = model.selectedEntry {
@@ -49,7 +49,7 @@ struct VaultView: View {
                 NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: cardsCompactColumn) {
                     sidebar
                 } detail: {
-                    EntryListView(editor: $editor)
+                    entries
                 }
             }
         }
@@ -86,6 +86,16 @@ struct VaultView: View {
     private var sidebar: some View {
         SidebarView(editor: $editor)
             .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+    }
+
+    /// The entries column: the sidebar's entries, or Recently Deleted.
+    @ViewBuilder
+    private var entries: some View {
+        if model.sidebarSelection == .recentlyDeleted {
+            RecentlyDeletedView()
+        } else {
+            EntryListView(editor: $editor)
+        }
     }
 
     /// `AppModel.compactColumn` is in the list layout's terms; with two columns its entries

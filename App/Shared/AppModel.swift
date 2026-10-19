@@ -8,6 +8,7 @@ enum SidebarItem: Hashable {
     case all
     case favorites
     case group(UUID)
+    case recentlyDeleted
 }
 
 /// An entry open in a sheet from the card view.
@@ -43,7 +44,10 @@ final class AppModel {
         self.sync = sync
         self.startupError = startupError
         if let session, let sync {
-            sync.onRemoteChanges = { [weak session] in try? session?.reload() }
+            sync.onRemoteChanges = { [weak self, weak session] in
+                try? session?.reload()
+                self?.dropStaleSelection()
+            }
             sync.onVaultDeletedRemotely = { [weak session] in session?.vaultWasDeletedElsewhere() }
             sync.onConflict = { [weak session] losing in
                 session?.keepConflictCopy(of: losing, deviceName: DeviceName.current)
@@ -133,12 +137,23 @@ final class AppModel {
         case .all: scoped = session.search(searchText)
         case .favorites: scoped = session.search(searchText).filter(\.isFavorite)
         case .group(let id): scoped = session.search(searchText, inGroup: id)
+        case .recentlyDeleted: scoped = session.search(searchText, inTrash: true)
         }
         return scoped
     }
 
     var selectedEntry: VaultEntry? {
-        entrySelection.flatMap { session?.entry(id: $0) }
+        entrySelection.flatMap(entryToShow)
+    }
+
+    /// The entry with this ID: one in use, or, while Recently Deleted is showing, one in it.
+    func entryToShow(id: VaultEntry.ID) -> VaultEntry? {
+        session?.entry(id: id) ?? (sidebarSelection == .recentlyDeleted ? session?.deletedEntry(id: id) : nil)
+    }
+
+    var isTrashEmpty: Bool {
+        guard let session else { return true }
+        return session.deletedGroups.isEmpty && session.deletedEntries.isEmpty
     }
 
     func title(for item: SidebarItem) -> String {
@@ -146,6 +161,7 @@ final class AppModel {
         case .all: "All Entries"
         case .favorites: "Favourites"
         case .group(let id): session?.group(id: id)?.name ?? "Group"
+        case .recentlyDeleted: "Recently Deleted"
         }
     }
 
@@ -167,15 +183,51 @@ final class AppModel {
         session?.lock()
     }
 
-    func deleteGroup(_ id: UUID) {
-        perform { try session?.deleteGroup(id: id) }
-        if sidebarSelection == .group(id) { sidebarSelection = .all }
-        if let entrySelection, session?.entry(id: entrySelection) == nil { self.entrySelection = nil }
+    // Recently Deleted (DESIGN.md §5). Each action drops a selection it leaves behind.
+
+    func moveGroupToTrash(_ id: UUID) {
+        perform { try session?.moveGroupToTrash(id: id) }
+        dropStaleSelection()
     }
 
-    func deleteEntry(_ id: UUID) {
-        perform { try session?.deleteEntry(id: id) }
-        if entrySelection == id { entrySelection = nil }
+    func moveEntryToTrash(_ id: UUID) {
+        perform { try session?.moveEntryToTrash(id: id) }
+        dropStaleSelection()
+    }
+
+    func restoreGroup(_ id: UUID) {
+        perform { try session?.restoreGroup(id: id) }
+        dropStaleSelection()
+    }
+
+    func restoreEntry(_ id: UUID) {
+        perform { try session?.restoreEntry(id: id) }
+        if sidebarSelection == .recentlyDeleted, entrySelection == id { entrySelection = nil }
+        dropStaleSelection()
+    }
+
+    func deleteGroupPermanently(_ id: UUID) {
+        perform { try session?.deleteGroupPermanently(id: id) }
+        dropStaleSelection()
+    }
+
+    func deleteEntryPermanently(_ id: UUID) {
+        perform { try session?.deleteEntryPermanently(id: id) }
+        dropStaleSelection()
+    }
+
+    func emptyTrash() {
+        perform { try session?.emptyTrash() }
+        dropStaleSelection()
+    }
+
+    /// Clears a sidebar or entry selection that no longer points at anything, such as a group
+    /// just deleted or an emptied Recently Deleted. Also called when sync changes the vault.
+    func dropStaleSelection() {
+        guard let session else { return }
+        if case .group(let id) = sidebarSelection, session.group(id: id) == nil { sidebarSelection = .all }
+        if sidebarSelection == .recentlyDeleted, isTrashEmpty { sidebarSelection = .all }
+        if entrySelection != nil, selectedEntry == nil { entrySelection = nil }
     }
 
     static func describe(_ error: Error) -> String {
