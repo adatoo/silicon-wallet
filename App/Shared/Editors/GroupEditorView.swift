@@ -88,7 +88,7 @@ struct TemplateFieldRow: View {
 
     var body: some View {
         HStack {
-            TextField("Label", text: $field.label)
+            LabelField(label: $field.label)
             Picker("Kind", selection: $field.kind) {
                 ForEach(FieldKind.allCases, id: \.self) { kind in
                     Text(kind.displayName).tag(kind)
@@ -115,6 +115,23 @@ struct TemplateFieldRow: View {
                 field.isMonospaced = new.isMonospacedByDefault(isConcealed: field.isConcealed)
             }
         }
+    }
+}
+
+/// A field's editable label. A long label wraps onto more lines, up to three, so it can be read
+/// whole while editing; a line break typed or pasted into it becomes a space.
+struct LabelField: View {
+    @Binding var label: String
+
+    var body: some View {
+        TextField("Label", text: $label, prompt: Text("Label"), axis: .vertical)
+            .lineLimit(1...3)
+            .labelsHidden()
+            .onChange(of: label) {
+                if label.contains(where: \.isNewline) {
+                    label = label.split(whereSeparator: \.isNewline).joined(separator: " ")
+                }
+            }
     }
 }
 

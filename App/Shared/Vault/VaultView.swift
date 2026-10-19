@@ -125,8 +125,11 @@ struct EditorSheet: View {
             case .entry(let entry): EntryEditorView(entry: entry, preferredGroupID: entry.groupID)
             }
         }
+        // Wide enough for long labels and values.
         #if os(macOS)
-            .frame(minWidth: 480, idealWidth: 540, minHeight: 480, idealHeight: 620)
+            .frame(minWidth: 680, idealWidth: 680, minHeight: 560, idealHeight: 680)
+        #else
+            .presentationSizing(.page)
         #endif
     }
 }
