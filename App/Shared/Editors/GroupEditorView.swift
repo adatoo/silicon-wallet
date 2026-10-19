@@ -85,6 +85,7 @@ struct TemplateFieldRow: View {
 
     var body: some View {
         HStack {
+            DragHandle()
             TextField("Label", text: $field.label)
             Picker("Kind", selection: $field.kind) {
                 ForEach(FieldKind.allCases, id: \.self) { kind in
@@ -115,12 +116,25 @@ struct TemplateFieldRow: View {
     }
 }
 
+/// Somewhere to grab a row to drag it on the Mac, where a row full of text fields and buttons
+/// leaves little else to grab. iOS shows its own reorder control in edit mode.
+struct DragHandle: View {
+    var body: some View {
+        #if os(macOS)
+            Image(systemName: "line.3.horizontal")
+                .foregroundStyle(.tertiary)
+                .help("Drag to reorder")
+                .accessibilityHidden(true)
+        #endif
+    }
+}
+
 /// A grid of the group icons to choose from.
 struct IconGrid: View {
     @Binding var selection: String
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 34), spacing: 6)], spacing: 6) {
+        WrappingLayout(spacing: 6) {
             ForEach(GroupIcons.all, id: \.self) { icon in
                 Button {
                     selection = icon
@@ -139,5 +153,59 @@ struct IconGrid: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// Lays its subviews out in rows, left to right, wrapping at the proposed width.
+///
+/// The icon grid used an adaptive `LazyVGrid`, but in a form row on iPad it was measured at a
+/// narrow width (one icon per row) and drawn at the full one, which left a row about 1,500
+/// points tall that pushed the Fields section off screen. This layout reports the height of the
+/// rows it actually draws.
+struct WrappingLayout: Layout {
+    var spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(subviews, width: proposal.width ?? .infinity)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(rows.count - 1, 0))
+        return CGSize(width: proposal.width ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(subviews, width: bounds.width) {
+            var x = bounds.minX
+            for index in row.indices {
+                let size = subviews[index].sizeThatFits(.unspecified)
+                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+    }
+
+    private func arrange(_ subviews: Subviews, width: CGFloat) -> [Row] {
+        var rows: [Row] = []
+        var row = Row()
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let needed = row.indices.isEmpty ? size.width : row.width + spacing + size.width
+            if needed > width, !row.indices.isEmpty {
+                rows.append(row)
+                row = Row()
+            }
+            row.width = row.indices.isEmpty ? size.width : row.width + spacing + size.width
+            row.height = max(row.height, size.height)
+            row.indices.append(index)
+        }
+        if !row.indices.isEmpty { rows.append(row) }
+        return rows
     }
 }
