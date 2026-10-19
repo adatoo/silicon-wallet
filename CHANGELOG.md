@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1] - 2026-10-19
+
+### Fixed
+
+- Face ID and Touch ID can no longer be brought back after a restart, or after the re-entry
+  period, by changing the date. The stored key is deleted once the period ends, and your next
+  password unlock stores it again. After this update, unlock with your password once before Face
+  ID or Touch ID is offered.
+
 ## [0.23.0] - 2026-10-19
 
 ### Changed
