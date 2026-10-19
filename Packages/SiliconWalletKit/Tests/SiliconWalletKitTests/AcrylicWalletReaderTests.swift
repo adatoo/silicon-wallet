@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import SQLite3
 import Testing
 
 @testable import SiliconWalletKit
@@ -113,4 +114,87 @@ func exportsDecryptWithTheSamePasswordAsTheirSourceVault(name: String, password:
     #expect(throws: AcrylicWalletError.wrongPasswordOrUnsupportedFile) {
         try AcrylicWalletReader(ciphertext: try Fixture.data("a.wallet"), password: "not-the-fake-password")
     }
+}
+
+/// f.wallet's password was pasted, so it's precomposed (NFC). Typed as decomposed letters
+/// plus combining marks (NFD), it's different bytes but must still open the vault.
+@Test func aDecomposedPasswordOpensAPrecomposedVault() throws {
+    let decomposed = "fake-pa\u{0308}sswo\u{0308}rd-\u{2713}"
+    #expect(!decomposed.utf8.elementsEqual("fake-pässwörd-✓".utf8))
+
+    let reader = try AcrylicWalletReader(ciphertext: Fixture.data("f.wallet"), password: decomposed)
+    #expect(try reader.entries().count == 2)
+}
+
+@Test func passwordFormsSkipRepeats() {
+    #expect(AcrylicWalletFile.passwordForms("fakepass") == ["fakepass"])
+    #expect(AcrylicWalletFile.passwordForms("fake-pässwörd").count == 2)
+}
+
+/// Wallet 3.5 always uses 1024-byte pages, but the page size comes from the header, so a
+/// file with bigger pages decrypts too. The fake vault is built here: a plain SQLite image,
+/// encrypted page by page with the same cipher (OFB is symmetric).
+@Test func aVaultWithBiggerPagesDecrypts() throws {
+    let plaintext = try syntheticVault(pageSize: 4096)
+    let ciphertext = try encrypt(plaintext, pageSize: 4096, password: "fakepass-4096")
+
+    let reader = try AcrylicWalletReader(ciphertext: ciphertext, password: "fakepass-4096")
+    #expect(try reader.groups().map(\.title) == ["Fake Group"])
+    #expect(try reader.entries().map(\.title) == ["Fake Entry"])
+}
+
+@Test func reservedBytesPerPageAreUnsupported() throws {
+    var ciphertext = try Fixture.data("a.wallet")
+    ciphertext[20] = 12
+
+    #expect(throws: AcrylicWalletError.unsupportedFormat) {
+        try AcrylicWalletReader(ciphertext: ciphertext, password: "fakepass")
+    }
+}
+
+@Test func aFileThatIsNotSQLiteIsRejected() throws {
+    var notAVault = try Fixture.data("attachment-test.png")
+    notAVault.append(Data(count: 1024 - notAVault.count % 1024))
+
+    #expect(throws: AcrylicWalletError.notAnAcrylicWallet) {
+        try AcrylicWalletReader(ciphertext: notAVault, password: "fakepass")
+    }
+}
+
+/// A plain SQLite image with the tables and columns `AcrylicWalletReader` queries, one fake
+/// group and one fake entry, at the given page size.
+private func syntheticVault(pageSize: Int) throws -> Data {
+    var db: OpaquePointer?
+    try #require(sqlite3_open(":memory:", &db) == SQLITE_OK)
+    defer { sqlite3_close(db) }
+
+    let sql = """
+        PRAGMA page_size = \(pageSize);
+        CREATE TABLE groups (pk INTEGER PRIMARY KEY, title TEXT, icon TEXT, "order" INTEGER, uuid TEXT,
+            defaultheaders BLOB, datelastupdated TEXT);
+        CREATE TABLE entries (pk INTEGER PRIMARY KEY, title TEXT, parent TEXT, notes TEXT, infodictionary TEXT,
+            extraheaders BLOB, star INTEGER, uuid TEXT, files TEXT, datelastupdated TEXT);
+        INSERT INTO groups (title, "order", uuid) VALUES ('Fake Group', 0, 'FAKE-GROUP');
+        INSERT INTO entries (title, parent, star, uuid) VALUES ('Fake Entry', 'FAKE-GROUP', 0, 'FAKE-ENTRY');
+        """
+    try #require(sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK)
+
+    var size: sqlite3_int64 = 0
+    let bytes = try #require(sqlite3_serialize(db, "main", &size, 0))
+    defer { sqlite3_free(bytes) }
+    let image = Data(bytes: bytes, count: Int(size))
+    try #require(image.count % pageSize == 0 && image.count > pageSize)
+    return image
+}
+
+private func encrypt(_ plaintext: Data, pageSize: Int, password: String) throws -> Data {
+    let key = AcrylicWalletCipher.key(password: password)
+    let bytes = [UInt8](plaintext)
+    var ciphertext = Data()
+    for start in stride(from: 0, to: bytes.count, by: pageSize) {
+        let page = Array(bytes[start..<start + pageSize])
+        let pageNumber = UInt32(start / pageSize + 1)
+        ciphertext.append(contentsOf: try AcrylicWalletCipher.decryptPage(page, pageNumber: pageNumber, key: key))
+    }
+    return ciphertext
 }

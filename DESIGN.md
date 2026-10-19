@@ -247,6 +247,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
     `"W7f@" + password` repeated/truncated to 32 bytes, per-page IV = the page number as a
     little-endian `UInt32` zero-padded to 16 bytes, no per-file salt. See ADR-0005 and
     `Fixtures/AcrylicWallet/README.md` for how this was found.
+  - The reader takes the page size from the plaintext header rather than assuming Wallet
+    3.5's 1024 bytes, rejects files with reserved bytes per page (an SEE nonce or MAC) as an
+    unsupported format, and retries a wrong password in its NFC and NFD forms.
+  - Because the key is the password itself (no KDF, no salt), an old `.wallet` file is cheap
+    to attack offline. The import summary and the support page tell users to delete old
+    copies, Dropbox copies and exports once they've checked their entries.
   - `SiliconWalletKit`'s `AcrylicImport` module (`AcrylicWalletReader`) implements this with
     CommonCrypto and the system `libsqlite3`, decrypting only into memory, and is unit-tested
     against every fixture in `Fixtures/AcrylicWallet/`.

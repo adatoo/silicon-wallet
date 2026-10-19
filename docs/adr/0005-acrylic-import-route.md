@@ -88,5 +88,14 @@ field *values*, which are stored as flat `"field-UUID" = "value";` text. `Acryli
   They are system libraries, not new third-party SPM dependencies, so AGENTS.md's dependency
   rule (ask before adding anything beyond libsodium/swift-sodium) doesn't apply; noted here for
   visibility anyway.
-- The reader and importer are proven against the fake fixtures only. The owner checks a real
-  vault by importing it into the app; the code only reads the file it's given.
+- The reader and importer are proven against the fake fixtures and, by the owner, against
+  their real vault (imported in the app); the code only reads the file it's given.
+- Only Wallet 3.5 for Mac has been seen. To cope with other versions' files (issue #48), the
+  reader takes the page size from the plaintext header bytes 16–17 instead of assuming 1024,
+  refuses files with reserved bytes per page (byte 20; an SEE nonce or MAC this IV scheme
+  doesn't cover) as `unsupportedFormat`, and retries a wrong password in its NFC and NFD
+  forms. Other SEE ciphers (RC4, AES-128) aren't attempted; such files report a wrong
+  password or an unsupported format, and nothing is imported.
+- The key is the password itself, with no KDF or salt, so a leaked `.wallet` file can be
+  brute-forced offline cheaply. This is Wallet's weakness, and the source is public, so the
+  importer tells users to delete old copies, Dropbox copies and exports once imported.
