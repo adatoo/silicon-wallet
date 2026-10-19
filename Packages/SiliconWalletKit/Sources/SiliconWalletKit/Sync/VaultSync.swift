@@ -30,6 +30,10 @@ public final class VaultSync: CKSyncEngineDelegate {
     /// Called when the vault was deleted in iCloud on purpose (from another device, or from
     /// iCloud settings), after the local copy has been removed too.
     @ObservationIgnored public var onVaultDeletedRemotely: (@MainActor () -> Void)?
+    /// Whether to take a fetched group or entry in place of the local copy. The session refuses
+    /// one it can't open while it can open the local copy, so a damaged or tampered server copy
+    /// can't destroy a good one; the local copy is then sent back over it.
+    @ObservationIgnored public var acceptsIncomingRecord: (@MainActor (SealedRecord) -> Bool)?
 
     @ObservationIgnored private let store: SyncedVaultStore
     @ObservationIgnored private var base: any SyncBackingStore { store.base }
@@ -246,8 +250,17 @@ public final class VaultSync: CKSyncEngineDelegate {
         guard let incoming = SyncRecordMapping.incoming(record), let item = item(for: record) else { return false }
         do {
             switch incoming {
-            case .meta(let meta): try base.saveMeta(meta)
-            case .record(let sealed): try base.saveRecords([sealed])
+            case .meta(let meta):
+                // Password-hashing limits this build won't run would lock every device out.
+                guard meta.kdf.isWithinLimits else { return false }
+                try base.saveMeta(meta)
+            case .record(let sealed):
+                if let accepts = acceptsIncomingRecord, !accepts(sealed) {
+                    try base.setSystemFields(SyncRecordMapping.encodeSystemFields(record), for: item)
+                    engine?.state.add(pendingRecordZoneChanges: [.saveRecord(record.recordID)])
+                    return false
+                }
+                try base.saveRecords([sealed])
             case .attachment(let id, let ciphertext): try base.saveAttachment(id: id, ciphertext: ciphertext)
             }
             try base.setSystemFields(SyncRecordMapping.encodeSystemFields(record), for: item)

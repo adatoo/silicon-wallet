@@ -54,6 +54,13 @@ final class LockController {
                         MainActor.assumeIsolated { self?.systemWillSleep() }
                     })
             }
+            // The clipboard timer dies with the app, so clear on the way out.
+            observers.append(
+                NotificationCenter.default.addObserver(
+                    forName: NSApplication.willTerminateNotification, object: nil, queue: .main
+                ) { _ in
+                    MainActor.assumeIsolated { Clipboard.clearIfOurs() }
+                })
             let distributed = DistributedNotificationCenter.default()
             for name in ["com.apple.screensaver.didstart", "com.apple.screenIsLocked"] {
                 observers.append(

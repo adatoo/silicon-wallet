@@ -55,7 +55,14 @@ final class AppModel {
                 try? session?.reload()
                 self?.dropStaleSelection()
             }
-            sync.onVaultDeletedRemotely = { [weak session] in session?.vaultWasDeletedElsewhere() }
+            sync.onVaultDeletedRemotely = { [weak session] in
+                // The same clean-up as deleting the vault here (VaultManagementViews).
+                session?.vaultWasDeletedElsewhere()
+                BiometricKeychain.delete()
+                TemporaryPreviews.removeAll()
+                Clipboard.clearIfOurs()
+            }
+            sync.acceptsIncomingRecord = { [weak session] record in session?.acceptsIncoming(record) ?? true }
             sync.onConflict = { [weak session] losing in
                 session?.keepConflictCopy(of: losing, deviceName: DeviceName.current)
             }

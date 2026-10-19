@@ -217,3 +217,57 @@ private func syncedSession() async throws -> (VaultSession, SyncedVaultStore, In
     #expect(try disk.systemFields(for: .record(entry.id)) == Data([5]))
     #expect(try disk.allSyncItems() == [.record(entry.id)])
 }
+
+@MainActor
+@Test func aCopyThatDoesntOpenCantReplaceAReadableOne() async throws {
+    let (session, _, base) = try await syncedSession()
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake Shop"))
+    let local = try #require(base.records[entry.id])
+
+    // Damaged or tampered bytes.
+    var damaged = local
+    damaged.ciphertext[damaged.ciphertext.count - 1] ^= 0x01
+    #expect(!session.acceptsIncoming(damaged))
+    // A genuine copy re-labelled with a far-future date, to win every conflict.
+    var redated = local
+    redated.modified = .now.addingTimeInterval(365 * 24 * 60 * 60)
+    #expect(!session.acceptsIncoming(redated))
+    // A newer schema this build can't read.
+    var newer = local
+    newer.schemaVersion = 99
+    #expect(!session.acceptsIncoming(newer))
+
+    // A genuine later edit is taken.
+    var edited = try #require(session.entry(id: entry.id))
+    edited.title = "Fake Shop Renamed"
+    try session.updateEntry(edited)
+    #expect(session.acceptsIncoming(try #require(base.records[entry.id])))
+    // So is anything for an item this device can't read, and anything while locked.
+    var unknown = damaged
+    unknown.id = UUID()
+    #expect(session.acceptsIncoming(unknown))
+    session.lock()
+    #expect(session.acceptsIncoming(damaged))
+}
+
+@MainActor
+@Test func aRecordWhoseDateDisagreesWithItsSealedDateIsUnreadable() async throws {
+    let (session, _, base) = try await syncedSession()
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake Shop"))
+    var record = try #require(base.records[entry.id])
+    record.modified = record.modified.addingTimeInterval(30 * 24 * 60 * 60)
+    try base.saveRecords([record])
+
+    try session.reload()
+    #expect(session.entry(id: entry.id) == nil)
+    #expect(session.unreadableRecordCount == 1)
+    // A date that differs only below a millisecond, as CloudKit rounds it, still opens.
+    var rounded = try #require(base.records[entry.id])
+    rounded.modified = Date(
+        timeIntervalSinceReferenceDate: (entry.modified.timeIntervalSinceReferenceDate * 1000).rounded() / 1000)
+    try base.saveRecords([rounded])
+    try session.reload()
+    #expect(session.entry(id: entry.id) != nil)
+}
