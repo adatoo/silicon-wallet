@@ -42,6 +42,18 @@ public enum BiometricError: Error, Equatable, Sendable {
     case keychain(OSStatus)
 }
 
+extension BiometricError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .unavailable: "Face ID or Touch ID isn't set up on this device."
+        case .noStoredKey: "The saved key for Face ID or Touch ID is missing."
+        case .cancelled: "Face ID or Touch ID was cancelled."
+        case .keychain(let status):
+            "The Keychain reported an error: \(SecCopyErrorMessageString(status, nil) as String? ?? "unknown") (\(status))."
+        }
+    }
+}
+
 /// Keeps the vault key in the Keychain behind Face ID or Touch ID: `.biometryCurrentSet`,
 /// `WhenUnlockedThisDeviceOnly`, never synced (DESIGN.md §5). Adding or removing a fingerprint
 /// or face invalidates the item, so the master password is needed again.
@@ -128,7 +140,8 @@ public enum BiometricKeychain {
                 guard let data = result as? Data else { throw BiometricError.noStoredKey }
                 return data
             case errSecItemNotFound: throw BiometricError.noStoredKey
-            case errSecUserCanceled, errSecAuthFailed: throw BiometricError.cancelled
+            // Interaction isn't allowed while the app isn't frontmost; the password still works.
+            case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed: throw BiometricError.cancelled
             default: throw BiometricError.keychain(status)
             }
         }.value

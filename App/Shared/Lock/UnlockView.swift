@@ -7,6 +7,7 @@ import SwiftUI
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
     @Environment(LockController.self) private var lock
+    @Environment(\.scenePhase) private var scenePhase
     @State private var password = ""
     @State private var isWorking = false
     @State private var failed = false
@@ -80,10 +81,10 @@ struct UnlockView: View {
         .padding(32)
         .onAppear {
             isFocused = true
-            if !triedBiometrics, lock.canUnlockWithBiometrics {
-                triedBiometrics = true
-                startBiometrics()
-            }
+            startBiometricsOnce()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { startBiometricsOnce() }
         }
         #if os(macOS)
             .onChange(of: password) { _, new in
@@ -115,6 +116,17 @@ struct UnlockView: View {
             }
         }
     #endif
+
+    /// Offers Face ID or Touch ID once, as the screen appears. On iPhone and iPad it waits until
+    /// the app is active: a prompt asked for while it's still coming to the front fails.
+    private func startBiometricsOnce() {
+        #if os(iOS)
+            guard scenePhase == .active else { return }
+        #endif
+        guard !triedBiometrics, lock.canUnlockWithBiometrics else { return }
+        triedBiometrics = true
+        startBiometrics()
+    }
 
     private func startBiometrics() {
         #if os(macOS)

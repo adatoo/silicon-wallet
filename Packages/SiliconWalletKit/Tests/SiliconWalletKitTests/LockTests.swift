@@ -96,3 +96,10 @@ func passwordsHaveTheRequestedLength(length: Int) {
     #expect(BiometricKeychain.mapped(LAError(.biometryLockout)) is LAError)
     #expect(BiometricKeychain.mapped(CryptoError.authenticationFailed) is CryptoError)
 }
+
+@Test func biometricErrorsReadAsSentences() {
+    #expect(BiometricError.unavailable.localizedDescription == "Face ID or Touch ID isn't set up on this device.")
+    let keychain = BiometricError.keychain(errSecInteractionNotAllowed).localizedDescription
+    #expect(keychain.contains("(-25308)"))
+    #expect(!keychain.contains("BiometricError"))
+}
