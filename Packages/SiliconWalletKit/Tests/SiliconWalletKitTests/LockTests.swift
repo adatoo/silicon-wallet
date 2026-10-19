@@ -93,7 +93,8 @@ func passwordsHaveTheRequestedLength(length: Int) {
         #expect(BiometricKeychain.mapped(LAError(code)) as? BiometricError == .cancelled)
     }
     #expect(BiometricKeychain.mapped(LAError(.biometryNotEnrolled)) as? BiometricError == .unavailable)
-    #expect(BiometricKeychain.mapped(LAError(.biometryLockout)) is LAError)
+    #expect(BiometricKeychain.mapped(LAError(.biometryLockout)) as? BiometricError == .lockedOut)
+    #expect(BiometricKeychain.mapped(LAError(.invalidContext)) is LAError)
     #expect(BiometricKeychain.mapped(CryptoError.authenticationFailed) is CryptoError)
 }
 
@@ -102,4 +103,14 @@ func passwordsHaveTheRequestedLength(length: Int) {
     let keychain = BiometricError.keychain(errSecInteractionNotAllowed).localizedDescription
     #expect(keychain.contains("(-25308)"))
     #expect(!keychain.contains("BiometricError"))
+}
+
+@Test(arguments: [errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed, -1, -2, -3, -4, -9])
+func aFaceOrFingerThatIsNotRecognisedFallsBackQuietly(status: OSStatus) {
+    #expect(BiometricKeychain.readFailure(status) == .cancelled)
+}
+
+@Test func otherKeychainFailuresAreReported() {
+    #expect(BiometricKeychain.readFailure(-8) == .lockedOut)
+    #expect(BiometricKeychain.readFailure(errSecMissingEntitlement) == .keychain(errSecMissingEntitlement))
 }

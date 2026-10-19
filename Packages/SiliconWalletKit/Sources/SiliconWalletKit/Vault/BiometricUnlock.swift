@@ -39,6 +39,8 @@ public enum BiometricError: Error, Equatable, Sendable {
     case noStoredKey
     /// The person cancelled, or authentication failed.
     case cancelled
+    /// Too many failed attempts; the device passcode or the master password is needed first.
+    case lockedOut
     case keychain(OSStatus)
 }
 
@@ -48,6 +50,7 @@ extension BiometricError: LocalizedError {
         case .unavailable: "Face ID or Touch ID isn't set up on this device."
         case .noStoredKey: "The saved key for Face ID or Touch ID is missing."
         case .cancelled: "Face ID or Touch ID was cancelled."
+        case .lockedOut: "Face ID or Touch ID is locked after too many attempts. Unlock with your password."
         case .keychain(let status):
             "The Keychain reported an error: \(SecCopyErrorMessageString(status, nil) as String? ?? "unknown") (\(status))."
         }
@@ -101,6 +104,8 @@ public enum BiometricKeychain {
         let context = LAContext()
         context.localizedReason = reason
         context.localizedCancelTitle = "Use Password"
+        // No "Enter Password" button after a failed attempt: the password field is right there.
+        context.localizedFallbackTitle = ""
         return try await read(context: context)
     }
 
@@ -140,12 +145,23 @@ public enum BiometricKeychain {
                 guard let data = result as? Data else { throw BiometricError.noStoredKey }
                 return data
             case errSecItemNotFound: throw BiometricError.noStoredKey
-            // Interaction isn't allowed while the app isn't frontmost; the password still works.
-            case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed: throw BiometricError.cancelled
-            default: throw BiometricError.keychain(status)
+            default: throw readFailure(status)
             }
         }.value
         return SymmetricKey(data: data)
+    }
+
+    /// What a failed Keychain read means. A face or finger that isn't recognised, a cancel, the
+    /// password button and "not frontmost" all mean "use the password", quietly. The Keychain
+    /// reports Face ID and Touch ID outcomes either as its own codes or as `LAError` codes.
+    static func readFailure(_ status: OSStatus) -> BiometricError {
+        switch status {
+        case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed:
+            return .cancelled
+        default:
+            guard let code = LAError.Code(rawValue: Int(status)) else { return .keychain(status) }
+            return mapped(LAError(code)) as? BiometricError ?? .keychain(status)
+        }
     }
 
     /// Cancelling, falling back to the password or failing too often all mean "use the password".
@@ -156,6 +172,8 @@ public enum BiometricKeychain {
             return BiometricError.cancelled
         case .biometryNotAvailable, .biometryNotEnrolled:
             return BiometricError.unavailable
+        case .biometryLockout:
+            return BiometricError.lockedOut
         default:
             return error
         }
