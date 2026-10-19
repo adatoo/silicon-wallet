@@ -39,6 +39,7 @@ final class LockController {
     /// Starts watching for activity and system events. Call once, at launch.
     func start() {
         guard ticker == nil else { return }
+        expireBiometricKeyIfNeeded()
         ticker = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(10))
@@ -79,6 +80,7 @@ final class LockController {
         Clipboard.clearIfOurs()
         TemporaryPreviews.removeAll()
         model.lock()
+        expireBiometricKeyIfNeeded()
     }
 
     private func checkInactivity() {
@@ -114,7 +116,7 @@ final class LockController {
 
     /// Call after the master password has unlocked (or created) the vault.
     func didUnlockWithPassword() {
-        settings.lastPasswordUnlock = .now
+        settings.lastPasswordUnlock = .current
         recordActivity()
         notice = nil
         if settings.biometricsEnabled, let key = model.session?.vaultKeyForBiometricUnlock() {
@@ -129,8 +131,18 @@ final class LockController {
     var canUnlockWithBiometrics: Bool {
         biometricKind != .none
             && settings.biometricPolicy.allowsBiometricUnlock(
-                lastPasswordUnlock: settings.lastPasswordUnlock, bootTime: BiometricPolicy.bootTime())
+                lastPasswordUnlock: settings.lastPasswordUnlock, now: .current)
             && BiometricKeychain.hasStoredKey
+    }
+
+    /// Deletes the stored key once biometrics may no longer stand in for the password, so changing
+    /// the clock later can't bring it back. The next password unlock stores it again.
+    func expireBiometricKeyIfNeeded() {
+        guard settings.biometricsEnabled,
+            !settings.biometricPolicy.allowsBiometricUnlock(
+                lastPasswordUnlock: settings.lastPasswordUnlock, now: .current)
+        else { return }
+        BiometricKeychain.delete()
     }
 
     /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
@@ -167,7 +179,7 @@ final class LockController {
             do {
                 try BiometricKeychain.store(key)
                 settings.biometricsEnabled = true
-                settings.lastPasswordUnlock = settings.lastPasswordUnlock ?? .now
+                settings.lastPasswordUnlock = settings.lastPasswordUnlock ?? .current
             } catch {
                 settings.biometricsEnabled = false
                 model.errorMessage = "\(biometricKind.name) couldn't be turned on: \(error.localizedDescription)"

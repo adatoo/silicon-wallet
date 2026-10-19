@@ -3,6 +3,38 @@ import Foundation
 import LocalAuthentication
 import Security
 
+/// Where the device's clocks stood at a moment. The boot session and the time since boot can't be
+/// moved by setting the date, so the biometric rule leans on them rather than on the date alone.
+public struct DeviceClock: Codable, Equatable, Sendable {
+    public var date: Date
+    /// Changes on every restart; `nil` where the system doesn't report it.
+    public var bootSession: String?
+    /// Seconds since the device started, counting sleep.
+    public var sinceBoot: TimeInterval
+
+    public init(date: Date, bootSession: String?, sinceBoot: TimeInterval) {
+        self.date = date
+        self.bootSession = bootSession
+        self.sinceBoot = sinceBoot
+    }
+
+    public static var current: DeviceClock {
+        DeviceClock(
+            date: .now, bootSession: bootSessionID(),
+            sinceBoot: TimeInterval(clock_gettime_nsec_np(CLOCK_MONOTONIC)) / 1_000_000_000)
+    }
+
+    /// The kernel's ID for this boot.
+    static func bootSessionID() -> String? {
+        var size = 0
+        guard sysctlbyname("kern.bootsessionuuid", nil, &size, nil, 0) == 0, size > 1 else { return nil }
+        var buffer = [UInt8](repeating: 0, count: size)
+        guard sysctlbyname("kern.bootsessionuuid", &buffer, &size, nil, 0) == 0 else { return nil }
+        let id = String(decoding: buffer.prefix { $0 != 0 }, as: UTF8.self)
+        return id.isEmpty ? nil : id
+    }
+}
+
 /// When Face ID or Touch ID may stand in for the master password (DESIGN.md §5): only after the
 /// password has been used since the device last started, and within `maximumAge` of that.
 public struct BiometricPolicy: Equatable, Sendable {
@@ -17,17 +49,21 @@ public struct BiometricPolicy: Equatable, Sendable {
     }
 
     /// - Parameters:
-    ///   - lastPasswordUnlock: when the master password last unlocked the vault, if ever.
-    ///   - bootTime: when the device last started.
-    public func allowsBiometricUnlock(lastPasswordUnlock: Date?, bootTime: Date, now: Date = .now) -> Bool {
-        guard isEnabled, let lastPasswordUnlock else { return false }
-        return lastPasswordUnlock >= bootTime && now.timeIntervalSince(lastPasswordUnlock) <= maximumAge
-            && lastPasswordUnlock <= now
-    }
-
-    /// When the device last started, from the time since boot.
-    public static func bootTime(now: Date = .now, uptime: TimeInterval = ProcessInfo.processInfo.systemUptime) -> Date {
-        now.addingTimeInterval(-uptime)
+    ///   - lastPasswordUnlock: the clocks when the master password last unlocked the vault, if ever.
+    ///   - now: the clocks now.
+    ///
+    /// The same boot session and the time since boot decide, so setting the date back after a
+    /// restart, or within one, doesn't reopen the window. The date must agree too. Without a boot
+    /// session, a restart is detected from the boot time the date implies.
+    public func allowsBiometricUnlock(lastPasswordUnlock: DeviceClock?, now: DeviceClock) -> Bool {
+        guard isEnabled, let last = lastPasswordUnlock else { return false }
+        let byDate = now.date.timeIntervalSince(last.date)
+        guard byDate >= 0, byDate <= maximumAge else { return false }
+        if let session = last.bootSession, let current = now.bootSession {
+            let sinceUnlock = now.sinceBoot - last.sinceBoot
+            return session == current && sinceUnlock >= 0 && sinceUnlock <= maximumAge
+        }
+        return last.date >= now.date.addingTimeInterval(-now.sinceBoot)
     }
 }
 

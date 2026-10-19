@@ -169,6 +169,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 - Face ID / Touch ID: the vault key is stored in the Keychain with
   `.biometryCurrentSet`, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, never synced.
   Require the master password after a restart, and after a configurable period (default 7 days).
+  A password unlock records the kernel's boot session ID (`kern.bootsessionuuid`) and the time
+  since boot (`CLOCK_MONOTONIC`, which counts sleep) as well as the date; biometrics need the
+  same boot session and the period measured by the time since boot, so setting the clock back
+  doesn't reopen the window. Without a boot session ID, a restart is judged from the boot time
+  the date implies. Once the window closes, the Keychain item is deleted (at launch and on lock);
+  the next password unlock stores it again.
   The vault key is checked against `VaultMeta.keyCheck` before use; a key that doesn't match
   (or an item invalidated by a biometry change) turns biometric unlock off. Settings: lock after
   inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing,
