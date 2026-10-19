@@ -1,4 +1,5 @@
 import Foundation
+import LocalAuthentication
 import Observation
 import SiliconWalletKit
 
@@ -132,10 +133,18 @@ final class LockController {
             && BiometricKeychain.hasStoredKey
     }
 
-    func unlockWithBiometrics() async {
+    /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
+    /// is displayed (the Mac lock screen's inline Touch ID); without one, the system shows its own.
+    func unlockWithBiometrics(context: LAContext? = nil) async {
         guard let session = model.session else { return }
+        let reason = "unlock your vault"
         do {
-            let key = try await BiometricKeychain.load(reason: "Unlock your vault")
+            let key =
+                if let context {
+                    try await BiometricKeychain.load(context: context, reason: reason)
+                } else {
+                    try await BiometricKeychain.load(reason: reason)
+                }
             try session.unlock(vaultKey: key)
             recordActivity()
             notice = nil

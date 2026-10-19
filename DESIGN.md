@@ -138,6 +138,9 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   (or an item invalidated by a biometry change) turns biometric unlock off. Settings: lock after
   inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing,
   biometrics and the re-entry period; stored in `UserDefaults`, never anything secret.
+  On the Mac, Touch ID is part of the lock screen (`LocalAuthenticationView`), not a floating
+  panel: the screen's `LAContext` is approved with Touch ID, then reused for the Keychain read so
+  there's no second prompt. Typing the password stops it. iOS uses the system Face ID prompt.
 - Auto-lock: after inactivity (default 5 min). On macOS also on sleep, screensaver and
   screen lock. On iOS when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
