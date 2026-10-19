@@ -70,8 +70,11 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - The lock screen has a backdrop: a blurred close-up of a circuit board in the icon's colours,
   original artwork drawn by `scripts/make-backdrop.py` (`task backdrop`), with the form on a
   frosted card. Only the lock screen has it; the vault screens keep the system backgrounds.
-- Sidebar: All Entries, Favourites, then the groups (drag to reorder). Moving an entry to
-  another group keeps every value: matching labels move across, the rest become extra fields.
+- Sidebar: All Entries, Favourites, then the groups (drag to reorder). In the editors, drag to
+  reorder a group's fields, an entry's extra fields and its attachments (the entry editor lists
+  them for this; adding and removing stay in the entry view). iOS editors stay in edit mode for
+  the reorder controls; the Mac rows have a drag handle. Moving an entry to another group keeps
+  every value: matching labels move across, the rest become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a

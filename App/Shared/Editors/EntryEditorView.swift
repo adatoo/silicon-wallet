@@ -43,6 +43,7 @@ struct EntryEditorView: View {
                         draft.extraFields.removeAll { $0.id == field.id }
                     }
                 }
+                .onMove { draft.extraFields.move(fromOffsets: $0, toOffset: $1) }
                 Button("Add Field", systemImage: "plus") {
                     draft.extraFields.append(CustomField(label: ""))
                 }
@@ -50,6 +51,24 @@ struct EntryEditorView: View {
                 Text("Extra Fields")
             } footer: {
                 Text("Fields for this entry only. To give every entry in the group a field, edit the group.")
+            }
+
+            if !draft.attachments.isEmpty {
+                Section {
+                    ForEach(draft.attachments) { attachment in
+                        HStack {
+                            DragHandle()
+                            AttachmentRow(
+                                attachment: attachment,
+                                isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
+                        }
+                    }
+                    .onMove { draft.attachments.move(fromOffsets: $0, toOffset: $1) }
+                } header: {
+                    Text("Attachments")
+                } footer: {
+                    Text("Drag to change the order. Add, open and remove attachments from the entry itself.")
+                }
             }
 
             Section("Notes") {
@@ -62,6 +81,8 @@ struct EntryEditorView: View {
         .navigationTitle(isNew ? "New Entry" : "Edit Entry")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
+            // Shows the drag handles for reordering extra fields and attachments.
+            .environment(\.editMode, .constant(.active))
         #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -173,6 +194,7 @@ struct ExtraFieldInput: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                DragHandle()
                 TextField("Label", text: $field.label)
                     .font(.callout.weight(.medium))
                 Menu {
