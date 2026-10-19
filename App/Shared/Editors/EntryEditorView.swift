@@ -77,7 +77,7 @@ struct EntryEditorView: View {
 
             Section("Notes") {
                 TextField("Notes", text: $draft.notes, axis: .vertical)
-                    .lineLimit(4...12)
+                    .lineLimit(4...)
                     .labelsHidden()
             }
         }
@@ -140,7 +140,9 @@ struct EntryEditorView: View {
     }
 }
 
-/// A labelled input for one value, concealed by default for secret fields.
+/// A labelled input for one value, concealed by default for secret fields. Long labels and values
+/// wrap instead of being cut off or scrolling, so all of them show while editing. Long text goes
+/// under its label at full width.
 struct FieldInput: View {
     let label: String
     let kind: FieldKind
@@ -151,35 +153,50 @@ struct FieldInput: View {
     @State private var generating = false
 
     var body: some View {
-        LabeledContent(label.isEmpty ? kind.displayName : label) {
-            HStack {
-                Group {
-                    if kind == .multiline {
-                        TextField(label, text: $value, axis: .vertical)
-                            .lineLimit(2...8)
-                    } else if isConcealed && !isRevealed {
-                        SecureField(label, text: $value)
-                    } else {
-                        TextField(label, text: $value)
+        Group {
+            if kind == .multiline {
+                VStack(alignment: .leading, spacing: 6) {
+                    labelText
+                    TextField(label, text: $value, axis: .vertical)
+                        .lineLimit(3...)
+                        .fieldStyle(kind, isMonospaced: isMonospaced)
+                }
+            } else {
+                LabeledContent {
+                    HStack {
+                        Group {
+                            if isConcealed && !isRevealed {
+                                SecureField(label, text: $value)
+                            } else {
+                                TextField(label, text: $value, axis: .vertical)
+                                    .lineLimit(1...)
+                            }
+                        }
+                        .fieldStyle(kind, isMonospaced: isMonospaced)
+                        if isConcealed {
+                            Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
+                                isRevealed.toggle()
+                            }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                        }
+                        if kind == .password {
+                            Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
+                                .labelStyle(.iconOnly)
+                                .buttonStyle(.borderless)
+                                .help("Generate a password")
+                        }
                     }
+                } label: {
+                    labelText
                 }
-                .fontDesign(isMonospaced ? .monospaced : .default)
-                .labelsHidden()
-                .fieldInput(kind)
-                .textContentType(nil)
-                if isConcealed && kind != .multiline {
-                    Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
-                        isRevealed.toggle()
-                    }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderless)
-                }
-                if kind == .password {
-                    Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .help("Generate a password")
-                }
+            }
+        }
+        .onChange(of: value) { old, new in
+            // A wrapping field takes Return as a line break; outside Long Text, a new one becomes
+            // a space. Line breaks already in a value are left alone.
+            if kind != .multiline, !old.contains(where: \.isNewline), new.contains(where: \.isNewline) {
+                value = new.split(whereSeparator: \.isNewline).joined(separator: " ")
             }
         }
         .sheet(isPresented: $generating) {
@@ -187,6 +204,21 @@ struct FieldInput: View {
                 GeneratorView { value = $0 }
             }
         }
+    }
+
+    private var labelText: some View {
+        Text(label.isEmpty ? kind.displayName : label)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+extension View {
+    /// The font, keyboard and text behaviour of a value's input.
+    fileprivate func fieldStyle(_ kind: FieldKind, isMonospaced: Bool) -> some View {
+        fontDesign(isMonospaced ? .monospaced : .default)
+            .labelsHidden()
+            .fieldInput(kind)
+            .textContentType(nil)
     }
 }
 
@@ -198,7 +230,7 @@ struct ExtraFieldInput: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                TextField("Label", text: $field.label)
+                LabelField(label: $field.label)
                     .font(.callout.weight(.medium))
                 Menu {
                     Picker("Kind", selection: $field.kind) {

@@ -75,8 +75,12 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   fields and its attachments (the entry editor lists them for this; adding and removing stay in
   the entry view). iOS editors stay in edit mode for the reorder controls (`onMove`). A Mac form
   ignores `onMove`, so there each row has a drag handle in its own column on the right, and
-  dropping a row on another puts it there; the drag carries only the row's ID. Moving an entry
-  to another group keeps every value: matching labels move across, the rest become extra fields.
+  the other rows make room as it is dragged; the drag carries only the row's ID. The editor
+  sheets are at least 680pt wide on the Mac and page-sized on iPad. Long labels wrap (an editable
+  label up to three lines), values wrap and grow instead of scrolling, and Long Text values sit
+  under their label. Outside Long Text, a line break typed into a value with none becomes a space.
+  Moving an entry to another group keeps every value: matching labels move across, the rest
+  become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
