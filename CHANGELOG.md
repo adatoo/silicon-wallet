@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1] - 2026-10-19
+
+### Fixed
+
+- On iPhone and iPad, Face ID and Touch ID no longer fail with an unhelpful error when the app
+  is opened or brought back to the front. If something does go wrong, the message now says what.
+
 ## [0.16.0] - 2026-10-19
 
 ### Added
