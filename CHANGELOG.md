@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-10-19
+
+### Changed
+
+- On iPad, Settings, Lock, Help and iCloud Sync are at the top right of the screen instead of
+  being folded into a ••• menu at the top of the sidebar, and New Group shows in the sidebar.
+  On iPhone they stay above the groups list, now with a Help button.
+
 ## [0.22.0] - 2026-10-19
 
 ### Added

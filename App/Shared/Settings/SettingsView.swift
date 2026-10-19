@@ -1,6 +1,20 @@
 import SiliconWalletKit
 import SwiftUI
 
+#if os(iOS)
+    /// Opens Settings in a sheet; the Mac uses the Settings scene (⌘,) instead.
+    struct SettingsButton: View {
+        @State private var showingSettings = false
+
+        var body: some View {
+            Button("Settings", systemImage: "gear") { showingSettings = true }
+                .sheet(isPresented: $showingSettings) {
+                    NavigationStack { SettingsView() }
+                }
+        }
+    }
+#endif
+
 /// Lock, clipboard and vault settings: the Settings window on the Mac, a sheet on iOS.
 struct SettingsView: View {
     @Environment(AppModel.self) private var model

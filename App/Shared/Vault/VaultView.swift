@@ -25,6 +25,9 @@ struct VaultView: View {
     @State private var editor: EditorTarget?
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @AppStorage(EntryListOptions.layoutKey) private var layout = EntryLayout.list
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     var body: some View {
         @Bindable var model = model
@@ -37,12 +40,24 @@ struct VaultView: View {
                     entries
                         .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 480)
                 } detail: {
-                    if let entry = model.selectedEntry {
-                        EntryDetailView(entry: entry, editor: $editor)
-                            .id(entry.id)
-                    } else {
-                        ContentUnavailableView("No Entry Selected", systemImage: "key.horizontal")
+                    Group {
+                        if let entry = model.selectedEntry {
+                            EntryDetailView(entry: entry, editor: $editor)
+                                .id(entry.id)
+                        } else {
+                            ContentUnavailableView("No Entry Selected", systemImage: "key.horizontal")
+                        }
                     }
+                    #if os(iOS)
+                        // The middle column is too narrow for these on iPad, so they go top right.
+                        // (Each column has its own size class; the detail column's matches the window.)
+                        .toolbar {
+                            if horizontalSizeClass == .regular {
+                                ToolbarSpacer(.fixed)
+                                VaultActionsToolbar()
+                            }
+                        }
+                    #endif
                 }
             case .cards:
                 // Cards take the width the detail column would have; an entry opens in a sheet.
@@ -84,8 +99,18 @@ struct VaultView: View {
     }
 
     private var sidebar: some View {
-        SidebarView(editor: $editor)
+        SidebarView(editor: $editor, showsVaultActions: showsVaultActionsInSidebar)
             .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+    }
+
+    /// iPhone shows Sync, Lock, Settings and Help above the groups; a regular-width iPad shows
+    /// them top right instead, as its sidebar is too narrow for them.
+    private var showsVaultActionsInSidebar: Bool {
+        #if os(iOS)
+            horizontalSizeClass == .compact
+        #else
+            false
+        #endif
     }
 
     /// The entries column: the sidebar's entries, or Recently Deleted.
