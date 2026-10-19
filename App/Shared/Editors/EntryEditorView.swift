@@ -59,10 +59,19 @@ struct EntryEditorView: View {
             if !draft.attachments.isEmpty {
                 Section {
                     ForEach(draft.attachments) { attachment in
-                        AttachmentRow(
-                            attachment: attachment,
-                            isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false
-                        )
+                        HStack {
+                            AttachmentRow(
+                                attachment: attachment,
+                                isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
+                            Spacer()
+                            Button("Remove Attachment", systemImage: "minus.circle.fill", role: .destructive) {
+                                draft.attachments.removeAll { $0.id == attachment.id }
+                            }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(.red)
+                            .help("Remove \(attachment.filename) when you save")
+                        }
                         .reorderable(attachment, in: $draft.attachments, title: attachment.filename)
                     }
                     #if os(iOS)
@@ -71,7 +80,9 @@ struct EntryEditorView: View {
                 } header: {
                     Text("Attachments")
                 } footer: {
-                    Text("Drag to change the order. Add, open and remove attachments from the entry itself.")
+                    Text(
+                        "Drag to change the order. A removed attachment is deleted when you save. Add and open attachments from the entry itself."
+                    )
                 }
             }
 

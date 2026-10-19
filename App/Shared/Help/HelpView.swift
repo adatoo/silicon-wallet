@@ -194,6 +194,7 @@ struct HelpTopic: Identifiable, Hashable {
                 attachmentsAdd,
                 "Images, PDFs and text files are shown straight from memory. Other files open in Quick Look from a temporary decrypted copy, which is deleted when you close it and when the vault locks.",
                 "**Save a Copy** writes an unencrypted copy wherever you choose. Delete it when you've finished with it.",
+                "To remove an attachment, use its menu in the entry, or the red remove button next to it while editing; that one takes effect when you save.",
             ]
         ),
         HelpTopic(

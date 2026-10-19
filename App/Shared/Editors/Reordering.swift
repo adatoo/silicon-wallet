@@ -34,7 +34,10 @@ private struct Reorderable<Item: Identifiable>: ViewModifier where Item.ID == UU
         #if os(macOS)
             // An overlay, not an HStack: in an HStack a wrapping text field in the row is laid out
             // one line high, so a long value scrolls instead of growing.
+            // The row fills the width, so the handle sits at its right edge however narrow the
+            // row's content is.
             content
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.trailing, 30)
                 .overlay(alignment: .trailing) {
                     DragHandle(row: ReorderedRow(id: id), title: title)
