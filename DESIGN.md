@@ -69,6 +69,10 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   teal to navy) is drawn by `scripts/make-icon.swift`; run `task icon` after changing it.
 - Sidebar: All Entries, Favourites, then the groups (drag to reorder). Moving an entry to
   another group keeps every value: matching labels move across, the rest become extra fields.
+- Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
+  skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
+  Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
+  display preference kept in `UserDefaults`.
 - Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌃⌘L lock.
 - Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
   filled with obviously fake entries, for UI tests and screenshots.

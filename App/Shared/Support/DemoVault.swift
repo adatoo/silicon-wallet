@@ -64,5 +64,20 @@ enum DemoVault {
                     CustomField(label: "Password", kind: .password, value: "demo-wifi-passphrase"),
                 ],
                 notes: "Router is in the hall cupboard."))
+        try session.addEntry(
+            VaultEntry(
+                groupID: notes.id, title: "Gym Locker",
+                extraFields: [CustomField(label: "Code", kind: .number, isConcealed: true, value: "0000")]))
+        try session.addEntry(
+            VaultEntry(
+                groupID: notes.id, title: "Library Card",
+                extraFields: [CustomField(label: "Card Number", value: "EXAMPLE-0000")]))
+        try session.addEntry(
+            VaultEntry(
+                groupID: notes.id, title: "4G Hotspot",
+                extraFields: [
+                    CustomField(label: "Network", value: "Example-Hotspot"),
+                    CustomField(label: "Password", kind: .password, value: "demo-hotspot-pass"),
+                ]))
     }
 }

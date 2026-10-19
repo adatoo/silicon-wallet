@@ -6,6 +6,7 @@ struct EntryListView: View {
     @Environment(AppModel.self) private var model
     @Binding var editor: EditorTarget?
     @State private var entryToDelete: VaultEntry?
+    @AppStorage(EntryListOptions.groupsByLetterKey) private var groupsByLetter = true
     #if os(iOS)
         @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     #endif
@@ -14,21 +15,20 @@ struct EntryListView: View {
         @Bindable var model = model
         let entries = model.visibleEntries
         List(selection: $model.entrySelection) {
-            ForEach(entries) { entry in
-                EntryRow(entry: entry, group: model.session?.group(id: entry.groupID))
-                    .tag(entry.id)
-                    .contextMenu {
-                        Button(entry.isFavorite ? "Remove from Favourites" : "Add to Favourites", systemImage: "star") {
-                            model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
-                        }
-                        Button("Edit…", systemImage: "pencil") { editor = .entry(entry) }
-                        Button("Delete…", systemImage: "trash", role: .destructive) { entryToDelete = entry }
+            if groupsByLetter {
+                ForEach(entries.sectionedByFirstLetter()) { section in
+                    Section(section.letter) {
+                        ForEach(section.entries, content: row)
                     }
-                    .swipeActions {
-                        Button("Delete", systemImage: "trash", role: .destructive) { entryToDelete = entry }
-                    }
+                    .sectionIndexLabel(section.letter)
+                }
+            } else {
+                ForEach(entries, content: row)
             }
         }
+        #if os(iOS)
+            .listSectionIndexVisibility(groupsByLetter ? .visible : .hidden)
+        #endif
         .overlay {
             if entries.isEmpty {
                 if model.searchText.isEmpty {
@@ -56,6 +56,9 @@ struct EntryListView: View {
         #endif
         .toolbar {
             ToolbarItem {
+                EntryListOptions.Menu()
+            }
+            ToolbarItem {
                 Button("New Entry", systemImage: "plus") { editor = .newEntry(groupID: model.selectedGroup?.id) }
                     .help("New entry")
                     .disabled(model.session?.groups.isEmpty != false)
@@ -71,8 +74,41 @@ struct EntryListView: View {
         }
     }
 
+    private func row(_ entry: VaultEntry) -> some View {
+        EntryRow(entry: entry, group: model.session?.group(id: entry.groupID))
+            .tag(entry.id)
+            .contextMenu {
+                Button(entry.isFavorite ? "Remove from Favourites" : "Add to Favourites", systemImage: "star") {
+                    model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
+                }
+                Button("Edit…", systemImage: "pencil") { editor = .entry(entry) }
+                Button("Delete…", systemImage: "trash", role: .destructive) { entryToDelete = entry }
+            }
+            .swipeActions {
+                Button("Delete", systemImage: "trash", role: .destructive) { entryToDelete = entry }
+            }
+    }
+
     private var deleteBinding: Binding<Bool> {
         Binding(get: { entryToDelete != nil }, set: { if !$0 { entryToDelete = nil } })
+    }
+}
+
+/// How the entry list is shown. Kept in `UserDefaults`: these are display preferences, never
+/// anything from the vault.
+enum EntryListOptions {
+    static let groupsByLetterKey = "groupsEntriesByLetter"
+
+    /// The middle column's View Options menu.
+    struct Menu: View {
+        @AppStorage(groupsByLetterKey) private var groupsByLetter = true
+
+        var body: some View {
+            SwiftUI.Menu("View Options", systemImage: "line.3.horizontal.decrease.circle") {
+                Toggle("Group by First Letter", isOn: $groupsByLetter)
+            }
+            .help("View options")
+        }
     }
 }
 

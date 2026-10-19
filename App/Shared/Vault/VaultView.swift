@@ -102,6 +102,7 @@ struct VaultCommands: Commands {
     let model: AppModel
     let lock: LockController
     @FocusedValue(\.vaultActions) private var actions
+    @AppStorage(EntryListOptions.groupsByLetterKey) private var groupsByLetter = true
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -116,6 +117,10 @@ struct VaultCommands: Commands {
             Divider()
             Button("Import from Acrylic Wallet…") { actions?.importAcrylic() }
                 .disabled(actions == nil)
+        }
+        CommandGroup(before: .toolbar) {
+            Toggle("Group by First Letter", isOn: $groupsByLetter)
+            Divider()
         }
         CommandMenu("Vault") {
             Button("Lock") { lock.lockNow() }
