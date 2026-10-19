@@ -44,9 +44,22 @@ public final class VaultSession {
     /// How long groups and entries stay in Recently Deleted before they're deleted for good.
     public static let trashRetention: TimeInterval = 30 * 24 * 60 * 60
 
-    /// When an item moved to Recently Deleted at `deletedAt` will be deleted for good.
+    /// How long this device shows an item in Recently Deleted, at least, before deleting it for
+    /// good, whatever its deletion date says (`TrashLedger`).
+    public static let minimumNotice: TimeInterval = 7 * 24 * 60 * 60
+
+    /// When an item moved to Recently Deleted at `deletedAt` will be deleted for good, going by
+    /// its deletion date alone.
     public static func purgeDate(forDeletedAt deletedAt: Date) -> Date {
         deletedAt.addingTimeInterval(trashRetention)
+    }
+
+    /// When the item `id` in Recently Deleted will be deleted for good: `trashRetention` after it
+    /// was deleted, but not before this device has shown it for `minimumNotice`. A deletion date
+    /// later than when this device first saw the item counts from when it was seen.
+    public func purgeDate(forTrashedItem id: UUID, deletedAt: Date) -> Date {
+        let seen = trashLedger.firstSeen(id) ?? .now
+        return max(Self.purgeDate(forDeletedAt: min(deletedAt, seen)), seen.addingTimeInterval(Self.minimumNotice))
     }
 
     public private(set) var state: State
@@ -65,6 +78,7 @@ public final class VaultSession {
     @ObservationIgnored private let store: any VaultStore
     /// The device's access log, if this session keeps one (DESIGN.md §5).
     @ObservationIgnored public let accessLog: AccessLog?
+    @ObservationIgnored private let trashLedger: TrashLedger
     @ObservationIgnored private var vaultKey: SymmetricKey?
     @ObservationIgnored private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -73,9 +87,12 @@ public final class VaultSession {
     }()
     @ObservationIgnored private let decoder = JSONDecoder()
 
-    public init(store: any VaultStore, accessLog: AccessLog? = nil) throws {
+    public init(
+        store: any VaultStore, accessLog: AccessLog? = nil, trashLedger: TrashLedger = TrashLedger(directory: nil)
+    ) throws {
         self.store = store
         self.accessLog = accessLog
+        self.trashLedger = trashLedger
         self.state = try store.loadMeta() == nil ? .noVault : .locked
     }
 
@@ -124,7 +141,7 @@ public final class VaultSession {
             accessLog?.recordWhileLocked(.failedUnlock)
             throw VaultError.wrongPassword
         }
-        try open(with: key)
+        try open(with: key, purging: true)
         accessLog?.record(AccessEvent(kind: .unlockedWithPassword), key: key)
     }
 
@@ -135,7 +152,7 @@ public final class VaultSession {
             accessLog?.recordWhileLocked(.failedUnlock)
             throw VaultError.wrongPassword
         }
-        try open(with: key)
+        try open(with: key, purging: true)
         accessLog?.record(AccessEvent(kind: .unlockedWithBiometrics), key: key)
     }
 
@@ -150,6 +167,7 @@ public final class VaultSession {
         deletedGroups = []
         deletedEntries = []
         unreadableRecordCount = 0
+        trashLedger.forget()
         if state == .unlocked { state = .locked }
     }
 
@@ -179,17 +197,19 @@ public final class VaultSession {
         return (try? VaultKey.unwrap(meta.wrappedVaultKey, kek: kek)) != nil
     }
 
-    /// Re-reads every record from the store, after sync has written remote changes into it.
+    /// Re-reads every record from the store, after sync has written remote changes into it. It
+    /// never deletes anything for good: only an unlock does that.
     public func reload() throws {
         if state == .noVault, try store.loadMeta() != nil { state = .locked }
         guard let key = vaultKey else { return }
-        try open(with: key)
+        try open(with: key, purging: false)
     }
 
     /// Forgets the vault after sync removed it because it was deleted on another device.
     public func vaultWasDeletedElsewhere() {
         lock()
         accessLog?.clear()
+        trashLedger.clear()
         state = .noVault
     }
 
@@ -197,6 +217,7 @@ public final class VaultSession {
     public func deleteVault() throws {
         try store.deleteAll()
         accessLog?.clear()
+        trashLedger.clear()
         lock()
         state = .noVault
     }
@@ -247,6 +268,7 @@ public final class VaultSession {
         deletedGroups.append(group)
         deletedEntries += trashed
         sortTrash()
+        noteTrash()
     }
 
     /// Puts the groups in the given order (for drag-to-reorder).
@@ -312,6 +334,7 @@ public final class VaultSession {
         entries.removeAll { $0.id == id }
         deletedEntries.append(entry)
         sortTrash()
+        noteTrash()
     }
 
     public func setFavorite(_ isFavorite: Bool, entryID: UUID) throws {
@@ -397,15 +420,17 @@ public final class VaultSession {
         try deletePermanently(groupIDs: deletedGroups.map(\.id), entryIDs: deletedEntries.map(\.id))
     }
 
-    /// Deletes for good whatever has been in Recently Deleted for `trashRetention` or longer,
-    /// with any remaining entries of an expired group. Runs on every unlock and reload; the
+    /// Deletes for good whatever has reached its `purgeDate(forTrashedItem:deletedAt:)`, with any
+    /// remaining entries of an expired group. Runs on unlock, never on a reload after sync; the
     /// deletion date is inside the ciphertext, so this can only happen while unlocked.
     @discardableResult
     public func purgeExpiredItems(now: Date = .now) throws -> Int {
         try requireUnlocked()
-        let isExpired = { (deleted: Date?) in deleted.map { Self.purgeDate(forDeletedAt: $0) <= now } ?? false }
-        let groupIDs = Set(deletedGroups.filter { isExpired($0.deleted) }.map(\.id))
-        let entryIDs = deletedEntries.filter { isExpired($0.deleted) || groupIDs.contains($0.groupID) }.map(\.id)
+        let isExpired = { (id: UUID, deleted: Date?) in
+            deleted.map { self.purgeDate(forTrashedItem: id, deletedAt: $0) <= now } ?? false
+        }
+        let groupIDs = Set(deletedGroups.filter { isExpired($0.id, $0.deleted) }.map(\.id))
+        let entryIDs = deletedEntries.filter { isExpired($0.id, $0.deleted) || groupIDs.contains($0.groupID) }.map(\.id)
         guard !groupIDs.isEmpty || !entryIDs.isEmpty else { return 0 }
         try deletePermanently(groupIDs: Array(groupIDs), entryIDs: entryIDs)
         return groupIDs.count + entryIDs.count
@@ -590,7 +615,7 @@ public final class VaultSession {
 
     // MARK: - Sealing
 
-    private func open(with key: SymmetricKey) throws {
+    private func open(with key: SymmetricKey, purging: Bool) throws {
         let meta = try requireMeta()
         guard meta.formatVersion <= SiliconWalletKit.formatVersion else {
             throw VaultError.unsupportedFormat(meta.formatVersion)
@@ -642,8 +667,10 @@ public final class VaultSession {
         sortGroups()
         sortEntries()
         sortTrash()
-        // A purge that fails now is tried again at the next unlock or reload.
-        _ = try? purgeExpiredItems()
+        trashLedger.load(key: key)
+        noteTrash()
+        // A purge that fails now is tried again at the next unlock.
+        if purging { _ = try? purgeExpiredItems() }
     }
 
     private func seal(_ group: VaultGroup) throws -> SealedRecord {
@@ -676,6 +703,13 @@ public final class VaultSession {
 
     private func sortEntries() {
         entries.sort { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+    }
+
+    /// Records in the ledger which items are in Recently Deleted now.
+    private func noteTrash() {
+        guard let vaultKey else { return }
+        let ids = Set(deletedGroups.map(\.id) + deletedEntries.map(\.id))
+        trashLedger.update(trashed: ids, now: .now, key: vaultKey)
     }
 
     private func sortTrash() {

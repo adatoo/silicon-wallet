@@ -205,8 +205,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   entry. A group takes its entries with it, all with the same deletion date; recovering the
   group brings back exactly those, and recovering one of them brings back the group (alone). Each
   item can be recovered or deleted now (with its attachments, from every device), and Delete
-  All empties it. Anything deleted 30 days ago or more is deleted for good at the next unlock or
-  reload on any device (`VaultSession.purgeExpiredItems`). The mark is `deleted: Date?` inside
+  All empties it. Anything deleted 30 days ago or more is deleted for good at the next unlock on
+  any device (`VaultSession.purgeExpiredItems`), never on a reload after sync, and only once that
+  device has shown it in Recently Deleted for at least 7 days. Each device keeps when it first
+  saw each item in a local `TrashLedger` file, sealed under the vault key like the access log;
+  a deletion date later than that counts from it. So an old copy replayed through iCloud, or a
+  date from a device whose clock is far behind, can't delete anything at once. The mark is `deleted: Date?` inside
   each group's and entry's ciphertext, so moving in and out is an ordinary save that syncs and
   resolves like any edit, and only the final deletion is a CloudKit delete. A deleted entry is
   shown read-only. Builds from before Recently Deleted ignore the mark and show those items as

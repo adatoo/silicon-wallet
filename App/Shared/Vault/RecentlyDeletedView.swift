@@ -104,7 +104,7 @@ struct RecentlyDeletedView: View {
             .count ?? 0
         return TrashRow(
             title: group.name.isEmpty ? "Untitled" : group.name, icon: group.icon,
-            detail: "\(count) entr\(count == 1 ? "y" : "ies")", deleted: group.deleted
+            detail: "\(count) entr\(count == 1 ? "y" : "ies")", purgeDate: purgeDate(group.id, group.deleted)
         )
         .contextMenu { actions(.group(group)) }
         .swipeActions { actions(.group(group)) }
@@ -115,7 +115,7 @@ struct RecentlyDeletedView: View {
         let group = model.session?.group(id: entry.groupID) ?? model.session?.deletedGroup(id: entry.groupID)
         let row = TrashRow(
             title: entry.title.isEmpty ? "Untitled" : entry.title, icon: group?.icon ?? "questionmark.folder",
-            detail: group?.name ?? "No group", deleted: entry.deleted)
+            detail: group?.name ?? "No group", purgeDate: purgeDate(entry.id, entry.deleted))
         Group {
             if layout == .cards {
                 Button {
@@ -130,6 +130,10 @@ struct RecentlyDeletedView: View {
         }
         .contextMenu { actions(.entry(entry)) }
         .swipeActions { actions(.entry(entry)) }
+    }
+
+    private func purgeDate(_ id: UUID, _ deleted: Date?) -> Date? {
+        deleted.flatMap { model.session?.purgeDate(forTrashedItem: id, deletedAt: $0) }
     }
 
     @ViewBuilder
@@ -175,7 +179,7 @@ struct TrashRow: View {
     let title: String
     let icon: String
     let detail: String
-    let deleted: Date?
+    let purgeDate: Date?
 
     var body: some View {
         HStack(spacing: 10) {
@@ -186,7 +190,7 @@ struct TrashRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .lineLimit(1)
-                Text("\(detail) · \(TrashRow.timeLeft(deleted))")
+                Text("\(detail) · \(TrashRow.timeLeft(until: purgeDate))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -195,10 +199,10 @@ struct TrashRow: View {
         .padding(.vertical, 2)
     }
 
-    /// "12 days left", from when the item was deleted.
-    static func timeLeft(_ deleted: Date?, now: Date = .now) -> String {
-        guard let deleted else { return "" }
-        let remaining = VaultSession.purgeDate(forDeletedAt: deleted).timeIntervalSince(now)
+    /// "12 days left", until the item is deleted for good.
+    static func timeLeft(until purgeDate: Date?, now: Date = .now) -> String {
+        guard let purgeDate else { return "" }
+        let remaining = purgeDate.timeIntervalSince(now)
         let days = Int((remaining / (24 * 60 * 60)).rounded(.up))
         return days <= 1 ? "Less than a day left" : "\(days) days left"
     }
