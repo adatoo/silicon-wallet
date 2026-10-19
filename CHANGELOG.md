@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2026-10-19
+
+### Changed
+
+- The project is ready to be published as open source: a contributing guide, an up-to-date
+  README, and a website for the support page and privacy policy.
+
 ## [0.18.0] - 2026-10-19
 
 ### Added
