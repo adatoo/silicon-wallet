@@ -74,11 +74,21 @@ private func value(_ entry: VaultEntry, _ label: String, in plan: AcrylicImportP
     #expect(text.contains("Ü") || text.contains("ü") || text.contains("ä"))
 }
 
+@Test func attachmentsOverTheLimitAreLeftOutAndCounted() throws {
+    let reader = try AcrylicWalletReader(
+        ciphertext: Data(contentsOf: ImportFixture.directory.appendingPathComponent("g.wallet")), password: "fakepass")
+    let plan = try AcrylicImporter.plan(reader: reader, maximumAttachmentSize: 16)
+    #expect(plan.attachments.isEmpty)
+    #expect(plan.oversizedAttachmentCount == 1)
+    #expect(plan.entries.count == 32)
+}
+
 @Test func vaultGBringsTheAttachment() throws {
     let plan = try ImportFixture.plan("g.wallet", "fakepass")
     #expect(plan.entries.count == 32)
     #expect(plan.attachments.count == 1)
     #expect(plan.missingAttachmentCount == 0)
+    #expect(plan.oversizedAttachmentCount == 0)
 
     let attachment = try #require(plan.attachments.first)
     #expect(attachment.filename == "attachment-test.png")

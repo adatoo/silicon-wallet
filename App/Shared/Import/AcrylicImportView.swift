@@ -108,6 +108,12 @@ struct AcrylicImportView: View {
                     Text("\(plan.missingAttachmentCount) attachments were listed but missing from the file.")
                         .font(.footnote).foregroundStyle(.secondary)
                 }
+                if plan.oversizedAttachmentCount > 0 {
+                    Text(
+                        "\(plan.oversizedAttachmentCount) attachments are over \(VaultSession.maximumAttachmentSize.formatted(.byteCount(style: .file))), the largest Silicon Wallet keeps, so they won't be imported."
+                    )
+                    .font(.footnote).foregroundStyle(.secondary)
+                }
             }
             Section("Groups") {
                 ForEach(plan.groups) { group in
@@ -158,6 +164,12 @@ struct AcrylicImportView: View {
             let url = try result.get()
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            if let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize,
+                size > AcrylicWalletFile.maximumFileSize
+            {
+                problem = Self.tooLargeMessage
+                return
+            }
             let data = try Data(contentsOf: url, options: .mappedIfSafe)
             stage = .password(filename: url.lastPathComponent, ciphertext: Data(data))
         } catch {
@@ -186,6 +198,8 @@ struct AcrylicImportView: View {
                 problem = "That password didn't open the file. Check it, and that this is an Acrylic Wallet 3 file."
             case .failure(AcrylicWalletError.notAnAcrylicWallet):
                 problem = "This doesn't look like an Acrylic Wallet file."
+            case .failure(AcrylicWalletError.fileTooLarge):
+                problem = Self.tooLargeMessage
             case .failure(AcrylicWalletError.unsupportedFormat):
                 problem =
                     "This Wallet file uses a format Silicon Wallet can't read yet. Please report it on the project's GitHub page, without attaching the file."
@@ -194,6 +208,9 @@ struct AcrylicImportView: View {
             }
         }
     }
+
+    private static let tooLargeMessage =
+        "That file is larger than \(AcrylicWalletFile.maximumFileSize.formatted(.byteCount(style: .file))), the most Silicon Wallet can import."
 
     private func importPlan(_ plan: AcrylicImportPlan) {
         guard let session = model.session else { return }

@@ -11,6 +11,9 @@ public enum AcrylicWalletError: Error, Equatable, Sendable {
     case wrongPasswordOrUnsupportedFile
     /// A CommonCrypto call failed; the `CCCryptorStatus` is included for diagnostics.
     case cipherFailed(Int)
-    /// The decrypted bytes don't open as SQLite, or fail `PRAGMA integrity_check`.
+    /// The decrypted bytes don't open as SQLite, or fail `PRAGMA integrity_check`, or a table the
+    /// reader needs is missing or isn't a plain table.
     case corruptDatabase
+    /// The file is larger than `AcrylicWalletFile.maximumFileSize`.
+    case fileTooLarge
 }

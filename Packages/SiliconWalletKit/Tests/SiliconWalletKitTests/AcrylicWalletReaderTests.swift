@@ -174,6 +174,7 @@ private func syntheticVault(pageSize: Int) throws -> Data {
             defaultheaders BLOB, datelastupdated TEXT);
         CREATE TABLE entries (pk INTEGER PRIMARY KEY, title TEXT, parent TEXT, notes TEXT, infodictionary TEXT,
             extraheaders BLOB, star INTEGER, uuid TEXT, files TEXT, datelastupdated TEXT);
+        CREATE TABLE files (pk INTEGER PRIMARY KEY, uuid TEXT, name TEXT, size INTEGER, type TEXT, data BLOB);
         INSERT INTO groups (title, "order", uuid) VALUES ('Fake Group', 0, 'FAKE-GROUP');
         INSERT INTO entries (title, parent, star, uuid) VALUES ('Fake Entry', 'FAKE-GROUP', 0, 'FAKE-ENTRY');
         """
@@ -197,4 +198,43 @@ private func encrypt(_ plaintext: Data, pageSize: Int, password: String) throws 
         ciphertext.append(contentsOf: try AcrylicWalletCipher.decryptPage(page, pageNumber: pageNumber, key: key))
     }
     return ciphertext
+}
+
+// MARK: - Hostile files
+
+/// A plain SQLite image built from `sql`, as a decrypted Wallet file would be.
+private func sqliteImage(_ sql: String) throws -> Data {
+    var db: OpaquePointer?
+    guard sqlite3_open(":memory:", &db) == SQLITE_OK, let db else { throw AcrylicWalletError.corruptDatabase }
+    defer { sqlite3_close(db) }
+    guard sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK else { throw AcrylicWalletError.corruptDatabase }
+    var size: sqlite3_int64 = 0
+    guard let bytes = sqlite3_serialize(db, "main", &size, 0) else { throw AcrylicWalletError.corruptDatabase }
+    defer { sqlite3_free(bytes) }
+    return Data(bytes: bytes, count: Int(size))
+}
+
+@Test func aFileOverTheSizeLimitIsRefusedBeforeDecrypting() throws {
+    let file = try Fixture.data("a.wallet")
+    #expect(throws: AcrylicWalletError.fileTooLarge) {
+        try AcrylicWalletFile.decrypt(file, password: "fakepass", maximumSize: file.count - 1)
+    }
+    #expect(AcrylicWalletFile.maximumFileSize == 512 * 1024 * 1024)
+}
+
+@Test func aViewInPlaceOfATableIsRejected() throws {
+    let tables = "CREATE TABLE entries (pk INTEGER); CREATE TABLE files (pk INTEGER);"
+    let withView = try sqliteImage(
+        tables
+            + """
+             CREATE VIEW groups AS WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM n)
+             SELECT x AS pk FROM n;
+            """)
+    #expect(throws: AcrylicWalletError.corruptDatabase) { try AcrylicWalletReader(plaintext: withView) }
+
+    let missing = try sqliteImage(tables)
+    #expect(throws: AcrylicWalletError.corruptDatabase) { try AcrylicWalletReader(plaintext: missing) }
+
+    let plain = try sqliteImage(tables + " CREATE TABLE groups (pk INTEGER);")
+    #expect(try AcrylicWalletReader(plaintext: plain).groups().isEmpty)
 }

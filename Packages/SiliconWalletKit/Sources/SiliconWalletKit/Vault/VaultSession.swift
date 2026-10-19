@@ -40,7 +40,7 @@ public final class VaultSession {
     /// The record schema written by this build, stored in the clear with each record.
     public static let recordSchemaVersion = 1
     /// The largest attachment accepted: 100 MB (DESIGN.md §7).
-    public static let maximumAttachmentSize = 100 * 1024 * 1024
+    public nonisolated static let maximumAttachmentSize = 100 * 1024 * 1024
     /// How long groups and entries stay in Recently Deleted before they're deleted for good.
     public static let trashRetention: TimeInterval = 30 * 24 * 60 * 60
 

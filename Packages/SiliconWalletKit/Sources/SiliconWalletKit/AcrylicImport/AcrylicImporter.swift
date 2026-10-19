@@ -18,6 +18,8 @@ public struct AcrylicImportPlan: Sendable {
     public var unlabelledValueCount: Int
     /// Attachment references whose file wasn't in the vault.
     public var missingAttachmentCount: Int
+    /// Attachments left out for being over `VaultSession.maximumAttachmentSize`.
+    public var oversizedAttachmentCount = 0
 
     public var fieldCount: Int { entries.reduce(0) { $0 + $1.values.count + $1.extraFields.count } }
 }
@@ -41,9 +43,11 @@ public enum AcrylicImporter {
         return try plan(reader: reader, existingGroupNames: existingGroupNames)
     }
 
-    public static func plan(reader: AcrylicWalletReader, existingGroupNames: Set<String> = []) throws
-        -> AcrylicImportPlan
-    {
+    /// - Parameter maximumAttachmentSize: for tests; attachments larger than this are left out.
+    public static func plan(
+        reader: AcrylicWalletReader, existingGroupNames: Set<String> = [],
+        maximumAttachmentSize: Int = VaultSession.maximumAttachmentSize
+    ) throws -> AcrylicImportPlan {
         let acrylicGroups = try reader.groups()
         let acrylicEntries = try reader.entries()
         let filesByUUID = Dictionary(try reader.files().map { ($0.uuid, $0) }, uniquingKeysWith: { first, _ in first })
@@ -74,6 +78,7 @@ public enum AcrylicImporter {
         var attachments: [AcrylicImportPlan.Attachment] = []
         var unlabelled = 0
         var missing = 0
+        var oversized = 0
 
         for source in acrylicEntries {
             // An entry whose group is missing goes into a catch-all group, made on demand.
@@ -125,6 +130,10 @@ public enum AcrylicImporter {
                     missing += 1
                     continue
                 }
+                guard file.data.count <= maximumAttachmentSize else {
+                    oversized += 1
+                    continue
+                }
                 attachments.append(
                     .init(entryID: entry.id, filename: file.name, uti: uti(for: file), contents: file.data))
             }
@@ -132,7 +141,7 @@ public enum AcrylicImporter {
 
         return AcrylicImportPlan(
             groups: groups, entries: entries, attachments: attachments, unlabelledValueCount: unlabelled,
-            missingAttachmentCount: missing)
+            missingAttachmentCount: missing, oversizedAttachmentCount: oversized)
     }
 
     // MARK: - Field definitions
