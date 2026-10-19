@@ -73,9 +73,15 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
   display preference kept in `UserDefaults`.
-- Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌃⌘L lock.
+- Entries show as a list (three columns) or as cards (View Options menu; Mac View menu ⌘1 / ⌘2).
+  Cards mode is two columns, Groups | cards, so the cards get the width. A card shows the group
+  icon, title, first non-concealed value, group and favourite star, never a concealed value.
+  Opening a card shows the entry in a sheet with the same detail view, Done and Edit; the sheet
+  follows edits and closes if the entry is deleted or the vault locks.
+- Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌘1 / ⌘2 list / cards, ⌃⌘L lock.
 - Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
-  filled with obviously fake entries, for UI tests and screenshots.
+  filled with obviously fake entries, for UI tests and screenshots. `-entryLayout cards` shows
+  the card view for that launch.
 
 ## 4. Data model (plaintext, in memory only)
 

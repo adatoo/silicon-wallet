@@ -10,6 +10,11 @@ enum SidebarItem: Hashable {
     case group(UUID)
 }
 
+/// An entry open in a sheet from the card view.
+struct OpenedEntry: Identifiable, Hashable {
+    let id: VaultEntry.ID
+}
+
 /// The app's state: the vault session plus what the UI has selected. Views only ever reach the
 /// vault through `session` (DESIGN.md §3).
 @MainActor
@@ -25,6 +30,8 @@ final class AppModel {
     /// Which column a compact (iPhone) split view shows.
     var compactColumn = NavigationSplitViewColumn.sidebar
     var entrySelection: VaultEntry.ID?
+    /// The entry open in a sheet, from the card view.
+    var openedEntry: OpenedEntry?
     var searchText = ""
     /// Whether the Acrylic Wallet import sheet is showing.
     var isImportingAcrylic = false
@@ -84,7 +91,8 @@ final class AppModel {
     }
 
     /// Picks the screen for App Store screenshots (`task screenshots`):
-    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`.
+    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`. With
+    /// `-entryLayout cards` (which sets that preference for the launch) the entry opens in a sheet.
     private func applyScreenshotArguments(_ arguments: [String]) {
         func value(after flag: String) -> String? {
             guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
@@ -101,7 +109,11 @@ final class AppModel {
         if let title = value(after: "-ScreenshotEntry"),
             let entry = session?.entries.first(where: { $0.title == title })
         {
-            entrySelection = entry.id
+            if UserDefaults.standard.string(forKey: EntryListOptions.layoutKey) == EntryLayout.cards.rawValue {
+                openedEntry = OpenedEntry(id: entry.id)
+            } else {
+                entrySelection = entry.id
+            }
             compactColumn = .detail
         }
     }
@@ -150,6 +162,7 @@ final class AppModel {
 
     func lock() {
         entrySelection = nil
+        openedEntry = nil
         searchText = ""
         session?.lock()
     }

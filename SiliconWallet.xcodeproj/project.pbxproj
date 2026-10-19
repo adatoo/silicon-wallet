@@ -28,6 +28,7 @@
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
 		D2E8F03BB82956CD144E8566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF419223A81F08132A022785 /* Assets.xcassets */; };
+		D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */; };
 		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
 		E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */; };
 		EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD892512A872BD9135E5CCB /* EntryListView.swift */; };
@@ -57,6 +58,7 @@
 		244D550D93A11FBA8C5076F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsSection.swift; sourceTree = "<group>"; };
 		303469DF1EEEF616BB78704E /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryCard.swift; sourceTree = "<group>"; };
 		381402974B9CD0061C4ADFF8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 		6E431CF5DF7362B9250D309C /* Vault */ = {
 			isa = PBXGroup;
 			children = (
+				31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */,
 				772BFA3C071751268172F197 /* EntryDetailView.swift */,
 				ACD892512A872BD9135E5CCB /* EntryListView.swift */,
 				244D550D93A11FBA8C5076F4 /* SidebarView.swift */,
@@ -391,6 +394,7 @@
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,
 				EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */,
 				42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */,
+				D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */,
 				F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */,
 				A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */,
 				EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */,

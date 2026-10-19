@@ -24,21 +24,33 @@ struct VaultView: View {
     @Environment(LockController.self) private var lock
     @State private var editor: EditorTarget?
     @State private var columnVisibility = NavigationSplitViewVisibility.all
+    @AppStorage(EntryListOptions.layoutKey) private var layout = EntryLayout.list
 
     var body: some View {
         @Bindable var model = model
-        NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $model.compactColumn) {
-            SidebarView(editor: $editor)
-                .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
-        } content: {
-            EntryListView(editor: $editor)
-                .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 480)
-        } detail: {
-            if let entry = model.selectedEntry {
-                EntryDetailView(entry: entry, editor: $editor)
-                    .id(entry.id)
-            } else {
-                ContentUnavailableView("No Entry Selected", systemImage: "key.horizontal")
+        Group {
+            switch layout {
+            case .list:
+                NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: $model.compactColumn) {
+                    sidebar
+                } content: {
+                    EntryListView(editor: $editor)
+                        .navigationSplitViewColumnWidth(min: 260, ideal: 320, max: 480)
+                } detail: {
+                    if let entry = model.selectedEntry {
+                        EntryDetailView(entry: entry, editor: $editor)
+                            .id(entry.id)
+                    } else {
+                        ContentUnavailableView("No Entry Selected", systemImage: "key.horizontal")
+                    }
+                }
+            case .cards:
+                // Cards take the width the detail column would have; an entry opens in a sheet.
+                NavigationSplitView(columnVisibility: $columnVisibility, preferredCompactColumn: cardsCompactColumn) {
+                    sidebar
+                } detail: {
+                    EntryListView(editor: $editor)
+                }
             }
         }
         #if os(macOS)
@@ -52,19 +64,8 @@ struct VaultView: View {
                 }
             }
         #endif
-        .sheet(item: $editor) { target in
-            NavigationStack {
-                switch target {
-                case .newGroup: GroupEditorView(group: nil)
-                case .group(let group): GroupEditorView(group: group)
-                case .newEntry(let groupID): EntryEditorView(entry: nil, preferredGroupID: groupID)
-                case .entry(let entry): EntryEditorView(entry: entry, preferredGroupID: entry.groupID)
-                }
-            }
-            #if os(macOS)
-                .frame(minWidth: 480, idealWidth: 540, minHeight: 480, idealHeight: 620)
-            #endif
-        }
+        .sheet(item: $editor) { EditorSheet(target: $0) }
+        .sheet(item: $model.openedEntry) { EntrySheet(entryID: $0.id) }
         .sheet(isPresented: $model.isImportingAcrylic) {
             NavigationStack { AcrylicImportView() }
         }
@@ -82,8 +83,41 @@ struct VaultView: View {
         }
     }
 
+    private var sidebar: some View {
+        SidebarView(editor: $editor)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 320)
+    }
+
+    /// `AppModel.compactColumn` is in the list layout's terms; with two columns its entries
+    /// column is the detail column.
+    private var cardsCompactColumn: Binding<NavigationSplitViewColumn> {
+        Binding(
+            get: { model.compactColumn == .content ? .detail : model.compactColumn },
+            set: { model.compactColumn = $0 == .detail ? .content : $0 }
+        )
+    }
+
     private func newEntry() {
         editor = .newEntry(groupID: model.selectedGroup?.id)
+    }
+}
+
+/// Creates or edits a group or entry, in a sheet.
+struct EditorSheet: View {
+    let target: EditorTarget
+
+    var body: some View {
+        NavigationStack {
+            switch target {
+            case .newGroup: GroupEditorView(group: nil)
+            case .group(let group): GroupEditorView(group: group)
+            case .newEntry(let groupID): EntryEditorView(entry: nil, preferredGroupID: groupID)
+            case .entry(let entry): EntryEditorView(entry: entry, preferredGroupID: entry.groupID)
+            }
+        }
+        #if os(macOS)
+            .frame(minWidth: 480, idealWidth: 540, minHeight: 480, idealHeight: 620)
+        #endif
     }
 }
 
@@ -103,6 +137,7 @@ struct VaultCommands: Commands {
     let lock: LockController
     @FocusedValue(\.vaultActions) private var actions
     @AppStorage(EntryListOptions.groupsByLetterKey) private var groupsByLetter = true
+    @AppStorage(EntryListOptions.layoutKey) private var layout = EntryLayout.list
 
     var body: some Commands {
         CommandGroup(replacing: .newItem) {
@@ -119,6 +154,10 @@ struct VaultCommands: Commands {
                 .disabled(actions == nil)
         }
         CommandGroup(before: .toolbar) {
+            ForEach(Array(EntryLayout.allCases.enumerated()), id: \.element) { index, option in
+                Toggle(option.title, isOn: Binding(get: { layout == option }, set: { if $0 { layout = option } }))
+                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")))
+            }
             Toggle("Group by First Letter", isOn: $groupsByLetter)
             Divider()
         }
