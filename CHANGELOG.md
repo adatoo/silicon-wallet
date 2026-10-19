@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.7] - 2026-10-19
+
+### Added
+
+- The CloudKit schema is kept in the repository, with tasks to export, check and deploy it, so
+  TestFlight and App Store builds can sync once it's deployed to Production.
+
 ## [0.23.6] - 2026-10-19
 
 ### Security
