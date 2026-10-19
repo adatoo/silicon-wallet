@@ -24,8 +24,13 @@ final class LockSettings {
     var passwordReentryDays: Int {
         didSet { defaults.set(passwordReentryDays, forKey: Key.passwordReentryDays) }
     }
-    /// When the master password last unlocked the vault.
-    var lastPasswordUnlock: Date? { didSet { defaults.set(lastPasswordUnlock, forKey: Key.lastPasswordUnlock) } }
+    /// The device's clocks when the master password last unlocked the vault. Not secret: it holds
+    /// a date, the boot session's ID and the time since boot.
+    var lastPasswordUnlock: DeviceClock? {
+        didSet {
+            defaults.set(lastPasswordUnlock.flatMap { try? JSONEncoder().encode($0) }, forKey: Key.lastPasswordUnlock)
+        }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -43,7 +48,9 @@ final class LockSettings {
         lockOnSleep = defaults.bool(forKey: Key.lockOnSleep)
         biometricsEnabled = defaults.bool(forKey: Key.biometricsEnabled)
         passwordReentryDays = defaults.integer(forKey: Key.passwordReentryDays)
-        lastPasswordUnlock = defaults.object(forKey: Key.lastPasswordUnlock) as? Date
+        lastPasswordUnlock = defaults.data(forKey: Key.lastPasswordUnlock).flatMap {
+            try? JSONDecoder().decode(DeviceClock.self, from: $0)
+        }
     }
 
     var biometricPolicy: BiometricPolicy {
@@ -57,6 +64,7 @@ final class LockSettings {
         static let lockOnSleep = "lockOnSleep"
         static let biometricsEnabled = "biometricsEnabled"
         static let passwordReentryDays = "passwordReentryDays"
-        static let lastPasswordUnlock = "lastPasswordUnlock"
+        // A new key: the date an older build stored there is ignored, so the password is needed once.
+        static let lastPasswordUnlock = "lastPasswordUnlockClock"
     }
 }
