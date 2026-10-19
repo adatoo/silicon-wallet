@@ -5,6 +5,16 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.3] - 2026-10-19
+
+### Changed
+
+- The edit sheets are wider: at least 680 points on the Mac, and page-sized on iPad.
+- Long field labels and values wrap and grow while editing instead of being cut off or
+  scrolling on one line. Long Text values sit under their label at full width, and notes grow
+  without a limit.
+- On the Mac, the other rows slide out of the way as you drag a field or attachment.
+
 ## [0.21.2] - 2026-10-19
 
 ### Fixed
