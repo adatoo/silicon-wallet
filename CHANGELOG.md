@@ -5,6 +5,16 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2026-10-19
+
+### Fixed
+
+- Importing from Acrylic Wallet copes with more files: it no longer assumes one page size,
+  accepts an accented password however it was typed, and says clearly when a file isn't a
+  Wallet vault or uses a format it can't read yet.
+- After an import, Silicon Wallet now explains why old Wallet files, Dropbox copies and
+  exports should be deleted.
+
 ## [0.17.0] - 2026-10-19
 
 ### Added
