@@ -50,5 +50,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Silicon Wallet Reordered Row</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.datoos.silicon-wallet.reordered-row</string>
+		</dict>
+	</array>
 </dict>
 </plist>

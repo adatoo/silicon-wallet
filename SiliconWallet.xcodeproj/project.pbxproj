@@ -22,6 +22,7 @@
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
+		8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17329ADEF2D57777E8BCC4BC /* Reordering.swift */; };
 		99D61EAE32634493A8A75F68 /* LockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E01D039A8E7DBF0A040A5C2C /* LockController.swift */; };
 		A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB2125A7AC56544D3361520 /* EntryEditorView.swift */; };
 		A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AA743C303F6A4BA4050A97 /* HelpView.swift */; };
@@ -58,6 +59,7 @@
 		0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentPreviewView.swift; sourceTree = "<group>"; };
 		05AAF8DA641C137E55BC0347 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		150E755B7E5B799C04F5B072 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		17329ADEF2D57777E8BCC4BC /* Reordering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reordering.swift; sourceTree = "<group>"; };
 		20DB2732C95570E9BBC25DC5 /* AppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinks.swift; sourceTree = "<group>"; };
 		244D550D93A11FBA8C5076F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsSection.swift; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				9CB2125A7AC56544D3361520 /* EntryEditorView.swift */,
 				ADA40B1A128244E04793739F /* GeneratorView.swift */,
 				5C60B119316E39F124349191 /* GroupEditorView.swift */,
+				17329ADEF2D57777E8BCC4BC /* Reordering.swift */,
 			);
 			path = Editors;
 			sourceTree = "<group>";
@@ -425,6 +428,7 @@
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,
 				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
 				CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */,
+				8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
 				4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */,

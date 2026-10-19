@@ -29,9 +29,12 @@ struct GroupEditorView: View {
             Section {
                 ForEach($draft.fields) { $field in
                     TemplateFieldRow(field: $field)
+                        .reorderable(field, in: $draft.fields, title: field.label)
                 }
                 .onDelete { draft.fields.remove(atOffsets: $0) }
-                .onMove { draft.fields.move(fromOffsets: $0, toOffset: $1) }
+                #if os(iOS)
+                    .onMove { draft.fields.move(fromOffsets: $0, toOffset: $1) }
+                #endif
                 Button("Add Field", systemImage: "plus") {
                     draft.fields.append(FieldTemplate(label: ""))
                 }
@@ -85,7 +88,6 @@ struct TemplateFieldRow: View {
 
     var body: some View {
         HStack {
-            DragHandle()
             TextField("Label", text: $field.label)
             Picker("Kind", selection: $field.kind) {
                 ForEach(FieldKind.allCases, id: \.self) { kind in
@@ -113,19 +115,6 @@ struct TemplateFieldRow: View {
                 field.isMonospaced = new.isMonospacedByDefault(isConcealed: field.isConcealed)
             }
         }
-    }
-}
-
-/// Somewhere to grab a row to drag it on the Mac, where a row full of text fields and buttons
-/// leaves little else to grab. iOS shows its own reorder control in edit mode.
-struct DragHandle: View {
-    var body: some View {
-        #if os(macOS)
-            Image(systemName: "line.3.horizontal")
-                .foregroundStyle(.tertiary)
-                .help("Drag to reorder")
-                .accessibilityHidden(true)
-        #endif
     }
 }
 
