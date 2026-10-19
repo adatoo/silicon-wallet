@@ -49,9 +49,11 @@ struct HelpView: View {
     }
 }
 
-/// Opens Help: the Help window on the Mac, a sheet on iOS.
+/// Opens Help: the Help window on the Mac, a sheet on iOS. Give it a `systemImage` to use it
+/// in a toolbar.
 struct HelpButton: View {
     var title: LocalizedStringKey = "Help"
+    var systemImage: String?
     #if os(macOS)
         @Environment(\.openWindow) private var openWindow
     #else
@@ -60,9 +62,9 @@ struct HelpButton: View {
 
     var body: some View {
         #if os(macOS)
-            Button(title) { openWindow(id: HelpView.windowID) }
+            button { openWindow(id: HelpView.windowID) }
         #else
-            Button(title) { showingHelp = true }
+            button { showingHelp = true }
                 .sheet(isPresented: $showingHelp) {
                     NavigationStack {
                         HelpView().toolbar {
@@ -71,6 +73,15 @@ struct HelpButton: View {
                     }
                 }
         #endif
+    }
+
+    @ViewBuilder
+    private func button(action: @escaping () -> Void) -> some View {
+        if let systemImage {
+            Button(title, systemImage: systemImage, action: action)
+        } else {
+            Button(title, action: action)
+        }
     }
 }
 

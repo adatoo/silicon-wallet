@@ -55,6 +55,14 @@ struct EntryListView: View {
                     .help("New entry")
                     .disabled(model.session?.groups.isEmpty != false)
             }
+            #if os(iOS)
+                // In cards layout the entries are the right-hand column; the list layout puts
+                // these over the detail column instead (VaultView).
+                if horizontalSizeClass == .regular, layout == .cards {
+                    ToolbarSpacer(.fixed)
+                    VaultActionsToolbar()
+                }
+            #endif
         }
     }
 

@@ -23,6 +23,7 @@
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
 		8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17329ADEF2D57777E8BCC4BC /* Reordering.swift */; };
+		97D0CE3BE312A5E9CF60A619 /* VaultActionsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */; };
 		99D61EAE32634493A8A75F68 /* LockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E01D039A8E7DBF0A040A5C2C /* LockController.swift */; };
 		A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB2125A7AC56544D3361520 /* EntryEditorView.swift */; };
 		A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AA743C303F6A4BA4050A97 /* HelpView.swift */; };
@@ -77,6 +78,7 @@
 		7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudEntitlement.swift; sourceTree = "<group>"; };
 		7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FieldKind+UI.swift"; sourceTree = "<group>"; };
 		879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultActionsToolbar.swift; sourceTree = "<group>"; };
 		92875FCE2F36955F82E985E1 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
 		98444000E2A9EC613E31BAD8 /* DemoVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVault.swift; sourceTree = "<group>"; };
 		9CB2125A7AC56544D3361520 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
@@ -181,6 +183,7 @@
 				ACD892512A872BD9135E5CCB /* EntryListView.swift */,
 				6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */,
 				244D550D93A11FBA8C5076F4 /* SidebarView.swift */,
+				8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */,
 				AF5CF27647D2249ED8F21191 /* VaultView.swift */,
 			);
 			path = Vault;
@@ -436,6 +439,7 @@
 				B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */,
 				DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */,
 				8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */,
+				97D0CE3BE312A5E9CF60A619 /* VaultActionsToolbar.swift in Sources */,
 				E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */,
 				FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */,
 			);

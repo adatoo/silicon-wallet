@@ -65,6 +65,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - `NavigationSplitView` with three columns: **Groups | Entries | Detail**.
 - Mac and iPad show all three columns. iPhone collapses to drill-down navigation.
 - Toolbar: lock toggle, sync status, search. Bottom/toolbar actions: add group, add entry, edit.
+- iOS: Sync, Lock, Settings and Help sit above the groups list on iPhone. On a regular-width
+  iPad they're at the top right (over the detail column, or the cards), because the sidebar
+  column is too narrow and would fold them into a ••• menu.
 - Original look and icon. Do not copy Acrylic's artwork. The icon (a silicon chip with a keyhole,
   teal to navy) is drawn by `scripts/make-icon.swift`; run `task icon` after changing it.
 - The lock screen has a backdrop: a blurred close-up of a circuit board in the icon's colours,
@@ -94,7 +97,8 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌘1 / ⌘2 list / cards, ⌃⌘L lock, ⌘? help.
 - Help: short offline topics (`HelpView`) that mirror `site/support.html`; change both
   together. The Mac opens them in a Help window from Help ▸ Silicon Wallet Help; iOS shows
-  them in a sheet from Settings. Settings and the first-run screen have a Help button on both.
+  them in a sheet from the toolbar's Help button or Settings. Settings and the first-run
+  screen have a Help button on both.
   About links to the support page, the privacy policy and the source (`AppLinks`).
 - Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
   filled with obviously fake entries, for UI tests and screenshots. `-entryLayout cards` shows

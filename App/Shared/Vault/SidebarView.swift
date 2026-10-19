@@ -5,10 +5,11 @@ import SwiftUI
 /// anything in it.
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
-    @Environment(LockController.self) private var lock
     @Binding var editor: EditorTarget?
     @State private var groupToDelete: VaultGroup?
-    @State private var showingSettings = false
+    /// iOS: show Sync, Lock, Settings and Help here. VaultView decides, from the window's
+    /// size class: an iPad's sidebar column reports compact even when the window is regular.
+    var showsVaultActions = false
 
     var body: some View {
         @Bindable var model = model
@@ -50,22 +51,11 @@ struct SidebarView: View {
                     .help("New group")
             }
             #if os(iOS)
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Settings", systemImage: "gear") { showingSettings = true }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Lock", systemImage: "lock") { lock.lockNow() }
-                }
-                if let sync = model.sync {
-                    ToolbarItem(placement: .topBarTrailing) { SyncStatusButton(sync: sync) }
+                if showsVaultActions {
+                    VaultActionsToolbar(placement: .topBarLeading)
                 }
             #endif
         }
-        #if os(iOS)
-            .sheet(isPresented: $showingSettings) {
-                NavigationStack { SettingsView() }
-            }
-        #endif
         .confirmationDialog(
             "Delete \(groupToDelete?.name ?? "this group")?", isPresented: deleteBinding, titleVisibility: .visible,
             presenting: groupToDelete
