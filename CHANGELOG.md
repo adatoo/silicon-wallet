@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-10-19
+
+### Changed
+
+- On the Mac, Touch ID now appears inside the lock screen instead of in a separate floating
+  panel. Start typing your password to skip it, or choose "Use Touch ID" to try again.
+
 ## [0.13.0] - 2026-10-18
 
 ### Added
