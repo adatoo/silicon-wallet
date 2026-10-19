@@ -78,6 +78,7 @@ struct EntryEditorView: View {
             Section("Notes") {
                 TextField("Notes", text: $draft.notes, axis: .vertical)
                     .lineLimit(4...)
+                    .returnAddsLine()
                     .labelsHidden()
             }
         }
@@ -160,6 +161,7 @@ struct FieldInput: View {
                     TextField(label, text: $value, axis: .vertical)
                         .lineLimit(3...)
                         .fieldStyle(kind, isMonospaced: isMonospaced)
+                        .returnAddsLine()
                 }
             } else {
                 LabeledContent {
@@ -193,8 +195,8 @@ struct FieldInput: View {
             }
         }
         .onChange(of: value) { old, new in
-            // A wrapping field takes Return as a line break; outside Long Text, a new one becomes
-            // a space. Line breaks already in a value are left alone.
+            // Outside Long Text, a line break typed into a value becomes a space. Line breaks
+            // already in a value are left alone.
             if kind != .multiline, !old.contains(where: \.isNewline), new.contains(where: \.isNewline) {
                 value = new.split(whereSeparator: \.isNewline).joined(separator: " ")
             }

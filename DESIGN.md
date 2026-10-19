@@ -78,7 +78,8 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   the other rows make room as it is dragged; the drag carries only the row's ID. The editor
   sheets are at least 680pt wide on the Mac and page-sized on iPad. Long labels wrap (an editable
   label up to three lines), values wrap and grow instead of scrolling, and Long Text values sit
-  under their label. Outside Long Text, a line break typed into a value with none becomes a space.
+  under their label. Return adds a line in Long Text and notes (on the Mac too, where a text field
+  would end editing); elsewhere a line break typed into a value with none becomes a space.
   Moving an entry to another group keeps every value: matching labels move across, the rest
   become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
