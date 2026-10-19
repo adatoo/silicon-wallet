@@ -566,9 +566,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "App/SiliconWallet-iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "App/SiliconWallet-iOS-Release.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = "App/SiliconWallet-iOS.entitlements";
-				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "App/SiliconWallet-macOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "App/SiliconWallet-macOS-Release.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = App/Info.plist;

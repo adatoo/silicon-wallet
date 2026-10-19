@@ -1,2 +1,2 @@
 // Generated from VERSION by `task version:sync` (ADR-0003). Don't edit by hand.
-MARKETING_VERSION = 0.12.0
+MARKETING_VERSION = 0.13.0

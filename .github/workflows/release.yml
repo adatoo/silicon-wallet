@@ -1,0 +1,58 @@
+name: release
+
+# Uploads both platforms to App Store Connect (TestFlight) for every version tag, which
+# tag.yml pushes with the App token so this workflow runs. Needs the Actions secrets
+# ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 (the .p8 file's contents); without them it
+# skips with a notice. docs/app-store-release.md, B0 and B2.
+
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: archive and upload
+    runs-on: ${{ vars.MAC_RUNNER || 'macos-26' }}
+    timeout-minutes: 60
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - name: Check for the App Store Connect key
+        id: key
+        run: |
+          if [ -z "$ASC_KEY_ID" ] || [ -z "$ASC_ISSUER_ID" ] || [ -z "$ASC_KEY_P8" ]; then
+            echo "::notice::The App Store Connect API key secrets aren't set, so nothing was uploaded."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.key.outputs.present == 'true'
+        with:
+          persist-credentials: false
+      - name: Install task and xcodegen if missing
+        if: steps.key.outputs.present == 'true'
+        run: |
+          for tool in go-task:task xcodegen:xcodegen; do
+            command -v "${tool#*:}" > /dev/null || brew install "${tool%%:*}"
+          done
+      - name: task release
+        if: steps.key.outputs.present == 'true'
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          key_dir="$(mktemp -d)"
+          trap 'rm -rf "$key_dir"' EXIT
+          printf '%s' "$ASC_KEY_P8" > "$key_dir/AuthKey_$ASC_KEY_ID.p8"
+          chmod 600 "$key_dir/AuthKey_$ASC_KEY_ID.p8"
+          ASC_KEY_PATH="$key_dir/AuthKey_$ASC_KEY_ID.p8" task release BUILD_NUMBER="$BUILD_NUMBER"

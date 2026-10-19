@@ -91,6 +91,10 @@ targets:
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+        # App Store and TestFlight builds use production CloudKit pushes.
+        Release:
+          "CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]": App/SiliconWallet-iOS-Release.entitlements
+          "CODE_SIGN_ENTITLEMENTS[sdk=macosx*]": App/SiliconWallet-macOS-Release.entitlements
 
   SiliconWalletTests:
     type: bundle.unit-test

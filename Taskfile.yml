@@ -21,6 +21,12 @@ vars:
   PRETTY:
     sh: 'command -v xcbeautify >/dev/null 2>&1 && echo "xcbeautify --quiet" || echo cat'
   SWIFT_DIRS: App Tests Packages
+  # The App Store Connect API key, when set (`task release:*`, the release workflow).
+  AUTH_FLAGS:
+    sh: |
+      if [ -n "${ASC_KEY_PATH:-}" ] && [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER_ID:-}" ]; then
+        echo "-authenticationKeyPath $ASC_KEY_PATH -authenticationKeyID $ASC_KEY_ID -authenticationKeyIssuerID $ASC_ISSUER_ID"
+      fi
 
 env:
   # xcode-select often points at the Command Line Tools, which can't run xcodebuild.
@@ -216,6 +222,52 @@ tasks:
         CODE_SIGN_ENTITLEMENTS=Config/Dev-macOS.entitlements
         | {{.PRETTY}}
       - open "{{.DERIVED_DATA}}/Build/Products/{{.CONFIGURATION}}/SiliconWallet.app"
+
+  release:archive:
+    desc: Archive a signed Release build for PLATFORM=ios or PLATFORM=macos into ./build
+    summary: |
+      Signs automatically (-allowProvisioningUpdates). With ASC_KEY_PATH, ASC_KEY_ID and
+      ASC_ISSUER_ID set, it uses the App Store Connect API key, so it also works on the headless
+      CI runner; without them it uses the Xcode account. BUILD_NUMBER defaults to a timestamp.
+    requires:
+      vars: [PLATFORM]
+    vars:
+      BUILD_NUMBER: '{{.BUILD_NUMBER | default (now | date "200601021504")}}'
+      DEST: '{{if eq .PLATFORM "ios"}}generic/platform=iOS{{else}}generic/platform=macOS{{end}}'
+    cmds:
+      - mkdir -p build
+      - >-
+        xcodebuild -scheme {{.SCHEME}} -configuration Release archive
+        -destination '{{.DEST}}'
+        -archivePath "build/SiliconWallet-{{.PLATFORM}}.xcarchive"
+        -allowProvisioningUpdates {{.AUTH_FLAGS}}
+        CURRENT_PROJECT_VERSION={{.BUILD_NUMBER}}
+        | {{.PRETTY}}
+
+  release:upload:
+    desc: Export the PLATFORM=ios or PLATFORM=macos archive and upload it to App Store Connect
+    requires:
+      vars: [PLATFORM]
+    cmds:
+      - >-
+        xcodebuild -exportArchive
+        -archivePath "build/SiliconWallet-{{.PLATFORM}}.xcarchive"
+        -exportOptionsPlist Config/ExportOptions.plist
+        -exportPath "build/export-{{.PLATFORM}}"
+        -allowProvisioningUpdates {{.AUTH_FLAGS}}
+        | {{.PRETTY}}
+
+  release:
+    desc: Archive and upload both platforms to App Store Connect (TestFlight)
+    cmds:
+      - task: release:archive
+        vars: {PLATFORM: ios, BUILD_NUMBER: '{{.BUILD_NUMBER}}'}
+      - task: release:upload
+        vars: {PLATFORM: ios}
+      - task: release:archive
+        vars: {PLATFORM: macos, BUILD_NUMBER: '{{.BUILD_NUMBER}}'}
+      - task: release:upload
+        vars: {PLATFORM: macos}
 
   ci:linux:
     desc: The checks CI runs on Linux (lint and secrets)
