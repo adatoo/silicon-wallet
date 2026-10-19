@@ -193,10 +193,11 @@ enum EntryLayout: String, CaseIterable {
 }
 
 extension VaultEntry {
-    /// The first non-concealed value, to tell similar entries apart.
-    func firstVisibleValue(in group: VaultGroup?) -> String? {
+    /// The first non-concealed value, to tell similar entries apart, and whether its field is
+    /// shown monospaced.
+    func firstVisibleValue(in group: VaultGroup?) -> (text: String, isMonospaced: Bool)? {
         for field in group?.fields ?? [] where !field.isConcealed {
-            if let value = values[field.id], !value.isEmpty { return value }
+            if let value = values[field.id], !value.isEmpty { return (value, field.isMonospaced) }
         }
         return nil
     }
@@ -215,8 +216,14 @@ struct EntryRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(entry.title.isEmpty ? "Untitled" : entry.title)
                     .lineLimit(1)
-                if let subtitle {
-                    Text(subtitle)
+                if let value = entry.firstVisibleValue(in: group) {
+                    Text(value.text)
+                        .font(.caption)
+                        .fontDesign(value.isMonospaced ? .monospaced : nil)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                } else if let group {
+                    Text(group.name)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -231,9 +238,5 @@ struct EntryRow: View {
             }
         }
         .padding(.vertical, 2)
-    }
-
-    private var subtitle: String? {
-        entry.firstVisibleValue(in: group) ?? group?.name
     }
 }

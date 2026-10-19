@@ -43,6 +43,14 @@ import Testing
     #expect(moved.extraFields.first?.kind == .number)
 }
 
+@Test func movingKeepsTheMonospacedChoice() {
+    let old = VaultGroup(name: "Fake Old", fields: [FieldTemplate(label: "Licence Key", isMonospaced: true)])
+    let new = VaultGroup(name: "Fake New")
+    let entry = VaultEntry(groupID: old.id, title: "Fake", values: [old.fields[0].id: "FAKE-KEY"])
+
+    #expect(entry.moved(from: old, to: new).extraFields.first?.isMonospaced == true)
+}
+
 @Test func movingWithinTheSameGroupChangesNothing() {
     let group = VaultGroup(name: "Fake", fields: [FieldTemplate(label: "A")])
     let entry = VaultEntry(groupID: group.id, title: "Fake", values: [group.fields[0].id: "x"])

@@ -93,7 +93,7 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 ## 4. Data model (plaintext, in memory only)
 
 ```swift
-struct FieldTemplate { id: UUID; label: String; kind: FieldKind; isConcealed: Bool }  // order = array order
+struct FieldTemplate { id: UUID; label: String; kind: FieldKind; isConcealed: Bool; isMonospaced: Bool }  // order = array order
 enum FieldKind { text, password, number, date, url, email, phone, multiline }
 
 struct VaultGroup {   // "Vault" prefix avoids clashing with SwiftUI's Group
@@ -116,6 +116,9 @@ struct AttachmentRef {
 ```
 
 Field labels live on the group, so "Gate Information" can have `side gate`, `main gate`, `other`.
+`isMonospaced` (on template fields and on an entry's extra fields) shows the value, never the
+label, in a monospaced font. It defaults to on for passwords and concealed fields, which is also
+what a record written before the option existed decodes to.
 
 The code is in `SiliconWalletKit/Model`. `VaultMeta` (KDF parameters, wrapped vault key, a
 key check that proves a biometric-held vault key belongs to this vault, format version) is the

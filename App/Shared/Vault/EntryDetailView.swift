@@ -82,13 +82,15 @@ struct EntryDetailView: View {
         for field in group?.fields ?? [] {
             guard let value = entry.values[field.id], !value.isEmpty else { continue }
             rows.append(
-                .init(id: field.id, label: field.label, kind: field.kind, isConcealed: field.isConcealed, value: value))
+                .init(
+                    id: field.id, label: field.label, kind: field.kind, isConcealed: field.isConcealed,
+                    isMonospaced: field.isMonospaced, value: value))
         }
         for field in entry.extraFields where !field.value.isEmpty {
             rows.append(
                 .init(
                     id: field.id, label: field.label, kind: field.kind, isConcealed: field.isConcealed,
-                    value: field.value))
+                    isMonospaced: field.isMonospaced, value: field.value))
         }
         return rows
     }
@@ -101,6 +103,7 @@ struct FieldValueRow: View {
         let label: String
         let kind: FieldKind
         let isConcealed: Bool
+        let isMonospaced: Bool
         let value: String
     }
 
@@ -157,7 +160,7 @@ struct FieldValueRow: View {
                 .accessibilityLabel("Concealed")
         } else {
             Text(row.value)
-                .font(row.isConcealed || row.kind == .password ? .body.monospaced() : .body)
+                .font(row.isMonospaced ? .body.monospaced() : .body)
                 .textSelection(.enabled)
         }
     }

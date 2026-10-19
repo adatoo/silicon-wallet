@@ -99,9 +99,18 @@ struct TemplateFieldRow: View {
             .toggleStyle(.button)
             .help(field.isConcealed ? "Concealed until revealed" : "Shown")
             .accessibilityLabel("Concealed")
+            Toggle(isOn: $field.isMonospaced) {
+                Image(systemName: "character.textbox")
+            }
+            .toggleStyle(.button)
+            .help(field.isMonospaced ? "Value shown in a monospaced font" : "Value shown in the standard font")
+            .accessibilityLabel("Monospaced")
         }
         .onChange(of: field.kind) { old, new in
-            if old.isConcealedByDefault != new.isConcealedByDefault { field.isConcealed = new.isConcealedByDefault }
+            if old.isConcealedByDefault != new.isConcealedByDefault {
+                field.isConcealed = new.isConcealedByDefault
+                field.isMonospaced = new.isMonospacedByDefault(isConcealed: field.isConcealed)
+            }
         }
     }
 }
