@@ -242,11 +242,24 @@ tasks:
         --environment development --output-file CloudKit/schema.ckdb
 
   cloudkit:validate:
-    desc: Check CloudKit/schema.ckdb against the Development schema (needs a management token)
+    desc: Check CloudKit/schema.ckdb is valid and matches the Development schema (needs a management token)
+    summary: |
+      `cktool validate-schema` only checks the file could be applied, so this also exports
+      Development to a temporary file and compares the two.
     cmds:
       - >-
         xcrun cktool validate-schema --team-id {{.TEAM_ID}} --container-id {{.CK_CONTAINER}}
         --environment development --file CloudKit/schema.ckdb
+      - |
+        tmp="$(mktemp -d)"
+        trap 'rm -rf "$tmp"' EXIT
+        xcrun cktool export-schema --team-id {{.TEAM_ID}} --container-id {{.CK_CONTAINER}} \
+          --environment development --output-file "$tmp/schema.ckdb"
+        if ! diff -u CloudKit/schema.ckdb "$tmp/schema.ckdb"; then
+          echo "CloudKit/schema.ckdb differs from Development: run 'task cloudkit:export' and commit it." >&2
+          exit 1
+        fi
+        echo "CloudKit/schema.ckdb matches Development."
 
   cloudkit:deploy:
     desc: Validate the schema, then show how to deploy it to Production before a TestFlight build
@@ -256,7 +269,7 @@ tasks:
       after checking the file matches Development (docs/app-store-release.md, B3).
     cmds:
       - task: cloudkit:validate
-      - echo "Schema matches Development. Deploy it in CloudKit Console ▸ {{.CK_CONTAINER}} ▸ Deploy Schema Changes…"
+      - echo "Deploy it in CloudKit Console ▸ {{.CK_CONTAINER}} ▸ Deploy Schema Changes…"
       - open "https://icloud.developer.apple.com/dashboard/"
 
   release:archive:
