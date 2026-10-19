@@ -21,6 +21,8 @@ vars:
   PRETTY:
     sh: 'command -v xcbeautify >/dev/null 2>&1 && echo "xcbeautify --quiet" || echo cat'
   SWIFT_DIRS: App Tests Packages
+  TEAM_ID: QKAYS6D525
+  CK_CONTAINER: iCloud.com.datoos.silicon-wallet
   # The App Store Connect API key, when set (`task release:*`, the release workflow).
   AUTH_FLAGS:
     sh: |
@@ -227,6 +229,35 @@ tasks:
         CODE_SIGN_ENTITLEMENTS=Config/Dev-macOS.entitlements
         | {{.PRETTY}}
       - open "{{.DERIVED_DATA}}/Build/Products/{{.CONFIGURATION}}/SiliconWallet.app"
+
+  cloudkit:export:
+    desc: Export the Development CloudKit schema to CloudKit/schema.ckdb (needs a management token)
+    summary: |
+      Save a management token once with `xcrun cktool save-token --type management`
+      (CloudKit Console ▸ account menu ▸ Settings ▸ Tokens). It stays in the keychain, never in
+      the repo. Development gets new record types and fields when a Debug build first saves them.
+    cmds:
+      - >-
+        xcrun cktool export-schema --team-id {{.TEAM_ID}} --container-id {{.CK_CONTAINER}}
+        --environment development --output-file CloudKit/schema.ckdb
+
+  cloudkit:validate:
+    desc: Check CloudKit/schema.ckdb against the Development schema (needs a management token)
+    cmds:
+      - >-
+        xcrun cktool validate-schema --team-id {{.TEAM_ID}} --container-id {{.CK_CONTAINER}}
+        --environment development --file CloudKit/schema.ckdb
+
+  cloudkit:deploy:
+    desc: Validate the schema, then show how to deploy it to Production before a TestFlight build
+    summary: |
+      Production schema changes can only add record types and fields, never remove or rename
+      them, so the deploy is a deliberate step in CloudKit Console ("Deploy Schema Changes…"),
+      after checking the file matches Development (docs/app-store-release.md, B3).
+    cmds:
+      - task: cloudkit:validate
+      - echo "Schema matches Development. Deploy it in CloudKit Console ▸ {{.CK_CONTAINER}} ▸ Deploy Schema Changes…"
+      - open "https://icloud.developer.apple.com/dashboard/"
 
   release:archive:
     desc: Archive a signed Release build for PLATFORM=ios or PLATFORM=macos into ./build

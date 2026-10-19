@@ -25,6 +25,8 @@ Every command is a `task`; run `task` to list them.
   `xcrun simctl list devices available`).
 - `task build`: both platforms. `task dev`: build and open the Mac app (ad-hoc signed, no iCloud).
 - `task fmt` / `task fmt:check`: swift-format (`.swift-format`).
+- `task cloudkit:export`, `cloudkit:validate`, `cloudkit:deploy`: the CloudKit schema in
+  `CloudKit/schema.ckdb` (needs a management token in the keychain; deploy before TestFlight).
 - `task icon`: redraw the app icon. `task screenshots`: App Store screenshots from the simulators.
 - `task release` (or `release:archive` / `release:upload` with `PLATFORM=ios|macos`): upload to
   App Store Connect. The `release` workflow runs it for every version tag once the API key

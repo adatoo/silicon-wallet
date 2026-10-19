@@ -64,8 +64,8 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 
 ## B3. Build steps 6 and 7: CloudKit sync and attachments
 - **The schema gotcha.** TestFlight and App Store builds use CloudKit's **Production** environment. Record types created in Development don't exist there until deployed.
-  - Keep the schema in the repo as `CloudKit/schema.ckdb`.
-  - Add `task cloudkit:export`, `cloudkit:validate` and `cloudkit:deploy`, which use `xcrun cktool` and a CloudKit management token in the keychain.
+  - The schema is in the repo as `CloudKit/schema.ckdb` (issue #78): `VaultMeta`, `Group` and `Entry` with an encrypted `payload`, `modified` and `schemaVersion`/`formatVersion`; `Attachment` with `file` and `size`. No queryable fields beyond `recordName`: `CKSyncEngine` fetches by zone, never by query.
+  - `task cloudkit:export`, `cloudkit:validate` and `cloudkit:deploy` use `xcrun cktool` and a CloudKit management token saved in the keychain (`xcrun cktool save-token --type management`, owner action). `cloudkit:deploy` validates, then opens CloudKit Console for "Deploy Schema Changes…".
   - Deploy to Production before any TestFlight build that syncs.
   - Production schema changes can only add, never remove or rename. Version the payload instead: `schemaVersion` is already in DESIGN.md.
 - **Test matrix:** two devices on one Apple ID; signed-out iCloud; iCloud Drive off; full iCloud storage; account switching; zone deletion. The app must stay usable without iCloud, because App Review will test that.
