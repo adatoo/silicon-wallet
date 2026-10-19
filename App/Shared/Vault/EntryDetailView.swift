@@ -6,6 +6,7 @@ struct EntryDetailView: View {
     @Environment(AppModel.self) private var model
     let entry: VaultEntry
     @Binding var editor: EditorTarget?
+    @State private var attachmentPresentation = AttachmentPresentation()
 
     private var group: VaultGroup? { model.session?.group(id: entry.groupID) }
 
@@ -47,7 +48,7 @@ struct EntryDetailView: View {
                 }
             }
 
-            AttachmentsSection(entry: entry)
+            AttachmentsSection(entry: entry, presentation: $attachmentPresentation)
 
             Section {
                 LabeledContent("Created", value: entry.created.formatted(date: .abbreviated, time: .shortened))
@@ -57,6 +58,7 @@ struct EntryDetailView: View {
             .foregroundStyle(.secondary)
         }
         .formStyle(.grouped)
+        .attachmentPresentations(for: entry, $attachmentPresentation)
         .navigationTitle(entry.title)
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
