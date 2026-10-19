@@ -233,7 +233,12 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
     only inside that entry's ciphertext).
 - The store is `Application Support/com.datoos.silicon-wallet/Vault/Vault.store`. Attachment
   ciphertext is stored as files under `…/Vault/Attachments/<uuid>.bin`.
-- File protection: `.complete` on iOS.
+- File protection on iOS: `.complete` for sealed attachments, the access log, the trash ledger
+  and preview files. The vault folder (the SwiftData store with its `-wal`/`-shm` files, and the
+  sync state) is `.completeUnlessOpen`: it can't be opened while the device is locked, but a store
+  already open keeps working, so CloudKit pushes can still be written in the background. If iOS
+  wakes the app for a push before the device has been unlocked, the app waits and opens the vault
+  once protected data becomes available (`SwiftDataVaultStore.isWaitingForDeviceUnlock`).
 
 ## 7. iCloud sync (CKSyncEngine)
 

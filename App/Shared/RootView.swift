@@ -16,6 +16,8 @@ struct RootView: View {
                 case .locked: UnlockView()
                 case .unlocked: VaultView()
                 }
+            } else if model.isWaitingForDeviceUnlock {
+                ProgressView()
             } else {
                 ContentUnavailableView(
                     "Silicon Wallet Can't Open Its Vault", systemImage: "exclamationmark.lock",

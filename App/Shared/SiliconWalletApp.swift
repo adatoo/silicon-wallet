@@ -9,11 +9,24 @@ struct SiliconWalletApp: App {
     #endif
     @State private var model: AppModel
     @State private var lock: LockController
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         let model = AppModel.launch()
         _model = State(initialValue: model)
         _lock = State(initialValue: LockController(model: model))
+    }
+
+    /// Opens the vault once the device has been unlocked, if the app was woken in the background
+    /// before that (`AppModel.isWaitingForDeviceUnlock`).
+    private func relaunchIfWaiting() {
+        guard model.isWaitingForDeviceUnlock else { return }
+        let relaunched = AppModel.launch()
+        guard !relaunched.isWaitingForDeviceUnlock else { return }
+        model = relaunched
+        lock = LockController(model: relaunched)
+        lock.start()
+        relaunched.sync?.start()
     }
 
     var body: some Scene {
@@ -25,6 +38,17 @@ struct SiliconWalletApp: App {
                     lock.start()
                     model.sync?.start()
                 }
+                #if os(iOS)
+                    .onReceive(
+                        NotificationCenter.default.publisher(
+                            for: UIApplication.protectedDataDidBecomeAvailableNotification)
+                    ) { _ in
+                        relaunchIfWaiting()
+                    }
+                    .onChange(of: scenePhase) { _, phase in
+                        if phase == .active { relaunchIfWaiting() }
+                    }
+                #endif
         }
         #if os(macOS)
             .defaultSize(width: 1100, height: 700)

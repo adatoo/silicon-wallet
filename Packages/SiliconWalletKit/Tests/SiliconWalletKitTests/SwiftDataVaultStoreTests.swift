@@ -137,3 +137,31 @@ private enum Disk {
         #expect(everything.range(of: Data(secret.utf8)) == nil, "\(secret) is on disk")
     }
 }
+
+@MainActor
+@Test func theVaultFolderIsProtectedOnIOS() throws {
+    let directory = Disk.directory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    // A store file from a build that didn't set protection.
+    let existing = directory.appendingPathComponent("SyncState.json")
+    try Data("{}".utf8).write(to: existing)
+
+    let store = try SwiftDataVaultStore(directory: directory)
+    try store.saveMeta(Disk.meta())
+
+    #expect(!SwiftDataVaultStore.isWaitingForDeviceUnlock(directory: directory))
+    // The Simulator doesn't keep file protection, so this is checked on a device only.
+    #if os(iOS) && !targetEnvironment(simulator)
+        for url in [directory, existing, directory.appendingPathComponent("Vault.store")] {
+            let protection =
+                try FileManager.default.attributesOfItem(atPath: url.path)[.protectionKey] as? FileProtectionType
+            #expect(protection == SwiftDataVaultStore.fileProtection, "\(url.lastPathComponent)")
+        }
+    #endif
+}
+
+@MainActor
+@Test func aFolderWithoutAVaultIsntWaitingForUnlock() {
+    #expect(!SwiftDataVaultStore.isWaitingForDeviceUnlock(directory: Disk.directory()))
+}

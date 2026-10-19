@@ -26,6 +26,9 @@ final class AppModel {
     let sync: VaultSync?
     /// Why the vault couldn't be opened at launch, if it couldn't.
     let startupError: String?
+    /// iOS: the app was woken in the background before the device was unlocked, so the vault's
+    /// files can't be opened yet (DESIGN.md §6). The app relaunches the model once they can.
+    let isWaitingForDeviceUnlock: Bool
 
     var sidebarSelection: SidebarItem? = .all
     /// Which column a compact (iPhone) split view shows.
@@ -39,10 +42,14 @@ final class AppModel {
     /// The message for the error alert; nil when none is showing.
     var errorMessage: String?
 
-    init(session: VaultSession?, sync: VaultSync? = nil, startupError: String? = nil) {
+    init(
+        session: VaultSession?, sync: VaultSync? = nil, startupError: String? = nil,
+        isWaitingForDeviceUnlock: Bool = false
+    ) {
         self.session = session
         self.sync = sync
         self.startupError = startupError
+        self.isWaitingForDeviceUnlock = isWaitingForDeviceUnlock
         if let session, let sync {
             sync.onRemoteChanges = { [weak self, weak session] in
                 try? session?.reload()
@@ -66,6 +73,9 @@ final class AppModel {
                 return AppModel(session: session)
             }
             let directory = try SwiftDataVaultStore.defaultDirectory()
+            if SwiftDataVaultStore.isWaitingForDeviceUnlock(directory: directory) {
+                return AppModel(session: nil, isWaitingForDeviceUnlock: true)
+            }
             let store = SyncedVaultStore(base: try SwiftDataVaultStore(directory: directory))
             let session = try VaultSession(
                 store: store, accessLog: AccessLog(directory: directory), trashLedger: TrashLedger(directory: directory)
