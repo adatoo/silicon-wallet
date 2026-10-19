@@ -1,4 +1,5 @@
 import Foundation
+import LocalAuthentication
 import Testing
 
 @testable import SiliconWalletKit
@@ -85,4 +86,13 @@ func passwordsHaveTheRequestedLength(length: Int) {
 @Test func bootTimeComesFromUptime() {
     let now = Date(timeIntervalSince1970: 10_000)
     #expect(BiometricPolicy.bootTime(now: now, uptime: 400) == Date(timeIntervalSince1970: 9_600))
+}
+
+@Test func touchIDCancelsAndFailuresFallBackToThePassword() {
+    for code in [LAError.Code.userCancel, .appCancel, .systemCancel, .userFallback, .authenticationFailed] {
+        #expect(BiometricKeychain.mapped(LAError(code)) as? BiometricError == .cancelled)
+    }
+    #expect(BiometricKeychain.mapped(LAError(.biometryNotEnrolled)) as? BiometricError == .unavailable)
+    #expect(BiometricKeychain.mapped(LAError(.biometryLockout)) is LAError)
+    #expect(BiometricKeychain.mapped(CryptoError.authenticationFailed) is CryptoError)
 }

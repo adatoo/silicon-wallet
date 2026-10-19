@@ -83,13 +83,40 @@ public enum BiometricKeychain {
         guard status == errSecSuccess else { throw BiometricError.keychain(status) }
     }
 
-    /// Asks for Face ID or Touch ID, then returns the stored vault key. The Keychain call blocks
-    /// while the prompt shows, so it runs off the main actor.
+    /// Asks for Face ID or Touch ID, then returns the stored vault key. The Keychain shows its
+    /// own prompt.
     public static func load(reason: String) async throws -> SymmetricKey {
+        let context = LAContext()
+        context.localizedReason = reason
+        context.localizedCancelTitle = "Use Password"
+        return try await read(context: context)
+    }
+
+    /// Asks for Touch ID through `context`, then returns the stored vault key. On the Mac the
+    /// lock screen shows `context` in a `LocalAuthenticationView`, so the prompt appears inside
+    /// the window rather than as a floating panel. The Keychain read reuses the approved context,
+    /// so it doesn't ask again.
+    @MainActor
+    public static func load(context: LAContext, reason: String) async throws -> SymmetricKey {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { _, error in
+                if let error {
+                    continuation.resume(throwing: mapped(error))
+                } else {
+                    continuation.resume()
+                }
+            }
+        }
+        // The lock screen keeps the context only to display it; nothing else uses it until the
+        // read returns.
+        nonisolated(unsafe) let approved = context
+        return try await read(context: approved)
+    }
+
+    /// Reads the key with `context`. The Keychain call blocks while any prompt shows, so it runs
+    /// off the main actor.
+    private static func read(context: sending LAContext) async throws -> SymmetricKey {
         let data: Data = try await Task.detached(priority: .userInitiated) {
-            let context = LAContext()
-            context.localizedReason = reason
-            context.localizedCancelTitle = "Use Password"
             var query = baseQuery
             query[kSecReturnData as String] = true
             query[kSecMatchLimit as String] = kSecMatchLimitOne
@@ -106,6 +133,19 @@ public enum BiometricKeychain {
             }
         }.value
         return SymmetricKey(data: data)
+    }
+
+    /// Cancelling, falling back to the password or failing too often all mean "use the password".
+    static func mapped(_ error: any Error) -> any Error {
+        guard let error = error as? LAError else { return error }
+        switch error.code {
+        case .userCancel, .appCancel, .systemCancel, .userFallback, .authenticationFailed:
+            return BiometricError.cancelled
+        case .biometryNotAvailable, .biometryNotEnrolled:
+            return BiometricError.unavailable
+        default:
+            return error
+        }
     }
 
     public static func delete() {

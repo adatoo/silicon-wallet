@@ -1,7 +1,9 @@
+import LocalAuthentication
 import SiliconWalletKit
 import SwiftUI
 
 /// The locked screen: the master password, or Face ID / Touch ID when allowed, unlocks the vault.
+/// On the Mac, Touch ID is shown inside the window (DESIGN.md §5).
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
     @Environment(LockController.self) private var lock
@@ -10,6 +12,10 @@ struct UnlockView: View {
     @State private var failed = false
     @State private var triedBiometrics = false
     @FocusState private var isFocused: Bool
+    #if os(macOS)
+        /// The context the inline Touch ID view shows. A new one is made for each attempt.
+        @State private var biometricContext: LAContext?
+    #endif
 
     var body: some View {
         VStack(spacing: 24) {
@@ -45,16 +51,23 @@ struct UnlockView: View {
                 .disabled(password.isEmpty || isWorking)
                 .keyboardShortcut(.defaultAction)
 
-                if lock.canUnlockWithBiometrics {
-                    Button("Unlock with \(lock.biometricKind.name)", systemImage: lock.biometricKind.symbol) {
-                        Task { await lock.unlockWithBiometrics() }
+                #if os(iOS)
+                    if lock.canUnlockWithBiometrics {
+                        Button("Unlock with \(lock.biometricKind.name)", systemImage: lock.biometricKind.symbol) {
+                            Task { await lock.unlockWithBiometrics() }
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.bordered)
                     }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.bordered)
-                    .help("Unlock with \(lock.biometricKind.name)")
-                }
+                #endif
             }
             .controlSize(.large)
+
+            #if os(macOS)
+                if lock.canUnlockWithBiometrics {
+                    inlineTouchID
+                }
+            #endif
 
             if let notice = lock.notice {
                 Text(notice)
@@ -69,10 +82,60 @@ struct UnlockView: View {
             isFocused = true
             if !triedBiometrics, lock.canUnlockWithBiometrics {
                 triedBiometrics = true
-                Task { await lock.unlockWithBiometrics() }
+                startBiometrics()
             }
         }
+        #if os(macOS)
+            .onChange(of: password) { _, new in
+                // Typing the password takes over from Touch ID.
+                if !new.isEmpty { stopBiometrics() }
+            }
+            .onDisappear(perform: stopBiometrics)
+        #endif
     }
+
+    #if os(macOS)
+        /// Touch ID inside the lock screen, instead of the system's floating panel.
+        @ViewBuilder
+        private var inlineTouchID: some View {
+            if let biometricContext {
+                VStack(spacing: 6) {
+                    LocalAuthenticationView(context: biometricContext) {
+                        Label("Touch ID", systemImage: "touchid")
+                    }
+                    .controlSize(.large)
+                    Text("Touch ID or enter your password")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Button("Use Touch ID", systemImage: "touchid", action: startBiometrics)
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+            }
+        }
+    #endif
+
+    private func startBiometrics() {
+        #if os(macOS)
+            let context = LAContext()
+            context.localizedCancelTitle = "Use Password"
+            biometricContext = context
+            Task {
+                await lock.unlockWithBiometrics(context: context)
+                if biometricContext === context { biometricContext = nil }
+            }
+        #else
+            Task { await lock.unlockWithBiometrics() }
+        #endif
+    }
+
+    #if os(macOS)
+        private func stopBiometrics() {
+            biometricContext?.invalidate()
+            biometricContext = nil
+        }
+    #endif
 
     private func unlock() {
         guard !password.isEmpty, !isWorking, let session = model.session else { return }
