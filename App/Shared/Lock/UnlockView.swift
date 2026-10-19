@@ -104,7 +104,7 @@ struct UnlockView: View {
                     LocalAuthenticationView(context: biometricContext) {
                         Label("Touch ID", systemImage: "touchid")
                     }
-                    .controlSize(.large)
+                    .controlSize(.regular)
                     Text("Touch ID or enter your password")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
