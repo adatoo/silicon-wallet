@@ -155,26 +155,90 @@ private let day: TimeInterval = 24 * 60 * 60
     #expect(VaultSession.purgeDate(forDeletedAt: deletedAt) == deletedAt.addingTimeInterval(30 * day))
 }
 
+/// Saves `entry` as another device would, sealed under the vault key.
 @MainActor
-@Test func unlockingDeletesExpiredItems() async throws {
-    let (session, store, group) = try await trashSession()
+private func saveFromAnotherDevice(_ entry: VaultEntry, to store: InMemoryVaultStore, session: VaultSession) throws {
     let key = try #require(session.vaultKeyForBiometricUnlock())
-    // An entry another device moved to Recently Deleted 31 days ago.
-    let old = VaultEntry(groupID: group.id, title: "Fake Old", deleted: Date.now.addingTimeInterval(-31 * day))
-    let recent = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake Recent"))
-    try session.moveEntryToTrash(id: recent.id)
     let encoder = JSONEncoder()
     encoder.outputFormatting = .sortedKeys
     try store.saveRecords([
         SealedRecord(
-            id: old.id, kind: .entry, modified: .now, schemaVersion: VaultSession.recordSchemaVersion,
-            ciphertext: RecordSealer.seal(encoder.encode(old), recordID: old.id, key: key))
+            id: entry.id, kind: .entry, modified: entry.modified, schemaVersion: VaultSession.recordSchemaVersion,
+            ciphertext: RecordSealer.seal(encoder.encode(entry), recordID: entry.id, key: key))
     ])
+}
+
+@MainActor
+@Test func unlockingDeletesExpiredItemsOnlyAfterTheyHaveBeenShownForAWeek() async throws {
+    let (session, store, group) = try await trashSession()
+    // An entry another device moved to Recently Deleted 31 days ago, seen here for the first time:
+    // an old copy replayed through iCloud, or a device whose clock is far behind.
+    let old = VaultEntry(groupID: group.id, title: "Fake Old", deleted: Date.now.addingTimeInterval(-31 * day))
+    try saveFromAnotherDevice(old, to: store, session: session)
 
     session.lock()
     try await session.unlock(password: "fake-master")
-    #expect(session.deletedEntries.map(\.id) == [recent.id])
+    #expect(session.deletedEntries.map(\.id) == [old.id])
+    #expect(store.records[old.id] != nil)
+    #expect(try session.purgeExpiredItems(now: .now.addingTimeInterval(6 * day)) == 0)
+
+    #expect(try session.purgeExpiredItems(now: .now.addingTimeInterval(7 * day + 60)) == 1)
     #expect(store.records[old.id] == nil)
+}
+
+@MainActor
+@Test func aReloadAfterSyncNeverDeletesAnythingForGood() async throws {
+    let (session, store, group) = try await trashSession()
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake"))
+    try session.moveEntryToTrash(id: entry.id)
+    // Long past both the retention and the notice, but only a reload happens.
+    var expired = try #require(session.deletedEntry(id: entry.id))
+    expired.deleted = Date.now.addingTimeInterval(-60 * day)
+    try saveFromAnotherDevice(expired, to: store, session: session)
+
+    try session.reload()
+    #expect(session.deletedEntries.map(\.id) == [entry.id])
+    #expect(store.records[entry.id] != nil)
+}
+
+@MainActor
+@Test func aDeletionDateInTheFutureCountsFromWhenItWasSeen() async throws {
+    let (session, store, group) = try await trashSession()
+    let future = VaultEntry(groupID: group.id, title: "Fake Future", deleted: Date.now.addingTimeInterval(365 * day))
+    try saveFromAnotherDevice(future, to: store, session: session)
+    try session.reload()
+
+    let shown = try #require(session.deletedEntry(id: future.id))
+    let purgeDate = session.purgeDate(forTrashedItem: shown.id, deletedAt: try #require(shown.deleted))
+    #expect(purgeDate < Date.now.addingTimeInterval(31 * day))
+    #expect(try session.purgeExpiredItems(now: .now.addingTimeInterval(31 * day)) == 1)
+}
+
+@MainActor
+@Test func whenAnItemWasFirstSeenSurvivesLockingButNotTheVault() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = InMemoryVaultStore()
+    let session = try VaultSession(store: store, trashLedger: TrashLedger(directory: directory))
+    try await session.createVault(
+        password: "fake-master", starterGroups: false, kdf: .generate(iterations: 1, memoryBytes: 8 << 10))
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let old = VaultEntry(groupID: group.id, title: "Fake Old", deleted: Date.now.addingTimeInterval(-31 * day))
+    try saveFromAnotherDevice(old, to: store, session: session)
+    try session.reload()
+    let firstPurgeDate = session.purgeDate(forTrashedItem: old.id, deletedAt: try #require(old.deleted))
+
+    // A later unlock, in a new session on the same files, keeps the first-seen date.
+    session.lock()
+    let reopened = try VaultSession(store: store, trashLedger: TrashLedger(directory: directory))
+    try await reopened.unlock(password: "fake-master")
+    #expect(reopened.purgeDate(forTrashedItem: old.id, deletedAt: try #require(old.deleted)) == firstPurgeDate)
+    let sealed = try Data(contentsOf: directory.appendingPathComponent("TrashLedger.sealed"))
+    #expect(!sealed.contains(Data(old.id.uuidString.utf8)))
+
+    try reopened.deleteVault()
+    #expect(!FileManager.default.fileExists(atPath: directory.appendingPathComponent("TrashLedger.sealed").path))
 }
 
 @MainActor

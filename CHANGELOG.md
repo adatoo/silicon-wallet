@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.2] - 2026-10-19
+
+### Fixed
+
+- Items in Recently Deleted are now deleted for good only when you unlock, never straight after
+  a sync, and only once this device has shown them for at least a week. An old copy coming back
+  through iCloud, or a device whose clock is wrong, can no longer delete things at once.
+
 ## [0.23.1] - 2026-10-19
 
 ### Fixed

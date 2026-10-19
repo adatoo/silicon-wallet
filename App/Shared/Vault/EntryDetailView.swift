@@ -20,7 +20,7 @@ struct EntryDetailView: View {
                 Section {
                     Label {
                         Text(
-                            "Deleted \(deleted.formatted(date: .abbreviated, time: .shortened)). It will be deleted for good on \(VaultSession.purgeDate(forDeletedAt: deleted).formatted(date: .abbreviated, time: .omitted))."
+                            "Deleted \(deleted.formatted(date: .abbreviated, time: .shortened)). It will be deleted for good on \(purgeDate(deleted).formatted(date: .abbreviated, time: .omitted))."
                         )
                     } icon: {
                         Image(systemName: "trash")
@@ -105,6 +105,11 @@ struct EntryDetailView: View {
         } message: {
             Text("It will be deleted from this vault on all your devices, with its attachments. This can't be undone.")
         }
+    }
+
+    private func purgeDate(_ deleted: Date) -> Date {
+        model.session?.purgeDate(forTrashedItem: entry.id, deletedAt: deleted)
+            ?? VaultSession.purgeDate(forDeletedAt: deleted)
     }
 
     private var fieldRows: [FieldValueRow.Row] {

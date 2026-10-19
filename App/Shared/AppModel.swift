@@ -67,7 +67,9 @@ final class AppModel {
             }
             let directory = try SwiftDataVaultStore.defaultDirectory()
             let store = SyncedVaultStore(base: try SwiftDataVaultStore(directory: directory))
-            let session = try VaultSession(store: store, accessLog: AccessLog(directory: directory))
+            let session = try VaultSession(
+                store: store, accessLog: AccessLog(directory: directory), trashLedger: TrashLedger(directory: directory)
+            )
             let sync =
                 CloudEntitlement.isAvailable
                 ? VaultSync(
