@@ -308,6 +308,10 @@ public final class VaultSync: CKSyncEngineDelegate {
 
     private func saveState(_ state: CKSyncEngine.State.Serialization) {
         guard let data = try? JSONEncoder().encode(state) else { return }
-        try? data.write(to: stateURL, options: .atomic)
+        #if os(iOS)
+            try? data.write(to: stateURL, options: [.atomic, .completeFileProtectionUnlessOpen])
+        #else
+            try? data.write(to: stateURL, options: .atomic)
+        #endif
     }
 }

@@ -18,6 +18,7 @@ public final class SwiftDataVaultStore: VaultStore {
     /// Opens (or creates) the store in `directory`, normally the app's Application Support.
     public init(directory: URL) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        Self.protect(directory)
         let configuration = ModelConfiguration(
             schema: Self.schema, url: directory.appendingPathComponent("Vault.store"), cloudKitDatabase: .none)
         container = try ModelContainer(for: Self.schema, configurations: [configuration])
@@ -37,6 +38,39 @@ public final class SwiftDataVaultStore: VaultStore {
         container = try ModelContainer(for: Self.schema, configurations: [configuration])
         attachmentsDirectory = directory
         try FileManager.default.createDirectory(at: attachmentsDirectory, withIntermediateDirectories: true)
+    }
+
+    /// The file protection for the vault's folder on iOS (DESIGN.md §6). `completeUnlessOpen`: the
+    /// files can't be opened while the device is locked, but a store already open keeps working,
+    /// so sync can still write in the background. Files created in the folder inherit it.
+    public static let fileProtection = FileProtectionType.completeUnlessOpen
+
+    /// Gives the folder and the files directly in it `fileProtection`, where they don't have it or
+    /// something stronger. Does nothing on the Mac, where the system volume's encryption covers it.
+    static func protect(_ directory: URL) {
+        #if os(iOS)
+            let manager = FileManager.default
+            let files = (try? manager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+            for url in [directory] + files {
+                let current = (try? manager.attributesOfItem(atPath: url.path))?[.protectionKey] as? FileProtectionType
+                guard current != fileProtection, current != .complete else { continue }
+                try? manager.setAttributes([.protectionKey: fileProtection], ofItemAtPath: url.path)
+            }
+        #endif
+    }
+
+    /// Whether the vault in `directory` exists but can't be read yet, because the device hasn't
+    /// been unlocked since the app was woken in the background. Open the store once it has.
+    public static func isWaitingForDeviceUnlock(directory: URL) -> Bool {
+        #if os(iOS)
+            let store = directory.appendingPathComponent("Vault.store")
+            guard FileManager.default.fileExists(atPath: store.path) else { return false }
+            guard let handle = FileHandle(forReadingAtPath: store.path) else { return true }
+            try? handle.close()
+            return false
+        #else
+            false
+        #endif
     }
 
     /// `Application Support/com.datoos.silicon-wallet/Vault`. In the sandboxed app this is inside
