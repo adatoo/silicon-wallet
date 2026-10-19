@@ -1,6 +1,10 @@
 import SiliconWalletKit
 import SwiftUI
 
+#if os(macOS)
+    import AppKit
+#endif
+
 extension FieldKind {
     var displayName: String {
         switch self {
@@ -68,6 +72,26 @@ extension View {
             }
         #else
             self.autocorrectionDisabled()
+        #endif
+    }
+}
+
+extension View {
+    /// Makes Return add a line in a multi-line text field on the Mac, where it would otherwise end
+    /// editing. iOS already adds a line. Return with a modifier, such as Option, is left alone.
+    @ViewBuilder
+    func returnAddsLine() -> some View {
+        #if os(macOS)
+            onKeyPress(keys: [.return]) { press in
+                guard press.modifiers.isEmpty else { return .ignored }
+                // The focused field's text view inserts the line at the cursor.
+                let inserted =
+                    NSApp.keyWindow?.firstResponder?.tryToPerform(
+                        #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:)), with: nil) ?? false
+                return inserted ? .handled : .ignored
+            }
+        #else
+            self
         #endif
     }
 }
