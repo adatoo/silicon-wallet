@@ -627,33 +627,12 @@ public final class VaultSession {
         var openedDeletedEntries: [VaultEntry] = []
         var unreadable = 0
         for record in try store.loadRecords() {
-            guard record.schemaVersion <= Self.recordSchemaVersion,
-                let plaintext = try? RecordSealer.open(record.ciphertext, recordID: record.id, key: key)
-            else {
-                unreadable += 1
-                continue
-            }
-            switch record.kind {
-            case .group:
-                if let group = try? decoder.decode(VaultGroup.self, from: plaintext), group.id == record.id {
-                    if group.deleted == nil {
-                        openedGroups.append(group)
-                    } else {
-                        openedDeletedGroups.append(group)
-                    }
-                } else {
-                    unreadable += 1
-                }
-            case .entry:
-                if let entry = try? decoder.decode(VaultEntry.self, from: plaintext), entry.id == record.id {
-                    if entry.deleted == nil {
-                        openedEntries.append(entry)
-                    } else {
-                        openedDeletedEntries.append(entry)
-                    }
-                } else {
-                    unreadable += 1
-                }
+            switch opened(record, key: key) {
+            case .group(let group) where group.deleted == nil: openedGroups.append(group)
+            case .group(let group): openedDeletedGroups.append(group)
+            case .entry(let entry) where entry.deleted == nil: openedEntries.append(entry)
+            case .entry(let entry): openedDeletedEntries.append(entry)
+            case nil: unreadable += 1
             }
         }
 
@@ -671,6 +650,51 @@ public final class VaultSession {
         noteTrash()
         // A purge that fails now is tried again at the next unlock.
         if purging { _ = try? purgeExpiredItems() }
+    }
+
+    private enum OpenedItem {
+        case group(VaultGroup)
+        case entry(VaultEntry)
+
+        var modified: Date {
+            switch self {
+            case .group(let group): group.modified
+            case .entry(let entry): entry.modified
+            }
+        }
+    }
+
+    /// The group or entry in `record`, or nil if it doesn't open: a newer schema, a wrong key,
+    /// tampered bytes, a payload for another ID, or a plain `modified` that differs from the one
+    /// sealed inside (CloudKit keeps dates to the millisecond, so a second's slack is allowed).
+    private func opened(_ record: SealedRecord, key: SymmetricKey) -> OpenedItem? {
+        guard record.schemaVersion <= Self.recordSchemaVersion,
+            let plaintext = try? RecordSealer.open(record.ciphertext, recordID: record.id, key: key)
+        else { return nil }
+        let item: OpenedItem
+        switch record.kind {
+        case .group:
+            guard let group = try? decoder.decode(VaultGroup.self, from: plaintext), group.id == record.id
+            else { return nil }
+            item = .group(group)
+        case .entry:
+            guard let entry = try? decoder.decode(VaultEntry.self, from: plaintext), entry.id == record.id
+            else { return nil }
+            item = .entry(entry)
+        }
+        guard abs(item.modified.timeIntervalSince(record.modified)) <= 1 else { return nil }
+        return item
+    }
+
+    /// Whether sync should take `record` in place of the local copy (`VaultSync.acceptsIncomingRecord`).
+    /// While locked, or with no readable local copy, it takes anything; otherwise the incoming copy
+    /// must open. So a damaged or tampered server copy can't replace a good one.
+    public func acceptsIncoming(_ record: SealedRecord) -> Bool {
+        guard let vaultKey else { return true }
+        let isReadableHere =
+            (groups + deletedGroups).contains { $0.id == record.id }
+            || (entries + deletedEntries).contains { $0.id == record.id }
+        return !isReadableHere || opened(record, key: vaultKey) != nil
     }
 
     private func seal(_ group: VaultGroup) throws -> SealedRecord {

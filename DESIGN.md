@@ -146,7 +146,10 @@ Accounts, Software Licences and Secure Notes.
 1. **Master password** → Argon2id (random 16-byte salt; parameters stored with the vault,
    tuned to about 0.5 s on the slowest supported device; starting point 64 MiB, 3 iterations) → **KEK**.
    libsodium's `crypto_pwhash` (ADR-0006). The password is normalised to Unicode NFC first, so
-   precomposed and decomposed forms of the same password unlock the same vault.
+   precomposed and decomposed forms of the same password unlock the same vault. The parameters
+   arrive with a synced `VaultMeta`, so this build refuses any above 1 GiB or 20 passes
+   (`KDFParameters.isWithinLimits`) rather than hang or run out of memory; sync ignores a meta
+   outside the limits.
 2. **Vault key**: random 256-bit key generated at vault creation. Stored only wrapped
    (AES-GCM) under the KEK. Changing the master password re-wraps the vault key only.
 3. **Record encryption**: every Group and Entry is serialised (Codable → binary plist/JSON)
@@ -163,6 +166,11 @@ Accounts, Software Licences and Secure Notes.
 ### What is stored unencrypted
 Record ID, record type, modified timestamp, schema version, ciphertext length.
 Nothing else: names, labels, values, notes and filenames are always encrypted.
+These plain fields aren't in the associated data, but they're checked on opening: the modified
+timestamp must match the one sealed inside (to the second, as CloudKit rounds to the
+millisecond), a record type that doesn't match its payload fails to decode, and a newer schema
+version is skipped. Any of them tampered with leaves the record unreadable, as tampered bytes
+do; it can't be made to win conflicts or pass as another kind of record.
 
 ### Unlock and lock
 - Master password unlock is always available.
@@ -194,7 +202,8 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
 ### Everyday protections
 - Concealed fields hidden until revealed.
 - Copy to clipboard with auto-clear (default 60 s). On iOS use local-only, expiring pasteboard
-  items. On macOS mark items as concealed / transient.
+  items. On macOS mark items as concealed / transient, and clear our item when the app quits,
+  since the timer doesn't outlive it.
 - Password generator (random characters and word-based): `PasswordGenerator`, with a built-in
   list of about 1,660 common words (about 10.7 bits each; six words by default).
 - Access log (encrypted, local per device): unlocks, failed attempts, exports.
@@ -217,7 +226,8 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   in use.
 - Delete Vault (Settings, needs the master password): from iCloud and every device (deletes the
   zone), or this device only. A zone deleted on purpose elsewhere (`.deleted`, `.purged`) removes
-  the vault here too; `.encryptedDataReset` re-uploads it.
+  the vault here too, with the same clean-up (the biometric Keychain item, preview files and our
+  clipboard item); `.encryptedDataReset` re-uploads it.
 - Screenshot / screen-recording privacy cover on iOS app switcher.
 - Never log secrets. No plaintext ever written to disk, iCloud, caches or crash logs.
 
@@ -265,6 +275,9 @@ Nothing else: names, labels, values, notes and filenames are always encrypted.
   sealed files.
   - Conflict copies need the vault key, so they're made only while the vault is unlocked;
     while locked, the later version simply wins. A tie goes to the server.
+  - While unlocked, a fetched group or entry that doesn't open (damaged, tampered or re-dated)
+    doesn't replace a local copy that does; the local copy is sent back over it
+    (`VaultSync.acceptsIncomingRecord`). While locked it can't be checked and is stored as is.
   - `zoneNotFound`/`unknownItem` re-upload the item; a deleted zone re-uploads everything.
   - First run waits (up to 20 s) for iCloud's first fetch before offering to create a vault, so
     a new device joins the existing vault instead of starting a second one.

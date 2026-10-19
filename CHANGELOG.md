@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.4] - 2026-10-19
+
+### Fixed
+
+- A damaged or tampered copy of an item arriving from iCloud can no longer replace a good copy
+  on an unlocked device, and a copy with a changed date can't win conflicts.
+- A tampered vault record from iCloud can no longer make every unlock hang: the password-hashing
+  settings are capped at 1 GB and 20 passes.
+- Deleting the vault on another device now also removes this device's Face ID or Touch ID key,
+  previews and copied values.
+- On the Mac, a copied password is cleared from the clipboard when you quit.
+
 ## [0.23.3] - 2026-10-19
 
 ### Fixed

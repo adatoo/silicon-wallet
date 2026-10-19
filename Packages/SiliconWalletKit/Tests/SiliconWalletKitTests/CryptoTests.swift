@@ -78,12 +78,27 @@ private enum Vector {
     tooLittleMemory.memoryBytes = 1024
     var noPasses = Vector.fastParameters
     noPasses.iterations = 0
+    // A tampered synced VaultMeta could ask for these; they'd hang or exhaust memory.
+    var tooMuchMemory = Vector.fastParameters
+    tooMuchMemory.memoryBytes = 4 << 30
+    var tooManyPasses = Vector.fastParameters
+    tooManyPasses.iterations = 1_000_000
 
-    for parameters in [shortSalt, tooLittleMemory, noPasses] {
+    for parameters in [shortSalt, tooLittleMemory, noPasses, tooMuchMemory, tooManyPasses] {
+        #expect(!parameters.isWithinLimits)
         #expect(throws: CryptoError.invalidParameters) {
             try KeyDerivation.deriveKEK(password: "fakepass", parameters: parameters)
         }
     }
+}
+
+@Test func theDefaultsAndTheCeilingsAreWithinLimits() {
+    #expect(KDFParameters.generate().isWithinLimits)
+    #expect(
+        KDFParameters.generate(
+            iterations: KDFParameters.maximumIterations, memoryBytes: KDFParameters.maximumMemoryBytes
+        )
+        .isWithinLimits)
 }
 
 @Test func kdfParametersRoundTripThroughCodable() throws {

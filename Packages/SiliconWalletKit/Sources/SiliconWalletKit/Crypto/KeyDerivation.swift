@@ -15,6 +15,10 @@ public struct KDFParameters: Codable, Equatable, Sendable {
     /// the slowest supported device.
     public static let defaultMemoryBytes = 64 << 20
     public static let defaultIterations = 3
+    /// The most this build will run. The parameters arrive with a synced `VaultMeta`, so without a
+    /// ceiling a tampered meta could make every unlock hang or run out of memory.
+    public static let maximumMemoryBytes = 1 << 30
+    public static let maximumIterations = 20
 
     public var algorithm: Algorithm
     public var salt: Data
@@ -26,6 +30,14 @@ public struct KDFParameters: Codable, Equatable, Sendable {
         self.salt = salt
         self.iterations = iterations
         self.memoryBytes = memoryBytes
+    }
+
+    /// Whether this build accepts these parameters: the right algorithm and salt length, and
+    /// limits between libsodium's minimums and this build's maximums.
+    public var isWithinLimits: Bool {
+        algorithm == .argon2id13 && salt.count == Self.saltLength
+            && (Int(crypto_pwhash_opslimit_min())...Self.maximumIterations).contains(iterations)
+            && (Int(crypto_pwhash_memlimit_min())...Self.maximumMemoryBytes).contains(memoryBytes)
     }
 
     /// New parameters with a random salt, for a new vault or a password change.
@@ -49,11 +61,7 @@ public enum KeyDerivation {
     /// always derives the same key.
     public static func deriveKEK(password: String, parameters: KDFParameters) throws -> SymmetricKey {
         guard sodiumReady else { throw CryptoError.keyDerivationFailed }
-        guard parameters.algorithm == .argon2id13,
-            parameters.salt.count == KDFParameters.saltLength,
-            parameters.iterations >= Int(crypto_pwhash_opslimit_min()),
-            parameters.memoryBytes >= Int(crypto_pwhash_memlimit_min())
-        else { throw CryptoError.invalidParameters }
+        guard parameters.isWithinLimits else { throw CryptoError.invalidParameters }
 
         // A trailing NUL keeps the buffer non-empty, so it always has an address; it isn't
         // part of the length passed to Argon2id.
