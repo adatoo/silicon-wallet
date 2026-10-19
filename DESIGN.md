@@ -253,7 +253,8 @@ do; it can't be made to win conflicts or pass as another kind of record.
 ## 7. iCloud sync (CKSyncEngine)
 
 - CloudKit **private database**, custom zone `Vault`.
-- Record types: `VaultMeta`, `Group`, `Entry`, `Attachment`.
+- Record types: `VaultMeta`, `Group`, `Entry`, `Attachment`. The schema is kept in
+  `CloudKit/schema.ckdb` and deployed to Production before a TestFlight build (`task cloudkit:*`).
 - Each record's encrypted payload goes in a field set via `CKRecord.encryptedValues`
   (CloudKit's own encryption layered on top of ours).
 - Entries and groups sync eagerly, so every device has the full encrypted vault and search
