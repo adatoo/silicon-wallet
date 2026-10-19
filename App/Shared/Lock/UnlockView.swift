@@ -3,7 +3,8 @@ import SiliconWalletKit
 import SwiftUI
 
 /// The locked screen: the master password, or Face ID / Touch ID when allowed, unlocks the vault.
-/// On the Mac, Touch ID is shown inside the window (DESIGN.md §5).
+/// On the Mac, Touch ID is shown inside the window (DESIGN.md §5). The form sits on a frosted card
+/// over the backdrop.
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
     @Environment(LockController.self) private var lock
@@ -79,6 +80,10 @@ struct UnlockView: View {
             }
         }
         .padding(32)
+        .background(.regularMaterial, in: .rect(cornerRadius: 24))
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { LockBackdrop() }
         .onAppear {
             isFocused = true
             startBiometricsOnce()
@@ -167,5 +172,23 @@ struct UnlockView: View {
             }
             isWorking = false
         }
+    }
+}
+
+/// A blurred circuit board in the icon's colours behind the lock screen (`task backdrop` draws it).
+private struct LockBackdrop: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Color.clear
+            .overlay {
+                Image("LockBackdrop")
+                    .resizable()
+                    .scaledToFill()
+            }
+            .overlay(colorScheme == .dark ? Color.black.opacity(0.2) : Color.white.opacity(0.08))
+            .clipped()
+            .ignoresSafeArea()
+            .accessibilityHidden(true)
     }
 }

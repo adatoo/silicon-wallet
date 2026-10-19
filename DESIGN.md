@@ -67,6 +67,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - Toolbar: lock toggle, sync status, search. Bottom/toolbar actions: add group, add entry, edit.
 - Original look and icon. Do not copy Acrylic's artwork. The icon (a silicon chip with a keyhole,
   teal to navy) is drawn by `scripts/make-icon.swift`; run `task icon` after changing it.
+- The lock screen has a backdrop: a blurred close-up of a circuit board in the icon's colours,
+  original artwork drawn by `scripts/make-backdrop.py` (`task backdrop`), with the form on a
+  frosted card. Only the lock screen has it; the vault screens keep the system backgrounds.
 - Sidebar: All Entries, Favourites, then the groups (drag to reorder). Moving an entry to
   another group keeps every value: matching labels move across, the rest become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation

@@ -102,6 +102,11 @@ tasks:
     cmds:
       - swift scripts/make-icon.swift App/Resources/Assets.xcassets/AppIcon.appiconset
 
+  backdrop:
+    desc: Redraw the lock screen backdrop from scripts/make-backdrop.py (needs Pillow and NumPy)
+    cmds:
+      - python3 scripts/make-backdrop.py App/Resources/Assets.xcassets/LockBackdrop.imageset
+
   screenshots:
     desc: Capture App Store screenshots from the iPhone and iPad simulators into AppStore/screenshots
     summary: |
