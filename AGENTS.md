@@ -13,6 +13,9 @@ Git workflow and general project hygiene follow the user-level engineering stand
 - The Xcode project is generated: edit `project.yml`, run `task generate`, and commit both
   (ADR-0001). Never hand-edit `SiliconWallet.xcodeproj` or `App/Info.plist`.
 - ADRs: `docs/adr/`. Release roadmap: `docs/app-store-release.md`.
+- The shared workflows (`auto-merge`, `issue-link`, `tag-on-merge`, `version-bump`) are vendored
+  from engineering-standards v0.6.0 so the repo can go public; once it is, CI uses
+  GitHub-hosted runners only (ADR-0007).
 
 ## Build and test
 Every command is a `task`; run `task` to list them.

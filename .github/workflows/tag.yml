@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   tag:
-    uses: adatoo/engineering-standards/.github/workflows/tag-on-merge.yml@v0.6.0
+    uses: ./.github/workflows/tag-on-merge.yml
     with:
       version-file: VERSION
       client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}

@@ -1,0 +1,142 @@
+name: tag-on-merge
+
+# Vendored unchanged from adatoo/engineering-standards v0.6.0, apart from these
+# comments (ADR-0007): a public repo can't call workflows in a private one. To update,
+# copy the new version over this file and keep this note.
+
+# Reusable workflow for AGENTS.md §"Versions, changelog and tags": tag every
+# merge to `main` with an annotated `vX.Y.Z`, read from the repo's single
+# version source.
+#
+# The tag is pushed with the `adatoo-automation` App's token, not
+# GITHUB_TOKEN, so its `push: tags` event starts the caller's release
+# workflows. The caller's `push: main` itself only fires because the merge
+# was made by the App too (auto-merge.yml).
+#
+#   on:
+#     push:
+#       branches: [main]
+#   permissions: {}
+#   jobs:
+#     tag:
+#       uses: ./.github/workflows/tag-on-merge.yml
+#       with:
+#         version-file: package.json
+#         client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
+#         runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+#       secrets:
+#         AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+#
+# Idempotent: a tag that already points at this commit is left alone. It
+# fails loudly when the version reads as 0.0.0 (the wrong file), or when the
+# tag already points at another commit (the version wasn't bumped).
+
+on:
+  workflow_call:
+    inputs:
+      version-file:
+        description: Path of the repo's single version source
+        required: true
+        type: string
+      client-id:
+        description: Client ID of the automation GitHub App
+        required: true
+        type: string
+      runner:
+        description: Runner label (pass the caller's LINUX_RUNNER variable)
+        required: false
+        type: string
+        default: ubuntu-latest
+    secrets:
+      AUTOMATION_APP_PRIVATE_KEY:
+        description: Private key of the automation GitHub App
+        required: true
+    outputs:
+      tag:
+        description: The tag this merge carries
+        value: ${{ jobs.tag.outputs.tag }}
+
+permissions: {}
+
+jobs:
+  tag:
+    name: Tag vX.Y.Z
+    runs-on: ${{ inputs.runner }}
+    # Never cancel a tag half-way.
+    concurrency:
+      group: tag-${{ github.repository }}
+      cancel-in-progress: false
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Mint the App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.client-id }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      # Keep the readers in step with version-bump.yml.
+      - name: Read the version
+        id: version
+        env:
+          VERSION_FILE: ${{ inputs.version-file }}
+        shell: python3 {0}
+        run: |
+          import json, os, re, sys, tomllib
+          from pathlib import PurePosixPath
+
+          path = os.environ["VERSION_FILE"]
+          with open(path) as f:
+              text = f.read()
+          name = PurePosixPath(path).name
+          if name.endswith(".json"):
+              version = json.loads(text)["version"]
+          elif name == "Cargo.toml":
+              data = tomllib.loads(text)
+              version = data.get("package", {}).get("version") or data["workspace"]["package"]["version"]
+          elif name == "pyproject.toml":
+              data = tomllib.loads(text)
+              version = data.get("project", {}).get("version") or data["tool"]["poetry"]["version"]
+          else:
+              version = text.strip()
+
+          if not re.match(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$", version):
+              sys.exit(f"::error file={path}::'{version}' is not a SemVer version")
+          if version == "0.0.0":
+              sys.exit(f"::error file={path}::refusing to tag 0.0.0; is {path} the version source?")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"version={version}\n")
+
+      - name: Create and push the tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if existing="$(gh api "repos/$REPO/commits/refs/tags/$tag" --jq .sha 2>/dev/null)"; then
+            if [ "$existing" = "$SHA" ]; then
+              echo "$tag already points at ${SHA:0:7}; nothing to do."
+              exit 0
+            fi
+            echo "::error::$tag already points at ${existing:0:7}, not ${SHA:0:7}. Was the version bumped?"
+            exit 1
+          fi
+          bot="${APP_SLUG}[bot]"
+          id="$(gh api "users/$bot" --jq .id)"
+          git config user.name "$bot"
+          git config user.email "${id}+${bot}@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $tag" "$SHA"
+          git push origin "refs/tags/$tag"
+          echo "Tagged ${SHA:0:7} as $tag."

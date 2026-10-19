@@ -1,0 +1,47 @@
+name: pages
+
+# Publishes site/ (the support page and privacy policy that the App Store listing links to)
+# to GitHub Pages at https://adatoo.github.io/silicon-wallet/. Plain HTML and CSS, so there's
+# no build step. Pages on a private repo needs a paid plan, so this only works once the repo
+# is public, with Settings > Pages > Source set to "GitHub Actions" (docs/app-store-release.md,
+# B4). Run it by hand the first time.
+on:
+  push:
+    branches: [main]
+    paths: ['site/**']
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    name: upload site
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: deploy
+    needs: upload
+    runs-on: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

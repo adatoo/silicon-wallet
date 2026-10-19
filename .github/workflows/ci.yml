@@ -49,14 +49,14 @@ jobs:
 
   version-bump:
     if: github.event_name == 'pull_request'
-    uses: adatoo/engineering-standards/.github/workflows/version-bump.yml@v0.6.0
+    uses: ./.github/workflows/version-bump.yml
     with:
       version-file: VERSION
       runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
 
   issue-link:
     if: github.event_name == 'pull_request'
-    uses: adatoo/engineering-standards/.github/workflows/issue-link.yml@v0.6.0
+    uses: ./.github/workflows/issue-link.yml
     with:
       runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
 

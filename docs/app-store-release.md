@@ -46,7 +46,7 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 - These follow DESIGN.md §8 exactly, with tests for wrong passwords, tampered ciphertext and known-answer vectors.
 - Add the swift-sodium dependency with an ADR. Pin it to an exact version and check its licence (ISC, compatible).
 - **Release hooks inside these steps:**
-  - Keep the threat model in `docs/security.md`.
+  - Keep the threat model in DESIGN.md §5–7 (SECURITY.md points there).
   - Add the required-reason API entries for `UserDefaults` and file timestamps to `PrivacyInfo.xcprivacy` as soon as either is used.
   - Never log secrets, and add a test that checks it.
 
@@ -71,13 +71,38 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
 - **Test matrix:** two devices on one Apple ID; signed-out iCloud; iCloud Drive off; full iCloud storage; account switching; zone deletion. The app must stay usable without iCloud, because App Review will test that.
 
 ## B4. Pre-beta security pass, then make the repo public
-- Review `docs/security.md` against the code.
-- Run `/security-review` and a dependency licence check.
-- Test vectors are committed and fuzz tests run on decrypt and parse.
-- Run `gitleaks` over the full history.
-- If possible, get an independent review of the crypto design. It is a password manager, and reviewers and users will ask.
-- Flip the repo to public. A public repo can't call reusable workflows in the private `engineering-standards` repo, so make those workflows reachable or vendor them first, as Quail does.
-- Add `CONTRIBUTING.md`, and enable private vulnerability reporting.
+Done in the repo (issue #52, 2026-10-19):
+- `gitleaks` over the full history: no leaks in 51 commits. No personal infrastructure names
+  in tracked files or history. Commit author emails become public with the history.
+- Dependency licences: swift-sodium and the libsodium it bundles are ISC, which is compatible
+  with MIT. CommonCrypto and `libsqlite3` are system libraries.
+- The shared workflows are vendored into `.github/workflows/` (ADR-0007).
+- `pages.yml` publishes `site/` to GitHub Pages.
+- `CONTRIBUTING.md` added; the README is up to date and asks forks to change the name and icon.
+- A stray Claude session log in `Fixtures/AcrylicWallet/` was deleted before it was committed.
+
+Still open:
+- Review DESIGN.md §5–7 against the code, and run `/security-review` on the crypto, vault and
+  import code.
+- Known-answer vectors exist for Argon2id (CryptoTests); fuzz tests on decrypt and parse
+  don't yet.
+- If possible, get an independent review of the crypto design. It is a password manager, and
+  reviewers and users will ask.
+
+**The flip (owner actions, in this order):**
+1. Remove the `mac-mini` and `docker-linux` self-hosted runners from this repo (Settings ▸
+   Actions ▸ Runners, and the runner configs on the Mac mini), and delete the repo variables
+   `MAC_RUNNER` and `LINUX_RUNNER`, so every workflow falls back to GitHub-hosted runners
+   (ADR-0007). Do this first: a fork can target any runner the repo has.
+2. `gh repo edit adatoo/silicon-wallet --visibility public --accept-visibility-change-consequences`.
+3. Settings ▸ Actions ▸ General: "Require approval for all external contributors" for fork
+   pull request workflows.
+4. Settings ▸ Code security: turn on private vulnerability reporting (SECURITY.md relies on
+   it), secret scanning and push protection.
+5. Settings ▸ Pages ▸ Source: "GitHub Actions"; then `gh workflow run pages` and check that
+   `https://adatoo.github.io/silicon-wallet/support.html` and `privacy.html` load.
+6. Open a test PR and confirm CI passes on hosted runners (`macos-26` must have an Xcode that
+   builds the iOS 26 / macOS 26 targets).
 
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
 - **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.

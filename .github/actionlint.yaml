@@ -1,3 +1,12 @@
-# The reusable workflows live in a private repo, so actionlint can't read their inputs.
+# The self-hosted runner labels apply only while the repo is private (ADR-0007).
 self-hosted-runner:
   labels: [docker-linux, mac-mini]
+# actionlint 1.7.12's bundled metadata for actions/create-github-app-token
+# predates its `client-id` input (added in v2, required in place of the
+# deprecated `app-id`). Drop these once the pinned actionlint knows it.
+# The same ignore is in adatoo/engineering-standards, where these files come from.
+paths:
+  .github/workflows/{auto-merge,tag-on-merge}.yml:
+    ignore:
+      - 'missing input "app-id" which is required by action "actions/create-github-app-token@v3"'
+      - 'input "client-id" is not defined in action "actions/create-github-app-token@v3"'

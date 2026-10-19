@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   auto-merge:
-    uses: adatoo/engineering-standards/.github/workflows/auto-merge.yml@v0.6.0
+    uses: ./.github/workflows/auto-merge.yml
     with:
       client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
       runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}

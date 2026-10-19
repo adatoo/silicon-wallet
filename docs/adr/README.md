@@ -8,6 +8,7 @@
 | [0004](./0004-ckSyncEngine-sync.md) | Sync through `CKSyncEngine`, not SwiftData's CloudKit integration | Accepted |
 | [0005](./0005-acrylic-import-route.md) | Acrylic Wallet import reads `.wallet` files natively; no SEE licence needed | Accepted |
 | [0006](./0006-swift-sodium-argon2id.md) | Argon2id from libsodium, through swift-sodium | Accepted |
+| [0007](./0007-public-repo-ci.md) | Once public, CI runs on GitHub-hosted runners only; shared workflows are vendored | Accepted |
 
 ## How to add or change an ADR
 
