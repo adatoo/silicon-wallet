@@ -8,9 +8,16 @@ private let sqliteMagic: [UInt8] = Array("SQLite format 3\0".utf8)
 /// This is only ever held in memory; Silicon Wallet never writes an imported vault's plaintext
 /// to disk (DESIGN.md §5). See `AcrylicWalletReader` to query the result.
 public enum AcrylicWalletFile {
+    /// The largest file accepted: 512 MB. Decrypting and opening holds several copies in memory,
+    /// so a larger (or hostile) file could exhaust it.
+    public static let maximumFileSize = 512 * 1024 * 1024
+
     /// Decrypts `ciphertext`, trying the password as typed and then its NFC and NFD forms, so
     /// an accented password still opens a vault whose password was entered the other way.
-    public static func decrypt(_ ciphertext: Data, password: String) throws -> Data {
+    /// - Parameter maximumSize: for tests; defaults to `maximumFileSize`.
+    public static func decrypt(_ ciphertext: Data, password: String, maximumSize: Int = maximumFileSize) throws -> Data
+    {
+        guard ciphertext.count <= maximumSize else { throw AcrylicWalletError.fileTooLarge }
         let bytes = [UInt8](ciphertext)
         let pageSize = try pageSize(ofHeader: bytes)
         guard bytes.count % pageSize == 0 else {

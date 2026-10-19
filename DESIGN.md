@@ -310,6 +310,9 @@ do; it can't be made to win conflicts or pass as another kind of record.
   - The reader takes the page size from the plaintext header rather than assuming Wallet
     3.5's 1024 bytes, rejects files with reserved bytes per page (an SEE nonce or MAC) as an
     unsupported format, and retries a wrong password in its NFC and NFD forms.
+  - Against a hostile file: files over 512 MB are refused before they're read; the decrypted
+    database opens with `trusted_schema` off, and `groups`, `entries` and `files` must be plain
+    tables, not views; attachments over the 100 MB limit are left out and counted in the summary.
   - Because the key is the password itself (no KDF, no salt), an old `.wallet` file is cheap
     to attack offline. The import summary and the support page tell users to delete old
     copies, Dropbox copies and exports once they've checked their entries.

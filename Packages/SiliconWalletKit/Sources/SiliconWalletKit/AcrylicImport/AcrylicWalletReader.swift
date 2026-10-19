@@ -10,11 +10,21 @@ public final class AcrylicWalletReader {
 
     /// Decrypts `ciphertext` with `password`, opens it as SQLite and confirms
     /// `PRAGMA integrity_check` passes before returning.
-    public init(ciphertext: Data, password: String) throws {
-        let plaintext = try AcrylicWalletFile.decrypt(ciphertext, password: password)
-        db = try Self.openInMemory(plaintext)
-        try Self.checkIntegrity(db)
+    public convenience init(ciphertext: Data, password: String) throws {
+        try self.init(plaintext: AcrylicWalletFile.decrypt(ciphertext, password: password))
     }
+
+    /// Opens an already decrypted SQLite image; for tests.
+    init(plaintext: Data) throws {
+        db = try Self.openInMemory(plaintext)
+        // A throw from here on still runs deinit, which closes the database.
+        try Self.checkIntegrity(db)
+        try Self.checkTables(db)
+    }
+
+    /// The tables the reader selects from. Each must be a plain table, not a view: a hostile file
+    /// could otherwise run an arbitrarily expensive query behind `SELECT * FROM groups`.
+    static let requiredTables = ["groups", "entries", "files"]
 
     deinit {
         sqlite3_close(db)
@@ -92,7 +102,26 @@ public final class AcrylicWalletReader {
             sqlite3_close(db)
             throw AcrylicWalletError.corruptDatabase
         }
+        // Functions the file's own schema names (in views, triggers or defaults) aren't trusted.
+        guard sqlite3_exec(db, "PRAGMA trusted_schema = OFF", nil, nil, nil) == SQLITE_OK else {
+            sqlite3_close(db)
+            throw AcrylicWalletError.corruptDatabase
+        }
         return db
+    }
+
+    private static func checkTables(_ db: OpaquePointer) throws {
+        var statement: OpaquePointer?
+        guard
+            sqlite3_prepare_v2(db, "SELECT name FROM sqlite_master WHERE type = 'table'", -1, &statement, nil)
+                == SQLITE_OK
+        else { throw AcrylicWalletError.corruptDatabase }
+        defer { sqlite3_finalize(statement) }
+        var tables: Set<String> = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            if let name = sqlite3_column_text(statement, 0) { tables.insert(String(cString: name).lowercased()) }
+        }
+        guard Set(requiredTables).isSubset(of: tables) else { throw AcrylicWalletError.corruptDatabase }
     }
 
     private static func checkIntegrity(_ db: OpaquePointer) throws {
