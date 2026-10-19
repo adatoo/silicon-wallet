@@ -84,8 +84,9 @@ Done in the repo (issue #52, 2026-10-19):
 Still open:
 - Review DESIGN.md §5–7 against the code, and run `/security-review` on the crypto, vault and
   import code.
-- Known-answer vectors exist for Argon2id (CryptoTests); fuzz tests on decrypt and parse
-  don't yet.
+- Known-answer vectors exist for Argon2id (CryptoTests). Seeded fuzz tests cover sealed values,
+  Acrylic headers, files and pages, and the property-list text parser (FuzzTests, issue #77);
+  TamperTests cover attachments, the key check, the wrapped key, newer formats and the access log.
 - If possible, get an independent review of the crypto design. It is a password manager, and
   reviewers and users will ask.
 
