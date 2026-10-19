@@ -1,0 +1,114 @@
+name: auto-merge
+
+# Vendored unchanged from adatoo/engineering-standards v0.6.0, apart from these
+# comments (ADR-0007): a public repo can't call workflows in a private one. To update,
+# copy the new version over this file and keep this note.
+
+# Reusable workflow for AGENTS.md §"CI and automation": turn on GitHub's
+# native auto-merge (merge commit) for the owner's PRs, so a PR lands as soon
+# as branch protection is satisfied. A `review` label holds the PR: while it
+# is on, auto-merge is turned off, and taking it off turns it back on.
+#
+# The merge is requested with the `adatoo-automation` App's token, not
+# GITHUB_TOKEN. Events caused by GITHUB_TOKEN start no workflows, so a merge
+# made that way would never run the caller's tag workflow.
+#
+# Call it from a `pull_request_target` workflow. That runs the base branch's
+# definition and never checks out PR code; this job only calls the API.
+#
+#   on:
+#     pull_request_target:
+#       types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
+#   permissions: {}
+#   jobs:
+#     auto-merge:
+#       uses: ./.github/workflows/auto-merge.yml
+#       with:
+#         client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
+#         runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+#       secrets:
+#         AUTOMATION_APP_PRIVATE_KEY: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+#
+# It refuses to run unless `main`'s protection requires `CI Gate`: without a
+# required check, GitHub would merge the PR at once, before CI has run.
+
+on:
+  workflow_call:
+    inputs:
+      client-id:
+        description: Client ID of the automation GitHub App
+        required: true
+        type: string
+      runner:
+        description: Runner label (pass the caller's LINUX_RUNNER variable)
+        required: false
+        type: string
+        default: ubuntu-latest
+      author:
+        description: Only PRs opened by this login are auto-merged
+        required: false
+        type: string
+        default: adatoo
+      hold-label:
+        description: A PR with this label is held for manual review
+        required: false
+        type: string
+        default: review
+      required-check:
+        description: The check branch protection must require before auto-merge is allowed
+        required: false
+        type: string
+        default: CI Gate
+    secrets:
+      AUTOMATION_APP_PRIVATE_KEY:
+        description: Private key of the automation GitHub App
+        required: true
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    name: Request auto-merge
+    runs-on: ${{ inputs.runner }}
+    if: >-
+      github.event.pull_request.user.login == inputs.author &&
+      github.event.pull_request.draft == false
+    concurrency:
+      group: auto-merge-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - name: Mint the App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ inputs.client-id }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+
+      - name: Request auto-merge (merge commit), unless held for review
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          REQUIRED: ${{ inputs.required-check }}
+          HELD: ${{ contains(github.event.pull_request.labels.*.name, inputs.hold-label) }}
+          HOLD_LABEL: ${{ inputs.hold-label }}
+        run: |
+          set -euo pipefail
+          if [ "$HELD" = "true" ]; then
+            echo "Held by the '$HOLD_LABEL' label: auto-merge off."
+            # Fails when auto-merge was never on, which is fine.
+            gh pr merge --disable-auto "$PR" --repo "$REPO" || true
+            exit 0
+          fi
+          # Required checks from classic protection and from rulesets.
+          classic="$(gh api "repos/$REPO/branches/$BASE" \
+            --jq '[.protection.required_status_checks.checks[]?.context, .protection.required_status_checks.contexts[]?] | .[]')"
+          rules="$(gh api "repos/$REPO/rules/branches/$BASE" \
+            --jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[].context] | .[]')"
+          if ! printf '%s\n%s\n' "$classic" "$rules" | grep -qxF "$REQUIRED"; then
+            echo "::error::$BASE does not require '$REQUIRED', so auto-merge would merge before CI. Protect $BASE first (scripts/apply-repo-settings.sh)."
+            exit 1
+          fi
+          gh pr merge --auto --merge "$PR" --repo "$REPO"
+          echo "Auto-merge on for #$PR: it merges once '$REQUIRED' passes."

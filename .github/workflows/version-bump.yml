@@ -1,0 +1,118 @@
+name: version-bump
+
+# Vendored unchanged from adatoo/engineering-standards v0.6.0, apart from these
+# comments (ADR-0007): a public repo can't call workflows in a private one. To update,
+# copy the new version over this file and keep this note.
+
+# Reusable check for AGENTS.md §"Versions, changelog and tags". A PR passes when:
+#   1. the version in `version-file` is a SemVer strictly greater than the base's;
+#   2. `changelog` has a `## [X.Y.Z]` heading for the new version;
+#   3. the branch's last non-merge commit changes both files (the release
+#      commit is last).
+#
+# Call it from a `pull_request` workflow:
+#
+#   version-bump:
+#     uses: ./.github/workflows/version-bump.yml
+#     with:
+#       version-file: package.json
+#       runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+#
+# The version is read by file name: `*.json` → `.version`; `Cargo.toml` →
+# `[package]` or `[workspace.package]` version; `pyproject.toml` →
+# `[project]` or `[tool.poetry]` version; anything else → the whole file.
+
+on:
+  workflow_call:
+    inputs:
+      version-file:
+        description: Path of the repo's single version source
+        required: true
+        type: string
+      changelog:
+        description: Path of the changelog
+        required: false
+        type: string
+        default: CHANGELOG.md
+      runner:
+        description: Runner label (pass the caller's LINUX_RUNNER variable)
+        required: false
+        type: string
+        default: ubuntu-latest
+
+permissions:
+  contents: read
+
+jobs:
+  version-bump:
+    name: version-bump
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check the version, changelog and release commit
+        env:
+          VERSION_FILE: ${{ inputs.version-file }}
+          CHANGELOG: ${{ inputs.changelog }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        shell: python3 {0}
+        run: |
+          import json, os, re, subprocess, sys, tomllib
+          from pathlib import PurePosixPath
+
+          path, changelog, base = os.environ["VERSION_FILE"], os.environ["CHANGELOG"], os.environ["BASE_SHA"]
+          errors = []
+
+          def git(*args):
+              return subprocess.run(["git", *args], capture_output=True, text=True)
+
+          def version_of(text):
+              name = PurePosixPath(path).name
+              if name.endswith(".json"):
+                  return json.loads(text)["version"]
+              if name == "Cargo.toml":
+                  data = tomllib.loads(text)
+                  return data.get("package", {}).get("version") or data["workspace"]["package"]["version"]
+              if name == "pyproject.toml":
+                  data = tomllib.loads(text)
+                  return data.get("project", {}).get("version") or data["tool"]["poetry"]["version"]
+              return text.strip()
+
+          SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$")
+
+          def key(v):
+              m = SEMVER.match(v)
+              if not m:
+                  sys.exit(f"::error file={path}::'{v}' is not a SemVer version")
+              major, minor, patch, pre = m.groups()
+              # A release sorts after any pre-release of the same version.
+              return (int(major), int(minor), int(patch), pre is None, pre or "")
+
+          with open(path) as f:
+              head = version_of(f.read())
+          shown = git("show", f"{base}:{path}")
+          if shown.returncode == 0:
+              old = version_of(shown.stdout)
+              if key(head) <= key(old):
+                  errors.append(f"::error file={path}::version {head} is not greater than the base's {old}; bump it (SemVer)")
+          else:
+              print(f"{path} is new at {base[:7]}; any version counts as a bump")
+
+          with open(changelog) as f:
+              if not re.search(rf"^## \[{re.escape(head)}\]", f.read(), re.M):
+                  errors.append(f"::error file={changelog}::no '## [{head}]' heading for the new version")
+
+          last = git("log", "--first-parent", "--no-merges", "-1", "--format=%h %s", "HEAD").stdout.strip()
+          touched = set(git("log", "--first-parent", "--no-merges", "-1", "--name-only", "--format=", "HEAD").stdout.split())
+          missing = [p for p in (path, changelog) if p not in touched]
+          if missing:
+              errors.append(f"::error::the last commit ({last}) must be the release commit and change {', '.join(missing)}")
+
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print(f"version {head}: bumped, in {changelog}, released by {last}")

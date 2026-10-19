@@ -1,0 +1,55 @@
+name: issue-link
+
+# Vendored unchanged from adatoo/engineering-standards v0.6.0, apart from these
+# comments (ADR-0007): a public repo can't call workflows in a private one. To update,
+# copy the new version over this file and keep this note.
+
+# Reusable check for AGENTS.md §"Planning: issues and ideas": every PR closes
+# an issue (`Closes #N` in its body, or an issue linked in the sidebar).
+# Dependabot PRs are exempt. Uses GitHub's own closing-issue references, so
+# any closing keyword GitHub honours counts, and a mention alone does not.
+#
+#   issue-link:
+#     uses: ./.github/workflows/issue-link.yml
+#     with:
+#       runner: ${{ vars.LINUX_RUNNER || 'ubuntu-latest' }}
+#
+# The caller must grant `pull-requests: read` and `issues: read`.
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: Runner label (pass the caller's LINUX_RUNNER variable)
+        required: false
+        type: string
+        default: ubuntu-latest
+
+permissions:
+  pull-requests: read
+  issues: read
+
+jobs:
+  issue-link:
+    name: issue-link
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Require a closing issue reference
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$AUTHOR" = "dependabot[bot]" ]; then
+            echo "Dependabot PR: exempt from the issue link."
+            exit 0
+          fi
+          issues="$(gh pr view "$PR" --repo "$REPO" --json closingIssuesReferences \
+            --jq '[.closingIssuesReferences[] | "#\(.number)"] | join(" ")')"
+          if [ -z "$issues" ]; then
+            echo "::error::PR #$PR closes no issue. Add 'Closes #N' to its body (AGENTS.md: every PR has an issue)."
+            exit 1
+          fi
+          echo "PR #$PR closes $issues"
