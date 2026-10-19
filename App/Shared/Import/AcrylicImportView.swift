@@ -126,9 +126,13 @@ struct AcrylicImportView: View {
             )
             .foregroundStyle(.green)
             Text(
-                "Check a few entries, then you can delete the old file and any Wallet exports. Silicon Wallet doesn't change or delete them."
+                "Check a few entries, then delete the old file, any Dropbox copy and any Wallet exports. Silicon Wallet doesn't change or delete them."
             )
             .foregroundStyle(.secondary)
+            Text(
+                "Wallet's encryption is weak by today's standards: anyone with a copy of an old file can try passwords against it very quickly. Deleting old copies keeps your secrets safe."
+            )
+            .font(.footnote).foregroundStyle(.secondary)
         }
     }
 
@@ -182,6 +186,9 @@ struct AcrylicImportView: View {
                 problem = "That password didn't open the file. Check it, and that this is an Acrylic Wallet 3 file."
             case .failure(AcrylicWalletError.notAnAcrylicWallet):
                 problem = "This doesn't look like an Acrylic Wallet file."
+            case .failure(AcrylicWalletError.unsupportedFormat):
+                problem =
+                    "This Wallet file uses a format Silicon Wallet can't read yet. Please report it on the project's GitHub page, without attaching the file."
             case .failure:
                 problem = "The file opened but looks damaged, so nothing was imported."
             }

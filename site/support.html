@@ -13,7 +13,9 @@
 <p>Check that the device is signed in to iCloud and that iCloud Drive is on. The sync icon in the toolbar shows the status; tap it to sync now. Your vault stays on the device while sync waits.</p>
 
 <h2>Moving from Acrylic Wallet</h2>
-<p>Choose File ▸ Import from Acrylic Wallet (or Settings ▸ Import). On a Mac, Wallet keeps its vault at <code>~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet</code>: in the file picker press ⇧⌘G and paste that path. Enter your old Wallet password, check the preview, and import. Silicon Wallet doesn't change the old file; delete it yourself once you've checked your entries.</p>
+<p>Choose File ▸ Import from Acrylic Wallet (or Settings ▸ Import). On a Mac, Wallet keeps its vault at <code>~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet</code>: in the file picker press ⇧⌘G and paste that path. Enter your old Wallet password, check the preview, and import. Silicon Wallet doesn't change the old file.</p>
+<p>Once you've checked your entries, delete the old file, any Dropbox copy and any "Wallet Database" exports. Wallet uses your password directly as its encryption key, with no slow hashing step, so anyone with a copy of an old file can try passwords against it very quickly.</p>
+<p>Silicon Wallet reads files from Wallet 3 for Mac. If it says a file uses a format it can't read yet, please open an issue on GitHub (never attach the file).</p>
 
 <h2>Something else</h2>
 <p>Report problems on the project's GitHub page: <a href="https://github.com/adatoo/silicon-wallet/issues">github.com/adatoo/silicon-wallet</a>.</p>

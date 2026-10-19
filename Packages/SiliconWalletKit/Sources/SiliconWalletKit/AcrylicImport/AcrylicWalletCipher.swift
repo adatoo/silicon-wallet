@@ -9,8 +9,6 @@ import Foundation
 /// CommonCrypto, Apple's system crypto library; no SEE source, no disassembly and no Acrylic
 /// code were used, and none of this is loaded into Silicon Wallet's own vault format.
 enum AcrylicWalletCipher {
-    /// Every page is this many bytes; the real file is a whole multiple of it.
-    static let pageSize = 1024
     /// Bytes 16–23 of page 1 are the plaintext SQLite header fields (page size, format
     /// numbers, reserved-byte count). SEE never encrypts them.
     static let plainHeaderRange = 16..<24
@@ -41,11 +39,12 @@ enum AcrylicWalletCipher {
         return bytes
     }
 
-    /// Decrypts one `pageSize`-byte page with AES-256-OFB. `pageNumber` is 1-based, matching
-    /// SQLite's own page numbering. For page 1, the unencrypted header bytes are restored
-    /// from the ciphertext afterwards.
+    /// Decrypts one whole page with AES-256-OFB. `pageNumber` is 1-based, matching SQLite's
+    /// own page numbering. For page 1, the unencrypted header bytes are restored from the
+    /// ciphertext afterwards. OFB is symmetric, so this also encrypts a plaintext page.
     static func decryptPage(_ ciphertext: [UInt8], pageNumber: UInt32, key: [UInt8]) throws -> [UInt8] {
-        guard ciphertext.count == pageSize else {
+        let pageSize = ciphertext.count
+        guard pageSize >= plainHeaderRange.upperBound else {
             throw AcrylicWalletError.notAnAcrylicWallet
         }
 
