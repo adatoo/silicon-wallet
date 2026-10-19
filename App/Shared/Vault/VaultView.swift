@@ -136,6 +136,9 @@ struct VaultCommands: Commands {
     let model: AppModel
     let lock: LockController
     @FocusedValue(\.vaultActions) private var actions
+    #if os(macOS)
+        @Environment(\.openWindow) private var openWindow
+    #endif
     @AppStorage(EntryListOptions.groupsByLetterKey) private var groupsByLetter = true
     @AppStorage(EntryListOptions.layoutKey) private var layout = EntryLayout.list
 
@@ -166,5 +169,11 @@ struct VaultCommands: Commands {
                 .keyboardShortcut("l", modifiers: [.command, .control])
                 .disabled(model.session?.isUnlocked != true)
         }
+        #if os(macOS)
+            CommandGroup(replacing: .help) {
+                Button("Silicon Wallet Help") { openWindow(id: HelpView.windowID) }
+                    .keyboardShortcut("?")
+            }
+        #endif
     }
 }

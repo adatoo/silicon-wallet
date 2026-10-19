@@ -168,6 +168,13 @@ struct AboutView: View {
                 Text("Argon2id comes from libsodium (ISC Licence), through swift-sodium.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
+            Section("Links") {
+                Link(destination: AppLinks.support) { Label("Support", systemImage: "questionmark.circle") }
+                Link(destination: AppLinks.privacy) { Label("Privacy Policy", systemImage: "hand.raised") }
+                Link(destination: AppLinks.source) {
+                    Label("Source Code", systemImage: "chevron.left.forwardslash.chevron.right")
+                }
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("About")

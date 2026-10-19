@@ -78,6 +78,9 @@ struct SetupView: View {
             .controlSize(.large)
             .disabled(problem != nil || isWorking)
             .keyboardShortcut(.defaultAction)
+
+            HelpButton()
+                .buttonStyle(.borderless)
         }
         .padding(32)
         .frame(maxWidth: 520)
