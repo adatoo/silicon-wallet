@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-10-19
+
+### Added
+
+- Show a field's values in a monospaced font, which makes card numbers, licence keys and
+  codes easier to check. Turn it on per field in the group editor, or in an extra field's
+  menu; labels keep the normal font. Passwords and concealed fields start monospaced, as
+  before.
+
 ## [0.18.2] - 2026-10-19
 
 ### Fixed
