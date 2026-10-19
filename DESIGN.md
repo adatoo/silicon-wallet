@@ -81,7 +81,11 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   icon, title, first non-concealed value, group and favourite star, never a concealed value.
   Opening a card shows the entry in a sheet with the same detail view, Done and Edit; the sheet
   follows edits and closes if the entry is deleted or the vault locks.
-- Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌘1 / ⌘2 list / cards, ⌃⌘L lock.
+- Mac shortcuts: ⌘N new entry, ⇧⌘N new group, ⌘E edit, ⌘1 / ⌘2 list / cards, ⌃⌘L lock, ⌘? help.
+- Help: short offline topics (`HelpView`) that mirror `site/support.html`; change both
+  together. The Mac opens them in a Help window from Help ▸ Silicon Wallet Help; iOS shows
+  them in a sheet from Settings. Settings and the first-run screen have a Help button on both.
+  About links to the support page, the privacy policy and the source (`AppLinks`).
 - Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
   filled with obviously fake entries, for UI tests and screenshots. `-entryLayout cards` shows
   the card view for that launch.

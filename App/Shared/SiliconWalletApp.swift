@@ -39,6 +39,11 @@ struct SiliconWalletApp: App {
                     .environment(model)
                     .environment(lock)
             }
+
+            Window("Silicon Wallet Help", id: HelpView.windowID) {
+                HelpView()
+            }
+            .defaultSize(width: 780, height: 540)
         #endif
     }
 }

@@ -24,6 +24,8 @@
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
 		99D61EAE32634493A8A75F68 /* LockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E01D039A8E7DBF0A040A5C2C /* LockController.swift */; };
 		A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB2125A7AC56544D3361520 /* EntryEditorView.swift */; };
+		A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AA743C303F6A4BA4050A97 /* HelpView.swift */; };
+		A90B0C80261C98D37BDDCD63 /* AppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DB2732C95570E9BBC25DC5 /* AppLinks.swift */; };
 		B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */; };
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
@@ -55,6 +57,7 @@
 		0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentPreviewView.swift; sourceTree = "<group>"; };
 		05AAF8DA641C137E55BC0347 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		150E755B7E5B799C04F5B072 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
+		20DB2732C95570E9BBC25DC5 /* AppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinks.swift; sourceTree = "<group>"; };
 		244D550D93A11FBA8C5076F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsSection.swift; sourceTree = "<group>"; };
 		303469DF1EEEF616BB78704E /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -87,6 +90,7 @@
 		D52C311423E961E1F9CA85AB /* SiliconWalletTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiliconWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E01D039A8E7DBF0A040A5C2C /* LockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockController.swift; sourceTree = "<group>"; };
 		EF419223A81F08132A022785 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F4AA743C303F6A4BA4050A97 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -130,6 +134,14 @@
 				879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		34C27DCA505C5E7B8569F72C /* Help */ = {
+			isa = PBXGroup;
+			children = (
+				F4AA743C303F6A4BA4050A97 /* HelpView.swift */,
+			);
+			path = Help;
 			sourceTree = "<group>";
 		};
 		45AFB566CE4FFA76F6D9FCFC /* Products */ = {
@@ -197,6 +209,7 @@
 		8F2A8D09C6546EB663E3AAE6 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				20DB2732C95570E9BBC25DC5 /* AppLinks.swift */,
 				05AAF8DA641C137E55BC0347 /* Clipboard.swift */,
 				7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */,
 				98444000E2A9EC613E31BAD8 /* DemoVault.swift */,
@@ -269,6 +282,7 @@
 				C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */,
 				7188C2907580D57EC6196376 /* Attachments */,
 				E1E992965D3AD287745A5FCE /* Editors */,
+				34C27DCA505C5E7B8569F72C /* Help */,
 				4AC72763302BB4D34DFA0B57 /* Import */,
 				EAE29A74E559CB253052989F /* Lock */,
 				E486CAD3DD5D1CFA2EC0F230 /* Settings */,
@@ -388,6 +402,7 @@
 			files = (
 				061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */,
 				F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */,
+				A90B0C80261C98D37BDDCD63 /* AppLinks.swift in Sources */,
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
 				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
 				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
@@ -401,6 +416,7 @@
 				6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */,
 				8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */,
 				09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */,
+				A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */,
 				99D61EAE32634493A8A75F68 /* LockController.swift in Sources */,
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,

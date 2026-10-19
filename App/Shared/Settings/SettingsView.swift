@@ -111,6 +111,7 @@ struct SettingsView: View {
 
             Section {
                 LabeledContent("Version", value: Self.version)
+                HelpButton(title: "Silicon Wallet Help")
                 Button("About Silicon Wallet…") { showingAbout = true }
             }
         }
