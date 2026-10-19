@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.3] - 2026-10-19
+
+### Fixed
+
+- On iPhone and iPad, the vault's database now has stronger file protection: it can't be read
+  while the device is locked, though sync can keep writing to it. If iCloud wakes the app before
+  you've unlocked the device, the vault opens once you do.
+
 ## [0.23.2] - 2026-10-19
 
 ### Fixed
