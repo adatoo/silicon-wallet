@@ -18,7 +18,9 @@ extension VaultEntry {
                 unclaimed.remove(at: index)
             } else {
                 moved.extraFields.append(
-                    CustomField(label: field.label, kind: field.kind, isConcealed: field.isConcealed, value: value))
+                    CustomField(
+                        label: field.label, kind: field.kind, isConcealed: field.isConcealed,
+                        isMonospaced: field.isMonospaced, value: value))
             }
         }
 

@@ -105,7 +105,8 @@ public enum AcrylicImporter {
                 let value = remaining.removeValue(forKey: header.uuid) ?? ""
                 extraFields.append(
                     CustomField(
-                        label: template.label, kind: template.kind, isConcealed: template.isConcealed, value: value))
+                        label: template.label, kind: template.kind, isConcealed: template.isConcealed,
+                        isMonospaced: template.isMonospaced, value: value))
             }
             for (_, value) in remaining.sorted(by: { $0.key < $1.key }) where !value.isEmpty {
                 unlabelled += 1

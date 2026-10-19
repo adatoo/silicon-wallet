@@ -32,7 +32,7 @@ struct EntryEditorView: View {
                     ForEach(group.fields) { field in
                         FieldInput(
                             label: field.label, kind: field.kind, isConcealed: field.isConcealed,
-                            value: valueBinding(field.id))
+                            isMonospaced: field.isMonospaced, value: valueBinding(field.id))
                     }
                 }
             }
@@ -120,6 +120,7 @@ struct FieldInput: View {
     let label: String
     let kind: FieldKind
     let isConcealed: Bool
+    let isMonospaced: Bool
     @Binding var value: String
     @State private var isRevealed = false
     @State private var generating = false
@@ -135,9 +136,9 @@ struct FieldInput: View {
                         SecureField(label, text: $value)
                     } else {
                         TextField(label, text: $value)
-                            .fontDesign(isConcealed ? .monospaced : .default)
                     }
                 }
+                .fontDesign(isMonospaced ? .monospaced : .default)
                 .labelsHidden()
                 .fieldInput(kind)
                 .textContentType(nil)
@@ -181,6 +182,7 @@ struct ExtraFieldInput: View {
                         }
                     }
                     Toggle("Concealed", isOn: $field.isConcealed)
+                    Toggle("Monospaced", isOn: $field.isMonospaced)
                 } label: {
                     Image(systemName: field.kind.symbol)
                 }
@@ -192,10 +194,15 @@ struct ExtraFieldInput: View {
                     .buttonStyle(.borderless)
                     .foregroundStyle(.red)
             }
-            FieldInput(label: "Value", kind: field.kind, isConcealed: field.isConcealed, value: $field.value)
+            FieldInput(
+                label: "Value", kind: field.kind, isConcealed: field.isConcealed, isMonospaced: field.isMonospaced,
+                value: $field.value)
         }
         .onChange(of: field.kind) { old, new in
-            if old.isConcealedByDefault != new.isConcealedByDefault { field.isConcealed = new.isConcealedByDefault }
+            if old.isConcealedByDefault != new.isConcealedByDefault {
+                field.isConcealed = new.isConcealedByDefault
+                field.isMonospaced = new.isMonospacedByDefault(isConcealed: field.isConcealed)
+            }
         }
     }
 }

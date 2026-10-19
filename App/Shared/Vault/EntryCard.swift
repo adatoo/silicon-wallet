@@ -28,8 +28,10 @@ struct EntryCard: View {
                 Text(entry.title.isEmpty ? "Untitled" : entry.title)
                     .font(.headline)
                     .lineLimit(1)
-                Text(entry.firstVisibleValue(in: group) ?? " ")
+                let value = entry.firstVisibleValue(in: group)
+                Text(value?.text ?? " ")
                     .font(.subheadline)
+                    .fontDesign(value?.isMonospaced == true ? .monospaced : nil)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
