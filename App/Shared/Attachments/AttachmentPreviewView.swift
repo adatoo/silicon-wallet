@@ -110,9 +110,11 @@ struct AttachmentPreviewView: View {
         .onChange(of: quickLookURL) { old, new in
             if let old, new == nil { TemporaryPreviews.remove(old) }
         }
+        // `.data`, not the attachment's own type: an exporter only uses types the document lists
+        // as writable, and it lists `.data` alone. The filename keeps its extension.
         .fileExporter(
             isPresented: $exporting, document: AttachmentDocument(contents: contents ?? Data()),
-            contentType: UTType(attachment.uti) ?? .data, defaultFilename: attachment.filename
+            contentType: .data, defaultFilename: attachment.filename
         ) { result in
             switch result {
             case .success: model.session?.recordAccess(.exported, detail: attachment.filename)
