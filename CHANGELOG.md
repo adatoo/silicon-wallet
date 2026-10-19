@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.2] - 2026-10-19
+
+### Fixed
+
+- On the Mac, drag to reorder in the editors now works. Each row has a handle in its own column
+  on the right; drag it onto another row to put it there.
+
 ## [0.21.1] - 2026-10-19
 
 ### Fixed

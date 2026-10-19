@@ -42,8 +42,11 @@ struct EntryEditorView: View {
                     ExtraFieldInput(field: $field) {
                         draft.extraFields.removeAll { $0.id == field.id }
                     }
+                    .reorderable(field, in: $draft.extraFields, title: field.label)
                 }
-                .onMove { draft.extraFields.move(fromOffsets: $0, toOffset: $1) }
+                #if os(iOS)
+                    .onMove { draft.extraFields.move(fromOffsets: $0, toOffset: $1) }
+                #endif
                 Button("Add Field", systemImage: "plus") {
                     draft.extraFields.append(CustomField(label: ""))
                 }
@@ -56,14 +59,15 @@ struct EntryEditorView: View {
             if !draft.attachments.isEmpty {
                 Section {
                     ForEach(draft.attachments) { attachment in
-                        HStack {
-                            DragHandle()
-                            AttachmentRow(
-                                attachment: attachment,
-                                isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
-                        }
+                        AttachmentRow(
+                            attachment: attachment,
+                            isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false
+                        )
+                        .reorderable(attachment, in: $draft.attachments, title: attachment.filename)
                     }
-                    .onMove { draft.attachments.move(fromOffsets: $0, toOffset: $1) }
+                    #if os(iOS)
+                        .onMove { draft.attachments.move(fromOffsets: $0, toOffset: $1) }
+                    #endif
                 } header: {
                     Text("Attachments")
                 } footer: {
@@ -194,7 +198,6 @@ struct ExtraFieldInput: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                DragHandle()
                 TextField("Label", text: $field.label)
                     .font(.callout.weight(.medium))
                 Menu {

@@ -73,9 +73,10 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - Sidebar: All Entries, Favourites, the groups (drag to reorder), then Recently Deleted while
   it has anything in it (§5). In the editors, drag to reorder a group's fields, an entry's extra
   fields and its attachments (the entry editor lists them for this; adding and removing stay in
-  the entry view). iOS editors stay in edit mode for the reorder controls; the Mac rows have a
-  drag handle. Moving an entry to another group keeps every value: matching labels move across,
-  the rest become extra fields.
+  the entry view). iOS editors stay in edit mode for the reorder controls (`onMove`). A Mac form
+  ignores `onMove`, so there each row has a drag handle in its own column on the right, and
+  dropping a row on another puts it there; the drag carries only the row's ID. Moving an entry
+  to another group keeps every value: matching labels move across, the rest become extra fields.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a

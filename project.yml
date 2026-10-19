@@ -61,6 +61,11 @@ targets:
         LSApplicationCategoryType: public.app-category.productivity
         NSFaceIDUsageDescription: Face ID unlocks your vault without typing your master password.
         NSHumanReadableCopyright: "Copyright © 2026 Arif Datoo. MIT Licence."
+        # A row dragged to a new place in an editor on the Mac (App/Shared/Editors/Reordering.swift).
+        UTExportedTypeDeclarations:
+          - UTTypeIdentifier: com.datoos.silicon-wallet.reordered-row
+            UTTypeDescription: Silicon Wallet Reordered Row
+            UTTypeConformsTo: [public.data]
         # CKSyncEngine is woken by CloudKit pushes (DESIGN.md §7). Ignored on macOS.
         UIBackgroundModes: [remote-notification]
         UILaunchScreen: {}
