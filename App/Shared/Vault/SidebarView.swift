@@ -1,7 +1,8 @@
 import SiliconWalletKit
 import SwiftUI
 
-/// The first column: All Entries, Favourites, then the groups.
+/// The first column: All Entries, Favourites, the groups, then Recently Deleted when it has
+/// anything in it.
 struct SidebarView: View {
     @Environment(AppModel.self) private var model
     @Environment(LockController.self) private var lock
@@ -33,7 +34,15 @@ struct SidebarView: View {
                 }
                 .onMove(perform: move)
             }
+            if let session, !model.isTrashEmpty {
+                Section {
+                    Label("Recently Deleted", systemImage: "trash")
+                        .badge(session.deletedGroups.count + session.deletedEntries.count)
+                        .tag(SidebarItem.recentlyDeleted)
+                }
+            }
         }
+        .onChange(of: model.isTrashEmpty) { model.dropStaleSelection() }
         .navigationTitle("Silicon Wallet")
         .toolbar {
             ToolbarItem {
@@ -61,13 +70,14 @@ struct SidebarView: View {
             "Delete \(groupToDelete?.name ?? "this group")?", isPresented: deleteBinding, titleVisibility: .visible,
             presenting: groupToDelete
         ) { group in
-            Button("Delete Group and Entries", role: .destructive) { model.deleteGroup(group.id) }
+            Button("Delete Group", role: .destructive) { model.moveGroupToTrash(group.id) }
         } message: { group in
             let count = session?.entries(inGroup: group.id).count ?? 0
             Text(
                 count == 0
-                    ? "This can't be undone."
-                    : "Its \(count) entr\(count == 1 ? "y" : "ies") will be deleted too. This can't be undone.")
+                    ? "It moves to Recently Deleted, where you can recover it for 30 days."
+                    : "It moves to Recently Deleted with its \(count) entr\(count == 1 ? "y" : "ies"), where you can recover them for 30 days."
+            )
         }
     }
 

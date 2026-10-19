@@ -1,17 +1,34 @@
 import SiliconWalletKit
 import SwiftUI
 
-/// The third column: one entry's fields, notes and attachments.
+/// The third column: one entry's fields, notes and attachments. An entry in Recently Deleted is
+/// read-only, with Recover and Delete Now instead of Favourite and Edit.
 struct EntryDetailView: View {
     @Environment(AppModel.self) private var model
     let entry: VaultEntry
     @Binding var editor: EditorTarget?
     @State private var attachmentPresentation = AttachmentPresentation()
+    @State private var confirmingDelete = false
 
-    private var group: VaultGroup? { model.session?.group(id: entry.groupID) }
+    private var group: VaultGroup? {
+        model.session?.group(id: entry.groupID) ?? model.session?.deletedGroup(id: entry.groupID)
+    }
 
     var body: some View {
         Form {
+            if let deleted = entry.deleted {
+                Section {
+                    Label {
+                        Text(
+                            "Deleted \(deleted.formatted(date: .abbreviated, time: .shortened)). It will be deleted for good on \(VaultSession.purgeDate(forDeletedAt: deleted).formatted(date: .abbreviated, time: .omitted))."
+                        )
+                    } icon: {
+                        Image(systemName: "trash")
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+
             Section {
                 HStack(spacing: 14) {
                     Image(systemName: group?.icon ?? "questionmark.folder")
@@ -48,7 +65,8 @@ struct EntryDetailView: View {
                 }
             }
 
-            AttachmentsSection(entry: entry, presentation: $attachmentPresentation)
+            AttachmentsSection(
+                entry: entry, presentation: $attachmentPresentation, isReadOnly: entry.deleted != nil)
 
             Section {
                 LabeledContent("Created", value: entry.created.formatted(date: .abbreviated, time: .shortened))
@@ -65,15 +83,27 @@ struct EntryDetailView: View {
         #endif
         .toolbar {
             ToolbarItemGroup {
-                Button(
-                    entry.isFavorite ? "Remove from Favourites" : "Add to Favourites",
-                    systemImage: entry.isFavorite ? "star.fill" : "star"
-                ) {
-                    model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
+                if entry.deleted != nil {
+                    Button("Recover", systemImage: "arrow.uturn.backward") { model.restoreEntry(entry.id) }
+                    Button("Delete Now…", systemImage: "trash") { confirmingDelete = true }
+                } else {
+                    Button(
+                        entry.isFavorite ? "Remove from Favourites" : "Add to Favourites",
+                        systemImage: entry.isFavorite ? "star.fill" : "star"
+                    ) {
+                        model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
+                    }
+                    Button("Edit", systemImage: "pencil") { editor = .entry(entry) }
+                        .keyboardShortcut("e")
                 }
-                Button("Edit", systemImage: "pencil") { editor = .entry(entry) }
-                    .keyboardShortcut("e")
             }
+        }
+        .confirmationDialog(
+            "Delete \(entry.title) Now?", isPresented: $confirmingDelete, titleVisibility: .visible
+        ) {
+            Button("Delete Now", role: .destructive) { model.deleteEntryPermanently(entry.id) }
+        } message: {
+            Text("It will be deleted from this vault on all your devices, with its attachments. This can't be undone.")
         }
     }
 

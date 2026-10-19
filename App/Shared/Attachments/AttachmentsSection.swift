@@ -20,6 +20,8 @@ struct AttachmentsSection: View {
     @Environment(AppModel.self) private var model
     let entry: VaultEntry
     @Binding var presentation: AttachmentPresentation
+    /// For an entry in Recently Deleted: attachments open and save, but can't be added or removed.
+    var isReadOnly = false
 
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var isDropTargeted = false
@@ -36,41 +38,58 @@ struct AttachmentsSection: View {
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button("Open", systemImage: "eye") { presentation.previewing = attachment }
-                    Button("Remove…", systemImage: "trash", role: .destructive) { presentation.toRemove = attachment }
+                    if !isReadOnly {
+                        Button("Remove…", systemImage: "trash", role: .destructive) {
+                            presentation.toRemove = attachment
+                        }
+                    }
                 }
                 .swipeActions {
-                    Button("Remove", systemImage: "trash", role: .destructive) { presentation.toRemove = attachment }
+                    if !isReadOnly {
+                        Button("Remove", systemImage: "trash", role: .destructive) {
+                            presentation.toRemove = attachment
+                        }
+                    }
                 }
             }
-            HStack {
-                Button("Add File…", systemImage: "doc.badge.plus") { presentation.addingFiles = true }
-                #if os(iOS)
-                    PhotosPicker(selection: $photoItems, matching: .images) {
-                        Label("Add Photo…", systemImage: "photo.badge.plus")
-                    }
-                    .onChange(of: photoItems) { _, items in
-                        guard !items.isEmpty else { return }
-                        Task { await addPhotos(items) }
-                    }
-                #endif
+            if !isReadOnly {
+                addButtons
             }
-            .buttonStyle(.borderless)
         } header: {
             Text("Attachments")
         } footer: {
-            #if os(macOS)
-                Text("You can also drop files here. Each attachment is encrypted with its own key, up to 100 MB.")
-            #else
-                Text("Each attachment is encrypted with its own key, up to 100 MB.")
-            #endif
+            if !isReadOnly {
+                #if os(macOS)
+                    Text("You can also drop files here. Each attachment is encrypted with its own key, up to 100 MB.")
+                #else
+                    Text("Each attachment is encrypted with its own key, up to 100 MB.")
+                #endif
+            }
         }
         .dropDestination(for: URL.self) { urls, _ in
+            guard !isReadOnly else { return false }
             Self.add(urls, to: entry.id, model: model)
             return true
         } isTargeted: {
-            isDropTargeted = $0
+            isDropTargeted = $0 && !isReadOnly
         }
         .listRowBackground(isDropTargeted ? Color.accentColor.opacity(0.15) : nil)
+    }
+
+    private var addButtons: some View {
+        HStack {
+            Button("Add File…", systemImage: "doc.badge.plus") { presentation.addingFiles = true }
+            #if os(iOS)
+                PhotosPicker(selection: $photoItems, matching: .images) {
+                    Label("Add Photo…", systemImage: "photo.badge.plus")
+                }
+                .onChange(of: photoItems) { _, items in
+                    guard !items.isEmpty else { return }
+                    Task { await addPhotos(items) }
+                }
+            #endif
+        }
+        .buttonStyle(.borderless)
     }
 
     /// Attaches each file to the entry, reporting any that can't be added.

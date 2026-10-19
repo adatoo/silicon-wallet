@@ -105,7 +105,9 @@ private func syncedSession() async throws -> (VaultSession, SyncedVaultStore, In
     let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake"))
     let ref = try session.addAttachment(
         to: entry.id, filename: "f.txt", uti: "public.plain-text", contents: Data("x".utf8))
-    try session.deleteEntry(id: entry.id)
+    try session.moveEntryToTrash(id: entry.id)
+    #expect(changes.last == .save(.record(entry.id)))
+    try session.deleteEntryPermanently(id: entry.id)
 
     #expect(changes.contains(.save(.record(group.id))))
     #expect(changes.contains(.save(.record(entry.id))))
@@ -150,6 +152,37 @@ private func syncedSession() async throws -> (VaultSession, SyncedVaultStore, In
 
     session.lock()
     #expect(session.keepConflictCopy(of: losing, deviceName: "Fake Mac") == nil)
+}
+
+@MainActor
+@Test func aLosingTrashedEntryMakesNoConflictCopy() async throws {
+    let (session, _, base) = try await syncedSession()
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake Trashed"))
+    try session.moveEntryToTrash(id: entry.id)
+    let losing = try #require(base.records[entry.id])
+
+    #expect(session.keepConflictCopy(of: losing, deviceName: "Fake Mac") == nil)
+    #expect(session.entries.isEmpty)
+}
+
+@MainActor
+@Test func trashAndRestoreFromAnotherDeviceAppearAfterReload() async throws {
+    let (session, _, base) = try await syncedSession()
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake"))
+    let other = try VaultSession(store: base)
+    try await other.unlock(password: "fake-master")
+
+    try other.moveGroupToTrash(id: group.id)
+    try session.reload()
+    #expect(session.groups.isEmpty && session.entries.isEmpty)
+    #expect(session.deletedEntries.map(\.id) == [entry.id])
+
+    try other.restoreGroup(id: group.id)
+    try session.reload()
+    #expect(session.entries.map(\.id) == [entry.id])
+    #expect(session.deletedGroups.isEmpty)
 }
 
 @MainActor

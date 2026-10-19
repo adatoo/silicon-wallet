@@ -138,6 +138,7 @@ struct HelpTopic: Identifiable, Hashable {
                 "Silicon Wallet keeps your passwords, cards, notes and files in an encrypted vault. There's no account to create: your master password is the only key.",
                 "Your vault is organised into **groups**, such as Logins or Credit Cards. Each group has its own fields, and every **entry** in it fills them in. Edit a group to add fields, rename them, mark them as concealed so their values stay hidden until you reveal them, or show their values in a monospaced font, which makes card numbers and keys easier to check. Drag fields, extra fields and attachments to change their order while editing.",
                 "Add an entry with the + button. When you need a new password, use the generator in the entry editor. Mark entries you use often as favourites.",
+                "Deleted entries and groups go to **Recently Deleted**, at the bottom of the sidebar. Recover them from there, or delete them for good; anything left is deleted for good after 30 days.",
                 "Search finds entries by their title and visible fields. It never searches concealed values.",
             ]
         ),

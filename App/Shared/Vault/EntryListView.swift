@@ -6,7 +6,6 @@ import SwiftUI
 struct EntryListView: View {
     @Environment(AppModel.self) private var model
     @Binding var editor: EditorTarget?
-    @State private var entryToDelete: VaultEntry?
     @AppStorage(EntryListOptions.groupsByLetterKey) private var groupsByLetter = true
     @AppStorage(EntryListOptions.layoutKey) private var layout = EntryLayout.list
     #if os(iOS)
@@ -57,14 +56,6 @@ struct EntryListView: View {
                     .disabled(model.session?.groups.isEmpty != false)
             }
         }
-        .confirmationDialog(
-            "Delete \(entryToDelete?.title ?? "this entry")?", isPresented: deleteBinding, titleVisibility: .visible,
-            presenting: entryToDelete
-        ) { entry in
-            Button("Delete Entry", role: .destructive) { model.deleteEntry(entry.id) }
-        } message: { _ in
-            Text("This can't be undone.")
-        }
     }
 
     private func list(_ entries: [VaultEntry]) -> some View {
@@ -91,7 +82,7 @@ struct EntryListView: View {
             .tag(entry.id)
             .contextMenu { menuItems(for: entry) }
             .swipeActions {
-                Button("Delete", systemImage: "trash", role: .destructive) { entryToDelete = entry }
+                Button("Delete", systemImage: "trash", role: .destructive) { model.moveEntryToTrash(entry.id) }
             }
     }
 
@@ -138,11 +129,8 @@ struct EntryListView: View {
             model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
         }
         Button("Edit…", systemImage: "pencil") { editor = .entry(entry) }
-        Button("Delete…", systemImage: "trash", role: .destructive) { entryToDelete = entry }
-    }
-
-    private var deleteBinding: Binding<Bool> {
-        Binding(get: { entryToDelete != nil }, set: { if !$0 { entryToDelete = nil } })
+        // Deleting moves the entry to Recently Deleted, so it needs no confirmation.
+        Button("Delete", systemImage: "trash", role: .destructive) { model.moveEntryToTrash(entry.id) }
     }
 }
 
