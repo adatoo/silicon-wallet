@@ -1,15 +1,21 @@
 import SiliconWalletKit
 import SwiftUI
 
-/// Adds or edits an entry. Changes are saved only when you press Save.
+/// Adds or edits an entry. Changes are saved only when you press Save, which asks first if it
+/// would delete attachments or filled-in extra fields for good.
 struct EntryEditorView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var draft: VaultEntry
+    /// What Save would delete, while the confirmation is showing.
+    @State private var pendingRemovals: EntryRemovals?
     private let isNew: Bool
+    /// The entry as it was opened; nil for a new one.
+    private let original: VaultEntry?
 
     init(entry: VaultEntry?, preferredGroupID: UUID?) {
         isNew = entry == nil
+        original = entry
         _draft = State(initialValue: entry ?? VaultEntry(groupID: preferredGroupID ?? UUID(), title: ""))
     }
 
@@ -105,12 +111,65 @@ struct EntryEditorView: View {
                 Button("Cancel") { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save", action: save)
+                Button("Save", action: requestSave)
                     .disabled(draft.title.trimmingCharacters(in: .whitespaces).isEmpty || group == nil)
             }
         }
         .onAppear {
             if group == nil, let first = groups.first { draft.groupID = first.id }
+        }
+        .confirmationDialog(
+            pendingRemovals.map(Self.confirmationTitle) ?? "",
+            isPresented: Binding(get: { pendingRemovals != nil }, set: { if !$0 { pendingRemovals = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingRemovals
+        ) { _ in
+            Button("Delete and Save", role: .destructive, action: save)
+            Button("Cancel", role: .cancel) {}
+        } message: { removals in
+            Text(Self.confirmationMessage(removals))
+        }
+    }
+
+    /// Saves, unless that would delete attachments or filled-in extra fields: then it asks first.
+    private func requestSave() {
+        let removals = original.map { draft.removals(since: $0) }
+        if let removals, !removals.isEmpty {
+            pendingRemovals = removals
+        } else {
+            save()
+        }
+    }
+
+    /// "Delete 2 attachments and 1 field?"
+    private static func confirmationTitle(_ removals: EntryRemovals) -> String {
+        let parts = [
+            count(removals.attachments.count, "attachment", "attachments"),
+            count(removals.extraFields.count, "field", "fields"),
+        ].compactMap(\.self)
+        return "Delete \(parts.joined(separator: " and "))?"
+    }
+
+    /// Names what goes, by filename or label (never a field's value, which may be concealed).
+    private static func confirmationMessage(_ removals: EntryRemovals) -> String {
+        var names =
+            removals.attachments.map { "\u{201C}\($0.filename)\u{201D}" }
+            + removals.extraFields.map { $0.label.isEmpty ? "an unnamed field" : "\u{201C}\($0.label)\u{201D}" }
+        let shown = 4
+        if names.count > shown + 1 {
+            let more = names.count - shown
+            names = Array(names.prefix(shown)) + ["\(more) more"]
+        }
+        let list = names.formatted(.list(type: .and))
+        return
+            "\(list.prefix(1).uppercased() + list.dropFirst()) will be deleted from this vault on all your devices. This can't be undone."
+    }
+
+    private static func count(_ n: Int, _ one: String, _ many: String) -> String? {
+        switch n {
+        case 0: nil
+        case 1: "1 \(one)"
+        default: "\(n) \(many)"
         }
     }
 

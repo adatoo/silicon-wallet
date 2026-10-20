@@ -76,7 +76,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
 - Sidebar: All Entries, Favourites, the groups (drag to reorder), then Recently Deleted while
   it has anything in it (§5). In the editors, drag to reorder a group's fields, an entry's extra
   fields and its attachments. The entry editor lists the attachments for this, each with a remove
-  button that takes effect on Save; adding stays in the entry view, which can remove them too. iOS editors stay in edit mode for the reorder controls (`onMove`). A Mac form
+  button that takes effect on Save; adding stays in the entry view, which can remove them too.
+  Save asks first when it would delete attachments, or extra fields that had a value, naming
+  them by filename or label (never a value). iOS editors stay in edit mode for the reorder controls (`onMove`). A Mac form
   ignores `onMove`, so there each row has a drag handle in its own column on the right, and
   the other rows make room as it is dragged; the drag carries only the row's ID. The editor
   sheets are at least 680pt wide on the Mac and page-sized on iPad. Long labels wrap (an editable
