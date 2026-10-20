@@ -91,7 +91,7 @@ final class AppModel {
                 CloudEntitlement.isAvailable
                 ? VaultSync(
                     store: store, containerIdentifier: CloudEntitlement.containerIdentifier,
-                    stateURL: directory.appendingPathComponent("SyncState.json"))
+                    stateURL: directory.appendingPathComponent(CloudEntitlement.environment.stateFileName))
                 : nil
             return AppModel(session: session, sync: sync)
         } catch {
