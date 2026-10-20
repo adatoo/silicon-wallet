@@ -9,6 +9,7 @@ struct SetupView: View {
     @State private var confirmation = ""
     @State private var isWorking = false
     @State private var movingFromAcrylic = false
+    @State private var unlockWithBiometrics = true
     @FocusState private var focus: Field?
 
     private enum Field { case password, confirmation }
@@ -58,6 +59,9 @@ struct SetupView: View {
                 PasswordStrengthView(password: password)
                 Toggle("I'm moving from Acrylic Wallet", isOn: $movingFromAcrylic)
                     .padding(.top, 4)
+                if lock.biometricKind != .none {
+                    Toggle("Unlock with \(lock.biometricKind.name)", isOn: $unlockWithBiometrics)
+                }
             }
             .textFieldStyle(.roundedBorder)
             .frame(maxWidth: 360)
@@ -98,6 +102,8 @@ struct SetupView: View {
         Task {
             do {
                 try await session.createVault(password: password, starterGroups: !movingFromAcrylic)
+                // Before `didUnlockWithPassword`, so it doesn't offer biometrics again.
+                if lock.biometricKind != .none { lock.setBiometrics(enabled: unlockWithBiometrics) }
                 lock.didUnlockWithPassword()
                 if movingFromAcrylic { model.isImportingAcrylic = true }
             } catch {

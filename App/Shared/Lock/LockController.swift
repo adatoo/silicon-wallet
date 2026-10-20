@@ -11,15 +11,19 @@ import SiliconWalletKit
 
 /// Locks the vault when it should be (DESIGN.md §5): after inactivity, on sleep, screensaver and
 /// screen lock on the Mac, and after time in the background on iOS. It also runs biometric
-/// unlock, and records password unlocks for the biometric re-entry rule.
+/// unlock, offers it once on a device where it's off, and reminds people of their password.
 @MainActor
 @Observable
 final class LockController {
     let model: AppModel
     let settings: LockSettings
 
-    /// A message for the unlock screen, such as why biometrics were turned off.
+    /// A message for the unlock screen, such as why the password is needed this once.
     var notice: String?
+    /// Asks, once per device, whether to turn on Face ID or Touch ID after a password unlock.
+    var isOfferingBiometrics = false
+    /// Asks whether the master password is still remembered (`PasswordReminder`).
+    var isRemindingPassword = false
 
     @ObservationIgnored private var lastActivity = Date.now
     @ObservationIgnored private var backgroundedAt: Date?
@@ -39,7 +43,6 @@ final class LockController {
     /// Starts watching for activity and system events. Call once, at launch.
     func start() {
         guard ticker == nil else { return }
-        expireBiometricKeyIfNeeded()
         ticker = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(10))
@@ -87,7 +90,7 @@ final class LockController {
         Clipboard.clearIfOurs()
         TemporaryPreviews.removeAll()
         model.lock()
-        expireBiometricKeyIfNeeded()
+        isRemindingPassword = false
     }
 
     private func checkInactivity() {
@@ -123,33 +126,24 @@ final class LockController {
 
     /// Call after the master password has unlocked (or created) the vault.
     func didUnlockWithPassword() {
-        settings.lastPasswordUnlock = .current
+        settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
         recordActivity()
         notice = nil
         if settings.biometricsEnabled, let key = model.session?.vaultKeyForBiometricUnlock() {
-            // Refresh the stored key, so it always matches this vault.
+            // Store it again, so it always matches this vault and the faces or fingerprints
+            // enrolled now.
             try? BiometricKeychain.store(key)
+        } else if !settings.biometricsOffered, biometricKind != .none {
+            isOfferingBiometrics = true
         }
     }
 
     var biometricKind: BiometricKeychain.Kind { BiometricKeychain.availableKind }
 
-    /// Whether the unlock screen should offer Face ID or Touch ID now.
+    /// Whether the unlock screen should offer Face ID or Touch ID now. Once turned on, they work
+    /// until the stored key is gone: the faces or fingerprints changed, or this is a new device.
     var canUnlockWithBiometrics: Bool {
-        biometricKind != .none
-            && settings.biometricPolicy.allowsBiometricUnlock(
-                lastPasswordUnlock: settings.lastPasswordUnlock, now: .current)
-            && BiometricKeychain.hasStoredKey
-    }
-
-    /// Deletes the stored key once biometrics may no longer stand in for the password, so changing
-    /// the clock later can't bring it back. The next password unlock stores it again.
-    func expireBiometricKeyIfNeeded() {
-        guard settings.biometricsEnabled,
-            !settings.biometricPolicy.allowsBiometricUnlock(
-                lastPasswordUnlock: settings.lastPasswordUnlock, now: .current)
-        else { return }
-        BiometricKeychain.delete()
+        settings.biometricsEnabled && biometricKind != .none && BiometricKeychain.hasStoredKey
     }
 
     /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
@@ -167,13 +161,17 @@ final class LockController {
             try session.unlock(vaultKey: key)
             recordActivity()
             notice = nil
+            if settings.nextPasswordReminder == nil {
+                settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
+            }
+            isRemindingPassword = PasswordReminder.isDue(next: settings.nextPasswordReminder, now: .now)
         } catch BiometricError.cancelled {
             // Fall back to the password field.
         } catch BiometricError.noStoredKey, VaultError.wrongPassword {
+            // Biometrics stay on: the next password unlock stores a fresh key.
             BiometricKeychain.delete()
-            settings.biometricsEnabled = false
             notice =
-                "\(biometricKind.name) was turned off because its saved key no longer matches. Unlock with your password, then turn it on again in Settings."
+                "\(biometricKind.name) needs your password once, because the faces or fingerprints on this device changed."
         } catch {
             notice = AppModel.describe(error)
         }
@@ -186,7 +184,9 @@ final class LockController {
             do {
                 try BiometricKeychain.store(key)
                 settings.biometricsEnabled = true
-                settings.lastPasswordUnlock = settings.lastPasswordUnlock ?? .current
+                if settings.nextPasswordReminder == nil {
+                    settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
+                }
             } catch {
                 settings.biometricsEnabled = false
                 model.errorMessage = "\(biometricKind.name) couldn't be turned on: \(error.localizedDescription)"
@@ -195,6 +195,33 @@ final class LockController {
             BiometricKeychain.delete()
             settings.biometricsEnabled = false
         }
+        settings.biometricsOffered = true
+    }
+
+    /// Answers the one-time offer to turn on Face ID or Touch ID.
+    func answerBiometricOffer(turnOn: Bool) {
+        isOfferingBiometrics = false
+        if turnOn {
+            setBiometrics(enabled: true)
+        } else {
+            settings.biometricsOffered = true
+        }
+    }
+
+    /// Checks `password` for the reminder. Nothing locks on a wrong one; it can be tried again.
+    func confirmPassword(_ password: String) async -> Bool {
+        guard let session = model.session, (try? await session.verifyPassword(password)) == true else {
+            return false
+        }
+        settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
+        isRemindingPassword = false
+        return true
+    }
+
+    /// "Not Now" on the reminder.
+    func snoozePasswordReminder() {
+        settings.nextPasswordReminder = PasswordReminder.next(afterSnoozingAt: .now)
+        isRemindingPassword = false
     }
 
     func setClipboardSeconds(_ seconds: Int) {

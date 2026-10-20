@@ -137,12 +137,26 @@ private func freshSettings() -> LockSettings {
     #expect(settings.backgroundGraceSeconds == 0)
     #expect(settings.lockOnSleep)
     #expect(!settings.biometricsEnabled)
-    #expect(settings.passwordReentryDays == 7)
+    #expect(!settings.biometricsOffered)
+    #expect(settings.nextPasswordReminder == nil)
 
     settings.autoLockMinutes = 15
     settings.clipboardSeconds = 0
+    let reminder = Date(timeIntervalSince1970: 1_000_000)
+    settings.nextPasswordReminder = reminder
     #expect(LockSettings(defaults: defaults).autoLockMinutes == 15)
     #expect(LockSettings(defaults: defaults).clipboardSeconds == 0)
+    #expect(LockSettings(defaults: defaults).nextPasswordReminder == reminder)
+}
+
+@MainActor
+@Test func oldReentrySettingsAreRemoved() throws {
+    let defaults = try #require(UserDefaults(suiteName: "SiliconWalletTests-\(UUID().uuidString)"))
+    defaults.set(7, forKey: "passwordReentryDays")
+    defaults.set(Data(), forKey: "lastPasswordUnlockClock")
+    _ = LockSettings(defaults: defaults)
+    #expect(defaults.object(forKey: "passwordReentryDays") == nil)
+    #expect(defaults.object(forKey: "lastPasswordUnlockClock") == nil)
 }
 
 @MainActor
@@ -165,13 +179,42 @@ private func freshSettings() -> LockSettings {
 }
 
 @MainActor
-@Test func biometricsAreOfferedOnlyWhenEnabledAndRecent() async throws {
+@Test func aPasswordUnlockPutsTheReminderOffAndOffersBiometricsOnce() async throws {
     let model = try await makeModel()
     let settings = freshSettings()
     let lock = LockController(model: model, settings: settings)
     #expect(!lock.canUnlockWithBiometrics)
     lock.didUnlockWithPassword()
-    #expect(settings.lastPasswordUnlock != nil)
+    let next = try #require(settings.nextPasswordReminder)
+    #expect(!PasswordReminder.isDue(next: next, now: .now))
+    // Offered only where the device has Face ID or Touch ID.
+    #expect(lock.isOfferingBiometrics == (lock.biometricKind != .none))
+    lock.answerBiometricOffer(turnOn: false)
+    #expect(settings.biometricsOffered)
+    #expect(!settings.biometricsEnabled)
+    lock.didUnlockWithPassword()
+    #expect(!lock.isOfferingBiometrics)
+}
+
+@MainActor
+@Test func thePasswordReminderChecksThePasswordOrWaitsAWeek() async throws {
+    let model = try await makeModel()
+    let settings = freshSettings()
+    let lock = LockController(model: model, settings: settings)
+    lock.isRemindingPassword = true
+
+    #expect(!(await lock.confirmPassword("not-it")))
+    #expect(lock.isRemindingPassword)
+    #expect(model.session?.state == .unlocked)
+
+    lock.snoozePasswordReminder()
+    #expect(!lock.isRemindingPassword)
+    let snoozed = try #require(settings.nextPasswordReminder)
+
+    lock.isRemindingPassword = true
+    #expect(await lock.confirmPassword("fake-master"))
+    #expect(!lock.isRemindingPassword)
+    #expect(try #require(settings.nextPasswordReminder) > snoozed)
 }
 
 // MARK: - Attachments

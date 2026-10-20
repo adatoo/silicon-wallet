@@ -31,6 +31,7 @@ struct VaultView: View {
 
     var body: some View {
         @Bindable var model = model
+        @Bindable var lock = lock
         Group {
             switch layout {
             case .list:
@@ -83,6 +84,15 @@ struct VaultView: View {
         .sheet(item: $model.openedEntry) { EntrySheet(entryID: $0.id) }
         .sheet(isPresented: $model.isImportingAcrylic) {
             NavigationStack { AcrylicImportView() }
+        }
+        .sheet(isPresented: $lock.isRemindingPassword) {
+            NavigationStack { PasswordReminderView() }
+        }
+        .alert("Unlock with \(lock.biometricKind.name) Next Time?", isPresented: $lock.isOfferingBiometrics) {
+            Button("Turn On") { lock.answerBiometricOffer(turnOn: true) }
+            Button("Not Now", role: .cancel) { lock.answerBiometricOffer(turnOn: false) }
+        } message: {
+            Text("You'll still need your master password on a new device. You can change this in Settings.")
         }
         .focusedSceneValue(
             \.vaultActions,

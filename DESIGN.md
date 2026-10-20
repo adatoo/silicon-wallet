@@ -178,17 +178,20 @@ do; it can't be made to win conflicts or pass as another kind of record.
 - Master password unlock is always available.
 - Face ID / Touch ID: the vault key is stored in the Keychain with
   `.biometryCurrentSet`, `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, never synced.
-  Require the master password after a restart, and after a configurable period (default 7 days).
-  A password unlock records the kernel's boot session ID (`kern.bootsessionuuid`) and the time
-  since boot (`CLOCK_MONOTONIC`, which counts sleep) as well as the date; biometrics need the
-  same boot session and the period measured by the time since boot, so setting the clock back
-  doesn't reopen the window. Without a boot session ID, a restart is judged from the boot time
-  the date implies. Once the window closes, the Keychain item is deleted (at launch and on lock);
-  the next password unlock stores it again.
+  Once on, it unlocks every time, including after a restart: the device passcode or login
+  password is needed then anyway. The master password is still needed at setup, on each new
+  device (the key never syncs), after the faces or fingerprints on the device change (the item
+  is invalidated), and after too many failed attempts. Setup offers biometrics, on by default,
+  and a password unlock on a device where they're off offers them once.
+  Every 30 days (`PasswordReminder`), a biometric unlock is followed by a skippable "Check Your
+  Password" sheet, because the password goes unused but is the only way in on a new device.
+  "Not Now" puts it off for a week; a wrong attempt changes nothing. Its date is in
+  `UserDefaults`; the password is checked with `VaultSession.verifyPassword`.
   The vault key is checked against `VaultMeta.keyCheck` before use; a key that doesn't match
-  (or an item invalidated by a biometry change) turns biometric unlock off. Settings: lock after
-  inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing,
-  biometrics and the re-entry period; stored in `UserDefaults`, never anything secret.
+  (or an item invalidated by a biometry change) is deleted and the password is asked for once;
+  biometrics stay on, and that password unlock stores a fresh item. Settings: lock after
+  inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing and
+  biometrics; stored in `UserDefaults`, never anything secret.
   On the Mac, Touch ID is part of the lock screen (`LocalAuthenticationView`), not a floating
   panel: the screen's `LAContext` is approved with Touch ID, then reused for the Keychain read so
   there's no second prompt. Typing the password stops it. iOS uses the system Face ID prompt.

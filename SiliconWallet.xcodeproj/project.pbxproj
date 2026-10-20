@@ -13,6 +13,7 @@
 		3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244D550D93A11FBA8C5076F4 /* SidebarView.swift */; };
 		4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150E755B7E5B799C04F5B072 /* SetupView.swift */; };
 		42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98444000E2A9EC613E31BAD8 /* DemoVault.swift */; };
+		483EAEC8FFD84589086A15C7 /* PasswordReminderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8015C5FAC376E3A45DB07475 /* PasswordReminderView.swift */; };
 		491161B5F7820AF3FD05DC77 /* SiliconWalletKit in Frameworks */ = {isa = PBXBuildFile; productRef = C5B581495F022687EF5EF44F /* SiliconWalletKit */; };
 		4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 303469DF1EEEF616BB78704E /* AppModel.swift */; };
 		50655948D274569F8CA7A5EB /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A66EC933A0C2F7CEBB604522 /* RootView.swift */; };
@@ -81,6 +82,7 @@
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudEntitlement.swift; sourceTree = "<group>"; };
 		7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FieldKind+UI.swift"; sourceTree = "<group>"; };
+		8015C5FAC376E3A45DB07475 /* PasswordReminderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordReminderView.swift; sourceTree = "<group>"; };
 		879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultActionsToolbar.swift; sourceTree = "<group>"; };
 		92875FCE2F36955F82E985E1 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
@@ -275,6 +277,7 @@
 			children = (
 				E01D039A8E7DBF0A040A5C2C /* LockController.swift */,
 				4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */,
+				8015C5FAC376E3A45DB07475 /* PasswordReminderView.swift */,
 				150E755B7E5B799C04F5B072 /* SetupView.swift */,
 				C570E57F9DD7E0D13D581ECE /* UnlockView.swift */,
 			);
@@ -434,6 +437,7 @@
 				A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */,
 				99D61EAE32634493A8A75F68 /* LockController.swift in Sources */,
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
+				483EAEC8FFD84589086A15C7 /* PasswordReminderView.swift in Sources */,
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,
 				EA7BA7D832764B49BBB9554B /* PreviewGeometry.swift in Sources */,
 				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
