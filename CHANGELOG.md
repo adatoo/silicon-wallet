@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-10-20
+
+### Added
+
+- The entry editor asks before Save deletes attachments, or extra fields that had a value, for
+  good. Removing an empty field or reordering saves without asking.
+
 ## [0.23.10] - 2026-10-19
 
 ### Fixed
