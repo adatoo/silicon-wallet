@@ -5,8 +5,9 @@ App Stores. Each item becomes an issue or PR when its turn comes. The steps foll
 order in [DESIGN.md](../DESIGN.md) §8, with release work threaded in early so nothing blocks at
 the end.
 
-Decisions already made: the repo stays private until the pre-beta security pass (B4), and the
-App Store primary language is English (UK).
+Decisions already made: the repo went public after the pre-beta security pass (B4, done
+2026-10-20), and the App Store primary language is English (UK). Release 1.0 is tracked in
+issue #101.
 
 
 Each item below becomes an issue or PR when its turn comes. The steps are DESIGN.md §8's build order, with release work threaded in early so that nothing blocks at the end.
@@ -90,7 +91,7 @@ Still open:
 - If possible, get an independent review of the crypto design. It is a password manager, and
   reviewers and users will ask.
 
-**The flip (owner actions, in this order):**
+**The flip** (done 2026-10-20 with `gh`, in this order):
 1. Remove the `mac-mini` and `docker-linux` self-hosted runners from this repo (Settings ▸
    Actions ▸ Runners, and the runner configs on the Mac mini), and delete the repo variables
    `MAC_RUNNER` and `LINUX_RUNNER`, so every workflow falls back to GitHub-hosted runners
@@ -103,7 +104,10 @@ Still open:
 5. Settings ▸ Pages ▸ Source: "GitHub Actions"; then `gh workflow run pages` and check that
    `https://adatoo.github.io/silicon-wallet/support.html` and `privacy.html` load.
 6. Open a test PR and confirm CI passes on hosted runners (`macos-26` must have an Xcode that
-   builds the iOS 26 / macOS 26 targets).
+   builds the iOS 26 / macOS 26 targets). The first was #104's PR.
+
+On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchDaemon
+(`com.github.actions-runner.adatoo-silicon-wallet`) is booted out by the owner.
 
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
 - **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.
