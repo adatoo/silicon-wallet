@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2026-10-20
+
+### Changed
+
+- With Face ID or Touch ID on, the lock screen leads with them and a Use Password button; the
+  password field shows only when asked for, or when the Face ID or Touch ID prompt is cancelled
+  or fails.
+
 ## [0.26.0] - 2026-10-20
 
 ### Changed
