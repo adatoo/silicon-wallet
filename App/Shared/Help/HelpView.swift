@@ -130,6 +130,8 @@ struct HelpTopic: Identifiable, Hashable {
             "Choose **File ▸ Import from Acrylic Wallet…** (or **Settings ▸ Import from Acrylic Wallet…**). Wallet keeps its vault at `~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet`: in the file picker, press ⇧⌘G and paste that path. A Dropbox copy or a \"Wallet Database\" export works too."
         private static let attachmentsAdd =
             "Add files in an entry's **Attachments** section, or drop them there. Each one is encrypted with its own key, up to 100 MB."
+        private static let attachmentsZoom =
+            "An image or PDF opens at its own size, up to the size of your screen; drag the edge of the preview to resize it. Zoom with a pinch, by double-clicking, or with ⌘= and ⌘- (⌘9 fits it to the window, ⌘0 shows it at actual size)."
     #else
         private static let biometrics = "Face ID or Touch ID"
         private static let autoLock =
@@ -138,6 +140,8 @@ struct HelpTopic: Identifiable, Hashable {
             "First put your `Database.wallet` file, or a \"Wallet Database\" export, in the Files app. Then choose **Settings ▸ Import from Acrylic Wallet…** and pick the file."
         private static let attachmentsAdd =
             "Add photos and files in an entry's **Attachments** section. Each one is encrypted with its own key, up to 100 MB."
+        private static let attachmentsZoom =
+            "Images and PDFs fit the screen when they open. Pinch or double-tap to zoom, and drag to move around; the buttons at the bottom zoom in, zoom out, fit and show actual size."
     #endif
 
     static let all: [HelpTopic] = [
@@ -192,6 +196,7 @@ struct HelpTopic: Identifiable, Hashable {
             symbol: "paperclip",
             paragraphs: [
                 attachmentsAdd,
+                attachmentsZoom,
                 "Images, PDFs and text files are shown straight from memory. Other files open in Quick Look from a temporary decrypted copy, which is deleted when you close it and when the vault locks.",
                 "**Save a Copy** writes an unencrypted copy wherever you choose. Delete it when you've finished with it.",
                 "To remove an attachment, use its menu in the entry, or the red remove button next to it while editing; that one takes effect when you save, which asks first.",

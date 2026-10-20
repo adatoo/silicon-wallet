@@ -196,7 +196,11 @@ do; it can't be made to win conflicts or pass as another kind of record.
   screen lock. On iOS when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
   preview files, clear our own clipboard items.
-- Attachments: images, PDFs and text preview from memory. Other types open in Quick Look from
+- Attachments: images, PDFs and text preview from memory. An image or PDF preview is decrypted
+  when it's opened, so it opens at the content's own size scaled down to fit 90% of the screen
+  (a resizable sheet on the Mac); it zooms with pinch, double-click or double-tap, and Zoom In,
+  Zoom Out, Zoom to Fit and Actual Size (⌘=, ⌘-, ⌘9, ⌘0, as in Preview). The image view can't
+  copy, so the decrypted image never reaches the clipboard. Other types open in Quick Look from
   a decrypted temporary file (complete file protection on iOS), deleted when the preview
   closes, on lock and at launch. "Save a Copy…" writes an unencrypted copy where the person
   chooses.

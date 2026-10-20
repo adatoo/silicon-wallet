@@ -210,3 +210,43 @@ private func freshSettings() -> LockSettings {
     lock.lockNow()
     #expect(!FileManager.default.fileExists(atPath: url.path))
 }
+
+// MARK: - Attachment preview geometry
+
+@Test func aLargeImageScalesDownToFitTheSpace() {
+    let available = CGSize(width: 1600, height: 900)
+    let landscape = PreviewGeometry.idealSize(
+        content: CGSize(width: 4000, height: 3000), available: available, minimum: CGSize(width: 520, height: 420))
+    #expect(landscape == CGSize(width: 1200, height: 900))
+
+    let portrait = PreviewGeometry.idealSize(
+        content: CGSize(width: 1000, height: 4000), available: available, minimum: CGSize(width: 520, height: 420))
+    #expect(portrait == CGSize(width: 520, height: 900))
+    #expect(PreviewGeometry.fitScale(content: CGSize(width: 1000, height: 4000), in: available) == 0.225)
+}
+
+@Test func aSmallImageStaysAtActualSize() {
+    let content = CGSize(width: 200, height: 150)
+    #expect(PreviewGeometry.fitScale(content: content, in: CGSize(width: 1600, height: 900)) == 1)
+    #expect(
+        PreviewGeometry.idealSize(
+            content: content, available: CGSize(width: 1600, height: 900), minimum: CGSize(width: 520, height: 420))
+            == CGSize(width: 520, height: 420))
+}
+
+@Test func theIdealSizeNeverExceedsTheSpace() {
+    let available = CGSize(width: 1400, height: 800)
+    for content in [
+        CGSize(width: 9000, height: 100), CGSize(width: 100, height: 9000), CGSize(width: 5000, height: 5000),
+    ] {
+        let size = PreviewGeometry.idealSize(content: content, available: available, minimum: .zero)
+        #expect(size.width <= available.width && size.height <= available.height)
+    }
+    #expect(PreviewGeometry.fitScale(content: .zero, in: available) == 1)
+}
+
+@Test func doubleTapZoomIsCapped() {
+    #expect(PreviewGeometry.doubleTapScale(fit: 0.1) == 0.25)
+    #expect(PreviewGeometry.doubleTapScale(fit: 1) == 2.5)
+    #expect(PreviewGeometry.doubleTapScale(fit: 5) == PreviewGeometry.maximumScale)
+}

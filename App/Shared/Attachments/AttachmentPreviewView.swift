@@ -65,42 +65,94 @@ enum TemporaryPreviews {
     }
 }
 
-/// Shows one attachment, decrypted in memory, with Save a Copy and Quick Look.
+/// An attachment decrypted for previewing. It's made when the attachment is opened, so the
+/// preview knows the content's size before its sheet appears, and dropped when the sheet closes.
+struct OpenedAttachment: Identifiable {
+    let ref: AttachmentRef
+    let contents: Data?
+    let problem: String?
+    let image: PlatformImage?
+    let pdf: PDFDocument?
+
+    var id: UUID { ref.id }
+    var kind: AttachmentKind { AttachmentKind(uti: ref.uti) }
+
+    /// The content's own size in points: an image's, or a PDF's first page.
+    var naturalSize: CGSize? {
+        if let image { return image.size }
+        if let page = pdf?.page(at: 0) { return page.bounds(for: .mediaBox).size }
+        return nil
+    }
+
+    @MainActor
+    init(_ ref: AttachmentRef, session: VaultSession?) {
+        self.ref = ref
+        var contents: Data?
+        var problem: String?
+        do {
+            guard let session else { throw VaultError.locked }
+            contents = try session.attachmentContents(ref)
+        } catch VaultError.attachmentUnavailable {
+            problem = "It isn't on this device yet. It will appear once iCloud sync finishes."
+        } catch {
+            problem = AppModel.describe(error)
+        }
+        self.contents = contents
+        self.problem = problem
+        let kind = AttachmentKind(uti: ref.uti)
+        image = kind == .image ? contents.flatMap(PlatformImage.init(data:)) : nil
+        pdf = kind == .pdf ? contents.flatMap(PDFDocument.init(data:)) : nil
+    }
+}
+
+/// Shows one attachment, decrypted in memory, with Save a Copy and Quick Look. Images and PDFs
+/// open at their own size within the screen, and zoom.
 struct AttachmentPreviewView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    let attachment: AttachmentRef
+    let opened: OpenedAttachment
 
-    @State private var contents: Data?
-    @State private var problem: String?
+    @State private var exportProblem: String?
     @State private var quickLookURL: URL?
     @State private var exporting = false
+    @State private var zoom = ZoomController()
+
+    private var attachment: AttachmentRef { opened.ref }
+    private var isZoomable: Bool { opened.image != nil || opened.pdf != nil }
 
     var body: some View {
         Group {
-            if let problem {
+            if let problem = opened.problem ?? exportProblem {
                 ContentUnavailableView(
                     "Can't Open \(attachment.filename)", systemImage: "paperclip", description: Text(problem))
-            } else if let contents {
+            } else if let contents = opened.contents {
                 preview(contents)
-            } else {
-                ProgressView()
             }
         }
         .navigationTitle(attachment.filename)
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #else
-            .frame(minWidth: 520, minHeight: 420)
+            .frame(
+                minWidth: Self.minimumSize.width, idealWidth: idealSize.width, maxWidth: .infinity,
+                minHeight: Self.minimumSize.height, idealHeight: idealSize.height, maxHeight: .infinity)
         #endif
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
             }
+            #if os(iOS)
+                if isZoomable {
+                    ToolbarItemGroup(placement: .bottomBar) { zoomButtons }
+                }
+            #endif
             ToolbarItemGroup(placement: .primaryAction) {
-                if contents != nil {
+                #if os(macOS)
+                    if isZoomable { zoomButtons }
+                #endif
+                if opened.contents != nil {
                     Button("Save a Copy…", systemImage: "square.and.arrow.down") { exporting = true }
-                    if AttachmentKind(uti: attachment.uti) == .other {
+                    if opened.kind == .other {
                         Button("Quick Look", systemImage: "eye", action: openQuickLook)
                     }
                 }
@@ -113,38 +165,69 @@ struct AttachmentPreviewView: View {
         // `.data`, not the attachment's own type: an exporter only uses types the document lists
         // as writable, and it lists `.data` alone. The filename keeps its extension.
         .fileExporter(
-            isPresented: $exporting, document: AttachmentDocument(contents: contents ?? Data()),
+            isPresented: $exporting, document: AttachmentDocument(contents: opened.contents ?? Data()),
             contentType: .data, defaultFilename: attachment.filename
         ) { result in
             switch result {
             case .success: model.session?.recordAccess(.exported, detail: attachment.filename)
-            case .failure(let error): problem = error.localizedDescription
+            case .failure(let error): exportProblem = error.localizedDescription
             }
         }
-        .task { load() }
         .onDisappear {
-            contents = nil
             if let quickLookURL { TemporaryPreviews.remove(quickLookURL) }
         }
     }
 
     @ViewBuilder
+    private var zoomButtons: some View {
+        Button("Zoom Out", systemImage: "minus.magnifyingglass", action: zoom.zoomOut)
+            .keyboardShortcut("-")
+            .help("Zoom out (⌘-)")
+            .disabled(!zoom.canZoomOut)
+        Button("Zoom In", systemImage: "plus.magnifyingglass", action: zoom.zoomIn)
+            .keyboardShortcut("=")
+            .help("Zoom in (⌘=)")
+            .disabled(!zoom.canZoomIn)
+        Button("Zoom to Fit", systemImage: "arrow.up.left.and.down.right.magnifyingglass", action: zoom.zoomToFit)
+            .keyboardShortcut("9")
+            .help("Zoom to fit (⌘9)")
+            .disabled(zoom.isFitting)
+        Button("Actual Size", systemImage: "1.magnifyingglass", action: zoom.actualSize)
+            .keyboardShortcut("0")
+            .help("Actual size (⌘0)")
+            .disabled(zoom.isActualSize)
+    }
+
+    #if os(macOS)
+        private static let minimumSize = CGSize(width: 520, height: 420)
+
+        /// The whole image or page, scaled down to fit 90% of the screen below the toolbar.
+        private var idealSize: CGSize {
+            guard let natural = opened.naturalSize,
+                let screen = NSApp.keyWindow?.screen ?? NSScreen.main
+            else { return Self.minimumSize }
+            let visible = screen.visibleFrame.size
+            let available = CGSize(width: visible.width * 0.9, height: visible.height * 0.9 - 60)
+            return PreviewGeometry.idealSize(content: natural, available: available, minimum: Self.minimumSize)
+        }
+    #endif
+
+    @ViewBuilder
     private func preview(_ contents: Data) -> some View {
-        switch AttachmentKind(uti: attachment.uti) {
+        switch opened.kind {
         case .image:
-            if let image = PlatformImage(data: contents) {
-                ScrollView([.horizontal, .vertical]) {
-                    image.swiftUIImage
-                        .resizable()
-                        .scaledToFit()
-                        .frame(minWidth: 300, minHeight: 300)
-                        .accessibilityLabel(attachment.filename)
-                }
+            if let image = opened.image {
+                ZoomableImage(image: image, controller: zoom)
+                    .accessibilityLabel(attachment.filename)
             } else {
                 fallback
             }
         case .pdf:
-            PDFPreview(data: contents)
+            if let pdf = opened.pdf {
+                PDFPreview(document: pdf, controller: zoom)
+            } else {
+                fallback
+            }
         case .text:
             ScrollView {
                 Text(String(decoding: contents, as: UTF8.self))
@@ -169,23 +252,12 @@ struct AttachmentPreviewView: View {
         }
     }
 
-    private func load() {
-        guard let session = model.session else { return }
-        do {
-            contents = try session.attachmentContents(attachment)
-        } catch VaultError.attachmentUnavailable {
-            problem = "It isn't on this device yet. It will appear once iCloud sync finishes."
-        } catch {
-            problem = AppModel.describe(error)
-        }
-    }
-
     private func openQuickLook() {
-        guard let contents else { return }
+        guard let contents = opened.contents else { return }
         do {
             quickLookURL = try TemporaryPreviews.write(contents, filename: attachment.filename)
         } catch {
-            problem = error.localizedDescription
+            exportProblem = error.localizedDescription
         }
     }
 }
@@ -212,31 +284,9 @@ struct AttachmentDocument: FileDocument {
     extension UIImage {
         var swiftUIImage: Image { Image(uiImage: self) }
     }
-
-    struct PDFPreview: UIViewRepresentable {
-        let data: Data
-        func makeUIView(context: Context) -> PDFView {
-            let view = PDFView()
-            view.autoScales = true
-            view.document = PDFDocument(data: data)
-            return view
-        }
-        func updateUIView(_ view: PDFView, context: Context) {}
-    }
 #else
     typealias PlatformImage = NSImage
     extension NSImage {
         var swiftUIImage: Image { Image(nsImage: self) }
-    }
-
-    struct PDFPreview: NSViewRepresentable {
-        let data: Data
-        func makeNSView(context: Context) -> PDFView {
-            let view = PDFView()
-            view.autoScales = true
-            view.document = PDFDocument(data: data)
-            return view
-        }
-        func updateNSView(_ view: PDFView, context: Context) {}
     }
 #endif
