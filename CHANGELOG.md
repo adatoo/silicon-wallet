@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.3] - 2026-10-20
+
+### Changed
+
+- The source is public, CI runs on GitHub-hosted runners, and the support and privacy pages are
+  live at adatoo.github.io/silicon-wallet.
+
 ## [0.27.2] - 2026-10-20
 
 ### Fixed

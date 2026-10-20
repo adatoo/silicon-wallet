@@ -14,8 +14,8 @@ Git workflow and general project hygiene follow the user-level engineering stand
   (ADR-0001). Never hand-edit `SiliconWallet.xcodeproj` or `App/Info.plist`.
 - ADRs: `docs/adr/`. Release roadmap: `docs/app-store-release.md`.
 - The shared workflows (`auto-merge`, `issue-link`, `tag-on-merge`, `version-bump`) are vendored
-  from engineering-standards v0.6.0 so the repo can go public; once it is, CI uses
-  GitHub-hosted runners only (ADR-0007).
+  from engineering-standards v0.6.0. The repo is public (since 2026-10-20), so CI uses
+  GitHub-hosted runners only; never add self-hosted runners back (ADR-0007).
 
 ## Build and test
 Every command is a `task`; run `task` to list them.
@@ -32,8 +32,8 @@ Every command is a `task`; run `task` to list them.
   App Store Connect. The `release` workflow runs it for every version tag once the API key
   secrets exist (docs/app-store-release.md, B0).
 - `task ci`: everything CI runs, plus the app-hosted tests. Run it before pushing.
-  The Mac CI runner is headless (a LaunchDaemon, no GUI session), so CI runs only the
-  package tests and both builds (`task ci:mac`); `test:macos` and `test:ios` run locally.
+  CI runs only the package tests and both builds (`task ci:mac`); `test:macos` and
+  `test:ios` run locally.
 - A change is done only when the package tests and both platform builds pass.
 
 ## Code rules
