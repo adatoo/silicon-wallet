@@ -96,6 +96,21 @@ extension View {
     }
 }
 
+/// A group's SF Symbol. Each symbol gets its own view, so a reused list row never draws one
+/// symbol in an image laid out for another, or keeps a replace animation half done; either left
+/// the key's shaft cut off now and then (#89).
+struct GroupSymbol: View {
+    let name: String
+
+    init(_ name: String?) {
+        self.name = name ?? "questionmark.folder"
+    }
+
+    var body: some View {
+        Image(systemName: name).id(name)
+    }
+}
+
 /// SF Symbols offered for groups.
 enum GroupIcons {
     static let all = [

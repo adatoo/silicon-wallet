@@ -183,7 +183,7 @@ struct TrashRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: icon)
+            GroupSymbol(icon)
                 .foregroundStyle(.secondary)
                 .frame(width: 24)
                 .accessibilityHidden(true)

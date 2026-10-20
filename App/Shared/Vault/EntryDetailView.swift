@@ -31,7 +31,7 @@ struct EntryDetailView: View {
 
             Section {
                 HStack(spacing: 14) {
-                    Image(systemName: group?.icon ?? "questionmark.folder")
+                    GroupSymbol(group?.icon)
                         .font(.title)
                         .foregroundStyle(.tint)
                         .frame(width: 44, height: 44)

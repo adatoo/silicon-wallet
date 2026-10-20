@@ -11,7 +11,7 @@ struct EntryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: group?.icon ?? "questionmark.folder")
+                GroupSymbol(group?.icon)
                     .font(.title2)
                     .foregroundStyle(.tint)
                     .frame(width: 40, height: 40)
