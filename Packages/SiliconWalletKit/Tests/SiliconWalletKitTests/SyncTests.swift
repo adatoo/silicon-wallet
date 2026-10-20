@@ -219,6 +219,29 @@ private func syncedSession() async throws -> (VaultSession, SyncedVaultStore, In
 }
 
 @MainActor
+@Test func aNewEnvironmentSendsEverythingAsNew() async throws {
+    let (session, _, base) = try await syncedSession()
+    let group = try session.addGroup(VaultGroup(name: "Fake"))
+    let entry = try session.addEntry(VaultEntry(groupID: group.id, title: "Fake"))
+    let ref = try session.addAttachment(to: entry.id, filename: "a", uti: "public.data", contents: Data([1]))
+    // System fields from CloudKit Development, left by a development build.
+    let everything: [SyncItem] = [.meta, .record(group.id), .record(entry.id), .attachment(ref.id)]
+    for item in everything { try base.setSystemFields(Data([7]), for: item) }
+
+    let items = VaultSync.forgetServerState(in: base)
+
+    #expect(Set(items) == Set(everything))
+    for item in everything { #expect(try base.systemFields(for: item) == nil, "\(item)") }
+    // Nothing else changes: the vault still opens with the same entries.
+    #expect(session.entries.map(\.id) == [entry.id])
+}
+
+@Test func eachCloudKitEnvironmentKeepsItsOwnSyncState() {
+    #expect(CloudEnvironment.development.stateFileName == "SyncState.json")
+    #expect(CloudEnvironment.production.stateFileName != CloudEnvironment.development.stateFileName)
+}
+
+@MainActor
 @Test func aCopyThatDoesntOpenCantReplaceAReadableOne() async throws {
     let (session, _, base) = try await syncedSession()
     let group = try session.addGroup(VaultGroup(name: "Fake"))

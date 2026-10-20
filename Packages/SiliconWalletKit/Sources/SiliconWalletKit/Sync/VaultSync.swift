@@ -60,8 +60,10 @@ public final class VaultSync: CKSyncEngineDelegate {
 
         store.onLocalChanges = { [weak self] changes in self?.enqueue(changes) }
         if engine.state.pendingDatabaseChanges.isEmpty, loadState() == nil {
-            engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: SyncRecordMapping.zoneID))])
-            enqueue(((try? base.allSyncItems()) ?? []).map { .save($0) })
+            // The first start in this CloudKit environment. Records may still carry system fields
+            // from the other one (a development build replaced by a TestFlight build), so send
+            // everything as new.
+            reuploadEverything(engine)
         }
         Task { await syncNow() }
     }
@@ -94,10 +96,16 @@ public final class VaultSync: CKSyncEngineDelegate {
     }
 
     private func reuploadEverything(_ engine: CKSyncEngine) {
-        let items = (try? base.allSyncItems()) ?? []
-        for item in items { try? base.setSystemFields(nil, for: item) }
+        let items = Self.forgetServerState(in: base)
         engine.state.add(pendingDatabaseChanges: [.saveZone(CKRecordZone(zoneID: SyncRecordMapping.zoneID))])
         enqueue(items.map { .save($0) })
+    }
+
+    /// Clears every item's CloudKit system fields, so each is sent as new, and returns the items.
+    static func forgetServerState(in base: any SyncBackingStore) -> [SyncItem] {
+        let items = (try? base.allSyncItems()) ?? []
+        for item in items { try? base.setSystemFields(nil, for: item) }
+        return items
     }
 
     func enqueue(_ changes: [SyncChange]) {

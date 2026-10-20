@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import SiliconWalletKit
 
 #if os(iOS)
     import UIKit
@@ -22,6 +23,16 @@ enum CloudEntitlement {
             // iOS builds that run are always signed with their entitlements; the simulator
             // builds CI makes are never run.
             return true
+        #endif
+    }
+
+    /// Debug builds sync with CloudKit Development. Release builds sync with Production: the
+    /// Release entitlements say so, so a Release build run from Xcode does too.
+    static var environment: CloudEnvironment {
+        #if DEBUG
+            .development
+        #else
+            .production
         #endif
     }
 }

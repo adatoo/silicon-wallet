@@ -281,6 +281,11 @@ do; it can't be made to win conflicts or pass as another kind of record.
 - New device: fetch `VaultMeta`, ask for the master password, unwrap the vault key, then sync.
 - Sync engine state serialization persisted locally; account-change and zone-deleted
   events handled (e.g. sign-out → keep local data, pause sync, show status).
+- **Environments**: Debug builds sync with CloudKit Development, Release builds (TestFlight,
+  App Store) with Production; the Release entitlements say so explicitly. Each environment
+  keeps its own engine state (`CloudEnvironment.stateFileName`). The first start in an
+  environment clears the stored system fields and sends the whole vault, so a device moving
+  from a development build to TestFlight uploads its vault to Production.
 - **As built** (`SiliconWalletKit/Sync`): `SyncedVaultStore` wraps the local store and queues
   every change `VaultSession` makes, so the session doesn't know sync exists; `VaultSync` writes
   fetched records to the underlying store and asks the session to reload. Each record keeps its

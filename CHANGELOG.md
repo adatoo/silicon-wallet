@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.2] - 2026-10-20
+
+### Fixed
+
+- A device moving from a development build to TestFlight uploads its vault to CloudKit
+  Production instead of waiting for each record to change.
+
 ## [0.27.1] - 2026-10-20
 
 ### Fixed
