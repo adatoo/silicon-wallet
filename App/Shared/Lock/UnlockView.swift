@@ -114,7 +114,8 @@ struct UnlockView: View {
 
             #if os(macOS)
                 if lock.canUnlockWithBiometrics {
-                    inlineTouchID
+                    Button("Use Touch ID", systemImage: "touchid", action: useBiometrics)
+                        .buttonStyle(.borderless)
                 }
             #endif
         }
@@ -147,6 +148,13 @@ struct UnlockView: View {
     }
 
     #if os(macOS)
+        /// Back from the password field to Touch ID; cancelling brings the field back.
+        private func useBiometrics() {
+            password = ""
+            failed = false
+            wantsPassword = false
+            startBiometrics()
+        }
         /// Touch ID inside the lock screen, instead of the system's floating panel.
         @ViewBuilder
         private var inlineTouchID: some View {
@@ -156,7 +164,7 @@ struct UnlockView: View {
                         Label("Touch ID", systemImage: "touchid")
                     }
                     .controlSize(.regular)
-                    Text("Touch ID or enter your password")
+                    Text("Touch ID or use your password")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
