@@ -205,7 +205,7 @@ struct EntryRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: group?.icon ?? "questionmark.folder")
+            GroupSymbol(group?.icon)
                 .foregroundStyle(.tint)
                 .frame(width: 24)
                 .accessibilityHidden(true)
