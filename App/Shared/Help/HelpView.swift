@@ -174,7 +174,7 @@ struct HelpTopic: Identifiable, Hashable {
             symbol: "lock",
             paragraphs: [
                 autoLock,
-                "With **Unlock with \(biometrics)** on (Settings), you don't need to type your password to unlock. You still need it on a new device, and once after the faces or fingerprints on this device change. Every 30 days you're asked to check you still remember it; you can skip that.",
+                "With **Unlock with \(biometrics)** on (Settings), you don't need to type your password to unlock; choose **Use Password** if you'd rather type it. You still need it on a new device, and once after the faces or fingerprints on this device change. Every 30 days you're asked to check you still remember it; you can skip that.",
                 "Copied values are cleared from the clipboard after 60 seconds, and when the vault locks, unless you've copied something else since.",
                 "**Settings ▸ Access Log…** lists unlocks and failed attempts on this device.",
             ]

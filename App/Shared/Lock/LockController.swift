@@ -148,8 +148,10 @@ final class LockController {
 
     /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
     /// is displayed (the Mac lock screen's inline Touch ID); without one, the system shows its own.
-    func unlockWithBiometrics(context: LAContext? = nil) async {
-        guard let session = model.session else { return }
+    /// Returns whether the vault unlocked.
+    @discardableResult
+    func unlockWithBiometrics(context: LAContext? = nil) async -> Bool {
+        guard let session = model.session else { return false }
         let reason = "unlock your vault"
         do {
             let key =
@@ -165,6 +167,7 @@ final class LockController {
                 settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
             }
             isRemindingPassword = PasswordReminder.isDue(next: settings.nextPasswordReminder, now: .now)
+            return true
         } catch BiometricError.cancelled {
             // Fall back to the password field.
         } catch BiometricError.noStoredKey, VaultError.wrongPassword {
@@ -175,6 +178,7 @@ final class LockController {
         } catch {
             notice = AppModel.describe(error)
         }
+        return false
     }
 
     /// Turns biometric unlock on or off. Turning it on needs the vault unlocked.

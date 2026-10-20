@@ -2,9 +2,10 @@ import LocalAuthentication
 import SiliconWalletKit
 import SwiftUI
 
-/// The locked screen: the master password, or Face ID / Touch ID when allowed, unlocks the vault.
-/// On the Mac, Touch ID is shown inside the window (DESIGN.md §5). The form sits on a frosted card
-/// over the backdrop.
+/// The locked screen: Face ID / Touch ID or the master password unlocks the vault. With biometrics
+/// on, it leads with them and shows the password field only on request, or when the prompt is
+/// cancelled. On the Mac, Touch ID is shown inside the window (DESIGN.md §5). The form sits on a
+/// frosted card over the backdrop.
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
     @Environment(LockController.self) private var lock
@@ -13,6 +14,8 @@ struct UnlockView: View {
     @State private var isWorking = false
     @State private var failed = false
     @State private var triedBiometrics = false
+    /// Asked for the password field, by "Use Password" or by cancelling the biometric prompt.
+    @State private var wantsPassword = false
     @FocusState private var isFocused: Bool
     #if os(macOS)
         /// The context the inline Touch ID view shows. A new one is made for each attempt.
@@ -28,6 +31,50 @@ struct UnlockView: View {
             Text("Silicon Wallet Is Locked")
                 .font(.title.bold())
 
+            if showsPassword {
+                passwordForm
+            } else {
+                biometricsFirst
+            }
+
+            if let notice = lock.notice {
+                Text(notice)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 360)
+            }
+        }
+        .padding(32)
+        .background(.regularMaterial, in: .rect(cornerRadius: 24))
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { LockBackdrop() }
+        .onAppear {
+            isFocused = showsPassword
+            startBiometricsOnce()
+        }
+        .onChange(of: showsPassword) { _, shows in
+            // The field only exists once it shows, so focus it then.
+            if shows { isFocused = true }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { startBiometricsOnce() }
+        }
+        #if os(macOS)
+            .onChange(of: password) { _, new in
+                // Typing the password takes over from Touch ID.
+                if !new.isEmpty { stopBiometrics() }
+            }
+            .onDisappear(perform: stopBiometrics)
+        #endif
+    }
+
+    /// The password field shows unless biometrics can unlock and it hasn't been asked for.
+    private var showsPassword: Bool { wantsPassword || !lock.canUnlockWithBiometrics }
+
+    private var passwordForm: some View {
+        Group {
             VStack(spacing: 8) {
                 SecureField("Master password", text: $password)
                     .textContentType(.password)
@@ -56,7 +103,7 @@ struct UnlockView: View {
                 #if os(iOS)
                     if lock.canUnlockWithBiometrics {
                         Button("Unlock with \(lock.biometricKind.name)", systemImage: lock.biometricKind.symbol) {
-                            Task { await lock.unlockWithBiometrics() }
+                            startBiometrics()
                         }
                         .labelStyle(.iconOnly)
                         .buttonStyle(.bordered)
@@ -70,34 +117,33 @@ struct UnlockView: View {
                     inlineTouchID
                 }
             #endif
+        }
+    }
 
-            if let notice = lock.notice {
-                Text(notice)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 360)
-            }
+    /// Face ID or Touch ID, with the password a button away.
+    private var biometricsFirst: some View {
+        VStack(spacing: 12) {
+            #if os(iOS)
+                Button(action: startBiometrics) {
+                    Label("Unlock with \(lock.biometricKind.name)", systemImage: lock.biometricKind.symbol)
+                        .frame(minWidth: 200)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
+            #else
+                inlineTouchID
+            #endif
+            Button("Use Password", action: usePassword)
+                .buttonStyle(.borderless)
         }
-        .padding(32)
-        .background(.regularMaterial, in: .rect(cornerRadius: 24))
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background { LockBackdrop() }
-        .onAppear {
-            isFocused = true
-            startBiometricsOnce()
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { startBiometricsOnce() }
-        }
+    }
+
+    private func usePassword() {
         #if os(macOS)
-            .onChange(of: password) { _, new in
-                // Typing the password takes over from Touch ID.
-                if !new.isEmpty { stopBiometrics() }
-            }
-            .onDisappear(perform: stopBiometrics)
+            stopBiometrics()
         #endif
+        wantsPassword = true
     }
 
     #if os(macOS)
@@ -139,11 +185,17 @@ struct UnlockView: View {
             context.localizedCancelTitle = "Use Password"
             biometricContext = context
             Task {
-                await lock.unlockWithBiometrics(context: context)
-                if biometricContext === context { biometricContext = nil }
+                let unlocked = await lock.unlockWithBiometrics(context: context)
+                if biometricContext === context {
+                    biometricContext = nil
+                    if !unlocked { usePassword() }
+                }
             }
         #else
-            Task { await lock.unlockWithBiometrics() }
+            Task {
+                // Cancelling the prompt ("Use Password") or failing brings up the password field.
+                if !(await lock.unlockWithBiometrics()) { usePassword() }
+            }
         #endif
     }
 

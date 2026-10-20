@@ -192,6 +192,9 @@ do; it can't be made to win conflicts or pass as another kind of record.
   biometrics stay on, and that password unlock stores a fresh item. Settings: lock after
   inactivity, lock on sleep (Mac) or after time in the background (iOS), clipboard clearing and
   biometrics; stored in `UserDefaults`, never anything secret.
+  With biometrics on, the lock screen leads with them: an "Unlock with Face ID" button (iOS) or
+  the inline Touch ID view (Mac), and "Use Password". The password field shows only after "Use
+  Password", or when the prompt is cancelled or fails; without biometrics it shows at once.
   On the Mac, Touch ID is part of the lock screen (`LocalAuthenticationView`), not a floating
   panel: the screen's `LAContext` is approved with Touch ID, then reused for the Keychain read so
   there's no second prompt. Typing the password stops it. iOS uses the system Face ID prompt.
