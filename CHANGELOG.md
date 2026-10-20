@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0] - 2026-10-20
+
+### Changed
+
+- Face ID and Touch ID unlock every time once they're on, including after a restart, instead of
+  asking for the master password every few days. Setup offers them, and a password unlock on a
+  device where they're off offers them once.
+- Every 30 days you're asked to check you still remember your master password; you can skip it
+  for a week.
+- After the faces or fingerprints on a device change, one password unlock turns Face ID or Touch
+  ID back on, without a trip to Settings.
+
 ## [0.25.0] - 2026-10-20
 
 ### Added
