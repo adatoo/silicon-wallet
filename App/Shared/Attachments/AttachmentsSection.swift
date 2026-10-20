@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 /// What the attachments section has asked to present: a preview, the file importer or a
 /// removal confirmation.
 struct AttachmentPresentation {
-    var previewing: AttachmentRef?
+    var previewing: OpenedAttachment?
     var addingFiles = false
     var toRemove: AttachmentRef?
 }
@@ -30,14 +30,16 @@ struct AttachmentsSection: View {
         Section {
             ForEach(entry.attachments) { attachment in
                 Button {
-                    presentation.previewing = attachment
+                    presentation.previewing = OpenedAttachment(attachment, session: model.session)
                 } label: {
                     AttachmentRow(
                         attachment: attachment, isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
-                    Button("Open", systemImage: "eye") { presentation.previewing = attachment }
+                    Button("Open", systemImage: "eye") {
+                        presentation.previewing = OpenedAttachment(attachment, session: model.session)
+                    }
                     if !isReadOnly {
                         Button("Remove…", systemImage: "trash", role: .destructive) {
                             presentation.toRemove = attachment
@@ -152,8 +154,15 @@ private struct AttachmentPresentations: ViewModifier {
             ) { result in
                 if case .success(let urls) = result { AttachmentsSection.add(urls, to: entry.id, model: model) }
             }
-            .sheet(item: $presentation.previewing) { attachment in
-                NavigationStack { AttachmentPreviewView(attachment: attachment) }
+            .sheet(item: $presentation.previewing) { opened in
+                NavigationStack { AttachmentPreviewView(opened: opened) }
+                    #if os(macOS)
+                        // Opens at the preview's ideal size (the whole image, within the
+                        // screen) and can be resized.
+                        .presentationSizing(.fitted)
+                    #else
+                        .presentationSizing(.page)
+                    #endif
             }
             .confirmationDialog(
                 "Remove \(presentation.toRemove?.filename ?? "this attachment")?",

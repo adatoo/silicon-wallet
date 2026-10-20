@@ -36,11 +36,13 @@
 		D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */; };
 		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
 		E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */; };
+		EA7BA7D832764B49BBB9554B /* PreviewGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C999E31F3061FBE1C25D0A5 /* PreviewGeometry.swift */; };
 		EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD892512A872BD9135E5CCB /* EntryListView.swift */; };
 		EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */; };
 		EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */; };
 		F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772BFA3C071751268172F197 /* EntryDetailView.swift */; };
 		F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */; platformFilters = (ios, ); };
+		F6995663416907E2E067DCD9 /* ZoomableViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A892AA93C34AB0DA7075BE /* ZoomableViews.swift */; };
 		F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05AAF8DA641C137E55BC0347 /* Clipboard.swift */; };
 		FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */; };
 		FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5CF27647D2249ED8F21191 /* VaultView.swift */; };
@@ -61,8 +63,10 @@
 		05AAF8DA641C137E55BC0347 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
 		150E755B7E5B799C04F5B072 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		17329ADEF2D57777E8BCC4BC /* Reordering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reordering.swift; sourceTree = "<group>"; };
+		1C999E31F3061FBE1C25D0A5 /* PreviewGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewGeometry.swift; sourceTree = "<group>"; };
 		20DB2732C95570E9BBC25DC5 /* AppLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLinks.swift; sourceTree = "<group>"; };
 		244D550D93A11FBA8C5076F4 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		25A892AA93C34AB0DA7075BE /* ZoomableViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomableViews.swift; sourceTree = "<group>"; };
 		264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentsSection.swift; sourceTree = "<group>"; };
 		303469DF1EEEF616BB78704E /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryCard.swift; sourceTree = "<group>"; };
@@ -194,6 +198,8 @@
 			children = (
 				0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */,
 				264BE2369BFBFC5A840DD8FC /* AttachmentsSection.swift */,
+				1C999E31F3061FBE1C25D0A5 /* PreviewGeometry.swift */,
+				25A892AA93C34AB0DA7075BE /* ZoomableViews.swift */,
 			);
 			path = Attachments;
 			sourceTree = "<group>";
@@ -429,6 +435,7 @@
 				99D61EAE32634493A8A75F68 /* LockController.swift in Sources */,
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
 				0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */,
+				EA7BA7D832764B49BBB9554B /* PreviewGeometry.swift in Sources */,
 				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
 				CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */,
 				8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */,
@@ -442,6 +449,7 @@
 				97D0CE3BE312A5E9CF60A619 /* VaultActionsToolbar.swift in Sources */,
 				E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */,
 				FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */,
+				F6995663416907E2E067DCD9 /* ZoomableViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
