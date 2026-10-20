@@ -20,16 +20,12 @@ final class LockSettings {
     /// macOS: lock on sleep, screensaver and screen lock.
     var lockOnSleep: Bool { didSet { defaults.set(lockOnSleep, forKey: Key.lockOnSleep) } }
     var biometricsEnabled: Bool { didSet { defaults.set(biometricsEnabled, forKey: Key.biometricsEnabled) } }
-    /// Days before the master password is needed again, even with biometrics.
-    var passwordReentryDays: Int {
-        didSet { defaults.set(passwordReentryDays, forKey: Key.passwordReentryDays) }
-    }
-    /// The device's clocks when the master password last unlocked the vault. Not secret: it holds
-    /// a date, the boot session's ID and the time since boot.
-    var lastPasswordUnlock: DeviceClock? {
-        didSet {
-            defaults.set(lastPasswordUnlock.flatMap { try? JSONEncoder().encode($0) }, forKey: Key.lastPasswordUnlock)
-        }
+    /// Whether this device has offered Face ID or Touch ID once, after a password unlock.
+    var biometricsOffered: Bool { didSet { defaults.set(biometricsOffered, forKey: Key.biometricsOffered) } }
+    /// When to next ask whether the master password is still remembered (`PasswordReminder`).
+    /// Not secret: only a date.
+    var nextPasswordReminder: Date? {
+        didSet { defaults.set(nextPasswordReminder, forKey: Key.nextPasswordReminder) }
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -40,21 +36,17 @@ final class LockSettings {
             Key.backgroundGraceSeconds: 0,
             Key.lockOnSleep: true,
             Key.biometricsEnabled: false,
-            Key.passwordReentryDays: 7,
+            Key.biometricsOffered: false,
         ])
+        // Left by builds that asked for the password every few days and after a restart.
+        for key in Key.retired { defaults.removeObject(forKey: key) }
         autoLockMinutes = defaults.integer(forKey: Key.autoLockMinutes)
         clipboardSeconds = defaults.integer(forKey: Key.clipboardSeconds)
         backgroundGraceSeconds = defaults.integer(forKey: Key.backgroundGraceSeconds)
         lockOnSleep = defaults.bool(forKey: Key.lockOnSleep)
         biometricsEnabled = defaults.bool(forKey: Key.biometricsEnabled)
-        passwordReentryDays = defaults.integer(forKey: Key.passwordReentryDays)
-        lastPasswordUnlock = defaults.data(forKey: Key.lastPasswordUnlock).flatMap {
-            try? JSONDecoder().decode(DeviceClock.self, from: $0)
-        }
-    }
-
-    var biometricPolicy: BiometricPolicy {
-        BiometricPolicy(isEnabled: biometricsEnabled, maximumAge: TimeInterval(passwordReentryDays) * 86_400)
+        biometricsOffered = defaults.bool(forKey: Key.biometricsOffered)
+        nextPasswordReminder = defaults.object(forKey: Key.nextPasswordReminder) as? Date
     }
 
     private enum Key {
@@ -63,8 +55,8 @@ final class LockSettings {
         static let backgroundGraceSeconds = "backgroundGraceSeconds"
         static let lockOnSleep = "lockOnSleep"
         static let biometricsEnabled = "biometricsEnabled"
-        static let passwordReentryDays = "passwordReentryDays"
-        // A new key: the date an older build stored there is ignored, so the password is needed once.
-        static let lastPasswordUnlock = "lastPasswordUnlockClock"
+        static let biometricsOffered = "biometricsOffered"
+        static let nextPasswordReminder = "nextPasswordReminder"
+        static let retired = ["passwordReentryDays", "lastPasswordUnlock", "lastPasswordUnlockClock"]
     }
 }

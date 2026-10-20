@@ -28,7 +28,6 @@ struct SettingsView: View {
     private static let autoLockChoices = [1, 2, 5, 10, 15, 30, 60, 0]
     private static let clipboardChoices = [15, 30, 60, 120, 300, 0]
     private static let graceChoices = [0, 30, 60, 300, 900]
-    private static let reentryChoices = [1, 3, 7, 14, 30]
 
     var body: some View {
         @Bindable var settings = lock.settings
@@ -57,19 +56,13 @@ struct SettingsView: View {
                     isOn: Binding(get: { settings.biometricsEnabled }, set: { lock.setBiometrics(enabled: $0) })
                 )
                 .disabled(lock.biometricKind == .none || (!isUnlocked && !settings.biometricsEnabled))
-                Picker("Require password every", selection: $settings.passwordReentryDays) {
-                    ForEach(Self.reentryChoices, id: \.self) { days in
-                        Text(days == 1 ? "Day" : "\(days) days").tag(days)
-                    }
-                }
-                .disabled(!settings.biometricsEnabled)
             } header: {
                 Text(lock.biometricKind == .none ? "Biometrics" : lock.biometricKind.name)
             } footer: {
                 Text(
                     lock.biometricKind == .none
                         ? "This device has no Face ID or Touch ID set up."
-                        : "Your master password is still needed after a restart, and at least this often."
+                        : "Your master password is still needed on a new device, and after the faces or fingerprints on this device change. Every 30 days you're asked to check you remember it; you can skip that."
                 )
             }
 

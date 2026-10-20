@@ -58,61 +58,29 @@ func passwordsHaveTheRequestedLength(length: Int) {
     #expect(PasswordGenerator.entropy(PasswordGenerator.WordOptions()) > 50)
 }
 
-// MARK: - Biometric policy
+// MARK: - Password reminder
 
-@Test func biometricsNeedARecentPasswordUnlockInThisBoot() {
-    let policy = BiometricPolicy(isEnabled: true)
-    let unlock = DeviceClock(date: Date(timeIntervalSince1970: 1_000_000), bootSession: "boot-a", sinceBoot: 3_600)
-    func later(_ seconds: TimeInterval, session: String? = "boot-a") -> DeviceClock {
-        DeviceClock(date: unlock.date.addingTimeInterval(seconds), bootSession: session, sinceBoot: 3_600 + seconds)
-    }
-
-    #expect(policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: later(60)))
-    #expect(policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: later(6 * 86_400)))
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: nil, now: later(60)))
-    // Too long ago.
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: later(8 * 86_400)))
-    // Restarted since: a new boot session.
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: later(60, session: "boot-b")))
-    // Turned off.
-    #expect(!BiometricPolicy(isEnabled: false).allowsBiometricUnlock(lastPasswordUnlock: unlock, now: later(60)))
+@Test func thePasswordReminderIsDueOnceItsDateArrives() {
+    let confirmed = Date(timeIntervalSince1970: 1_000_000)
+    let next = PasswordReminder.next(afterConfirmingAt: confirmed)
+    #expect(next == confirmed.addingTimeInterval(30 * 86_400))
+    #expect(!PasswordReminder.isDue(next: next, now: next.addingTimeInterval(-1)))
+    #expect(PasswordReminder.isDue(next: next, now: next))
+    #expect(PasswordReminder.isDue(next: next, now: next.addingTimeInterval(86_400)))
 }
 
-@Test func settingTheClockBackDoesntReopenBiometrics() {
-    let policy = BiometricPolicy(isEnabled: true)
-    let unlock = DeviceClock(date: Date(timeIntervalSince1970: 1_000_000), bootSession: "boot-a", sinceBoot: 3_600)
-
-    // After a restart, the date set back to just after the last password unlock.
-    let restarted = DeviceClock(date: unlock.date.addingTimeInterval(60), bootSession: "boot-b", sinceBoot: 120)
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: restarted))
-    // In the same boot, eight days later, with the date set back a week.
-    let rewound = DeviceClock(
-        date: unlock.date.addingTimeInterval(86_400), bootSession: "boot-a", sinceBoot: 3_600 + 8 * 86_400)
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: rewound))
-    // A date before the unlock doesn't count either.
-    let backwards = DeviceClock(date: unlock.date.addingTimeInterval(-60), bootSession: "boot-a", sinceBoot: 3_660)
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: backwards))
+@Test func notNowPutsTheReminderOffForAWeek() {
+    let now = Date(timeIntervalSince1970: 1_000_000)
+    let snoozed = PasswordReminder.next(afterSnoozingAt: now)
+    #expect(snoozed == now.addingTimeInterval(7 * 86_400))
+    #expect(snoozed < PasswordReminder.next(afterConfirmingAt: now))
 }
 
-@Test func withoutABootSessionARestartComesFromTheBootTime() {
-    let policy = BiometricPolicy(isEnabled: true)
-    let unlock = DeviceClock(date: Date(timeIntervalSince1970: 1_000_000), bootSession: nil, sinceBoot: 3_600)
-
-    let sameBoot = DeviceClock(date: unlock.date.addingTimeInterval(60), bootSession: nil, sinceBoot: 3_660)
-    #expect(policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: sameBoot))
-    // Started 30 seconds ago, after the unlock.
-    let restarted = DeviceClock(date: unlock.date.addingTimeInterval(60), bootSession: nil, sinceBoot: 30)
-    #expect(!policy.allowsBiometricUnlock(lastPasswordUnlock: unlock, now: restarted))
+@Test func withNoDateThePasswordReminderIsntDue() {
+    #expect(!PasswordReminder.isDue(next: nil, now: .now))
 }
 
-@Test func theCurrentClockHasABootSession() {
-    let first = DeviceClock.current
-    let second = DeviceClock.current
-    #expect(first.bootSession != nil)
-    #expect(first.bootSession == second.bootSession)
-    #expect(second.sinceBoot >= first.sinceBoot)
-    #expect(first.sinceBoot > 0)
-}
+// MARK: - Biometric errors
 
 @Test func touchIDCancelsAndFailuresFallBackToThePassword() {
     for code in [LAError.Code.userCancel, .appCancel, .systemCancel, .userFallback, .authenticationFailed] {
