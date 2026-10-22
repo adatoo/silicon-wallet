@@ -7,7 +7,9 @@ the end.
 
 Decisions already made: the repo went public after the pre-beta security pass (B4, done
 2026-10-20), and the App Store primary language is English (UK). Release 1.0 is tracked in
-issue #101.
+issue #101. There is no TestFlight testing phase (decided 2026-10-22): builds still upload to
+App Store Connect, but Production sync is checked with a local Release build (B5) and 1.0 is
+submitted directly, with manual release.
 
 
 Each item below becomes an issue or PR when its turn comes. The steps are DESIGN.md §8's build order, with release work threaded in early so that nothing blocks at the end.
@@ -28,7 +30,8 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
      and Push Notifications. CloudKit pushes need no APNs certificate.
    - iCloud container `iCloud.com.datoos.silicon-wallet`, assigned to that App ID only.
      Containers can't be deleted, so don't create spares.
-3. **App Store Connect API key** (owner action; the release pipeline is ready for it):
+3. **App Store Connect API key** (done 2026-10-22, key "Silicon Wallet release"; the `.p8` is in
+   `~/.appstoreconnect/private_keys/`):
    - Users and Access ▸ Integrations ▸ App Store Connect API: make a team key with the **Admin**
      role. The headless CI runner has no signing certificate, so Xcode uses cloud-managed
      distribution signing, which needs Admin (or App Manager plus "Access to Cloud Managed
@@ -60,7 +63,7 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
   - **Versions:** `MARKETING_VERSION` comes from `VERSION`, and `CURRENT_PROJECT_VERSION` is `github.run_number`, which is unique and only goes up.
   - **Entitlements:** Release builds use `aps-environment: production`.
   - **Local tasks:** `task release:archive PLATFORM=ios|macos` and `task release:upload`.
-- **TestFlight internal testing** on your own iPhone, iPad and Mac. It needs no review. Use it from step 4 onwards.
+- **TestFlight internal testing:** skipped (see the decisions above). Uploaded builds still show in TestFlight if it's ever wanted.
 - **Accessibility from the start:** VoiceOver labels, Dynamic Type, keyboard navigation on Mac, and Reduce Motion.
 
 ## B3. Build steps 6 and 7: CloudKit sync and attachments
@@ -131,10 +134,11 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 - **Accessibility Nutrition Labels:** declare only the features verified on each platform.
 - **Export compliance.** The app uses encryption, through CryptoKit and libsodium's Argon2id. Answer the App Store Connect questionnaire, then set `ITSAppUsesNonExemptEncryption` to match, so each build skips the prompt.
   - **To verify:** before submission, check the current US export rules (BIS mass-market and open-source publication) and the France declaration requirement against what App Store Connect asks at that time. I'm not certain of the current specifics.
-- **External TestFlight:** this needs Beta App Review. Use a public link, and write review notes that explain:
-  - the app needs no account;
-  - you create a vault with any master password;
-  - iCloud sync is optional.
+- **Production smoke test, instead of TestFlight:** Release builds sync to CloudKit Production
+  (`icloud-container-environment` in the Release entitlements). Back up the vault folder, then run
+  a team-signed Release build on the Mac (`-configuration Release -allowProvisioningUpdates`) and
+  on an iPhone or iPad (Xcode scheme ▸ Run ▸ Build Configuration: Release). Check the vault uploads,
+  a second device receives it, Face ID / Touch ID work and an attachment round-trips.
 
 ## B6. Submission
 - **App Review readiness checklist:**
@@ -151,12 +155,12 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 
 ## B7. Launch and after
 - Release, then watch crash reports in Xcode Organizer. These are Apple-collected and opt-in, which is compatible with "Data Not Collected".
-- Watch TestFlight feedback and App Store reviews.
+- Watch App Store reviews.
 - **Every later release** follows one cycle:
   1. A PR, with its version bump, is merged.
   2. The merge is tagged.
-  3. The release workflow uploads the build to TestFlight.
-  4. The build is promoted manually in App Store Connect.
+  3. The release workflow uploads the build to App Store Connect.
+  4. The build is chosen for a new version and submitted for review in App Store Connect.
 - Phase 2 and 3 work, starting only when you ask: Acrylic import, export, AutoFill extension.
 
 ## Milestone summary
@@ -164,7 +168,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 |---|---|
 | M0 Setup | `task ci` green locally and in CI; repo private; ruleset applied |
 | M1 Kit (steps 1–3) | crypto, vault and store tests green, including tampered and wrong-password cases |
-| M2 Internal TestFlight (steps 4–5) | release workflow uploads both platforms |
+| M2 Upload pipeline (steps 4–5) | release workflow uploads both platforms |
 | M3 Sync (steps 6–7) | Production schema deployed; two-device sync passes |
-| M4 Public repo and external beta | security pass done; listing, privacy policy and screenshots ready |
+| M4 Public repo and Production smoke test | security pass done; listing, privacy policy and screenshots ready; local Release build syncs to Production |
 | M5 1.0 on both App Stores | App Review approved; phased release on |
