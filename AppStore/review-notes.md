@@ -8,9 +8,11 @@ Silicon Wallet is a password manager. It needs no account or sign-in.
 
 To try it:
 1. On first launch, choose any master password (at least 8 characters) and tap Create Vault.
+   "Unlock with Face ID" is on by default and can be turned off on the same screen.
    The vault starts with example groups (Logins, Credit Cards and so on).
 2. Tap + to add an entry. Concealed fields (such as passwords) are hidden until revealed.
-3. Lock with the padlock button; unlock with the same master password.
+3. Lock with the padlock button. To unlock, use Face ID or Touch ID, or tap "Use Password"
+   and enter the same master password.
 
 iCloud sync is optional and automatic when the device is signed in to iCloud; the app works
 fully without it. Everything is encrypted on the device before it is stored or synced

@@ -1,16 +1,16 @@
 Silicon Wallet keeps your passwords, cards, bank details, licence keys and private notes in one encrypted vault, on your Mac, iPad and iPhone.
 
 YOUR VAULT, ENCRYPTED ON YOUR DEVICE
-Everything is encrypted before it's saved or synced, with a key made from your master password. Apple can't read it, and neither can anyone else. There's no account to create and nothing is collected.
+Everything is encrypted before it's saved or synced, with a key made from your master password. Neither Apple nor the developer can read it. There's no account to create and nothing is collected. Your master password can't be recovered, so keep it somewhere safe.
 
 ORGANISED YOUR WAY
 • Groups with their own fields: give "Wi-Fi" a network and password, or "Membership" a number and renewal date
 • Favourites, notes and extra fields on any entry
 • Fast search that ignores case and accents, and never looks inside hidden fields
-• Attachments such as scans and PDFs, each encrypted with its own key
+• Attachments such as scans and PDFs, previewed in the app and each encrypted with its own key
 
 SAFE TO USE EVERY DAY
-• Unlock with Face ID or Touch ID
+• Unlock with Face ID or Touch ID, with a gentle check of your master password every 30 days so you don't forget it
 • Locks itself after a few minutes, when your Mac sleeps, and when you leave the app
 • Hidden fields stay hidden until you reveal them
 • Copied passwords clear themselves from the clipboard
