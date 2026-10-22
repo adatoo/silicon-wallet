@@ -133,7 +133,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 - **Age rating questionnaire:** all "None", which gives the lowest rating.
 - **Accessibility Nutrition Labels:** declare only the features verified on each platform.
 - **Export compliance** (done 2026-10-22): answered "None of the algorithms mentioned above", since every cipher comes from Apple's OS, and `ITSAppUsesNonExemptEncryption` is `NO` (AppStore/README.md).
-- **Production smoke test, instead of TestFlight:** Release builds sync to CloudKit Production
+- **Production smoke test, instead of TestFlight** (passed 2026-10-22 on the Mac and an iPhone): Release builds sync to CloudKit Production
   (`icloud-container-environment` in the Release entitlements). Back up the vault folder, then run
   a team-signed Release build on the Mac (`-configuration Release -allowProvisioningUpdates`) and
   on an iPhone or iPad (Xcode scheme ▸ Run ▸ Build Configuration: Release). Check the vault uploads,
@@ -145,7 +145,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   - **2.1 (completeness):** no placeholder UI. Import/export stays hidden until it ships.
   - **5.1.1 (privacy):** no account means account deletion doesn't apply. The privacy policy matches the app's behaviour.
   - **2.5.x:** only public APIs, the background mode used only for CloudKit pushes, and the sandbox justified.
-- Pick a marketing version of **1.0.0**, made by a major bump PR that updates `VERSION` and the CHANGELOG.
+- Marketing version **1.0.0**, made by a major bump PR that updates `VERSION` and the CHANGELOG (done 2026-10-22).
 - Choose the build for iOS and for macOS in App Store Connect and submit both platforms together.
 - **Release settings:**
   - manual release after approval;
