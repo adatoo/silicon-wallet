@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-10-22
+
+### Changed
+
+- The first App Store release, for iPhone, iPad and Mac: an encrypted vault for passwords, cards
+  and notes, with iCloud sync through CloudKit Production, Face ID and Touch ID, a password
+  generator, attachments and import from Acrylic Wallet.
+
 ## [0.27.5] - 2026-10-22
 
 ### Changed
