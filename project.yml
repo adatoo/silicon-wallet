@@ -80,8 +80,9 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        # ITSAppUsesNonExemptEncryption is set once the export-compliance answer is
-        # settled (docs/app-store-release.md, B5). Until then App Store Connect asks per build.
+        # Export compliance (AppStore/README.md): every cipher comes from Apple's OS (CryptoKit,
+        # CommonCrypto); libsodium is used only for Argon2id password hashing.
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.datoos.silicon-wallet

@@ -23,11 +23,11 @@ Everything App Store Connect asks for apart from builds (docs/app-store-release.
 | Content rights | No third-party content |
 | Accessibility Nutrition Labels | Declare only what's been checked on each platform: VoiceOver, Larger Text, Dark Interface and Reduced Motion are supported by the standard controls used; check each before declaring |
 
-## Export compliance (owner decision)
+## Export compliance
 
-The app encrypts the user's own data with standard algorithms: AES-256-GCM from Apple's
-CryptoKit, and Argon2id (a password hash, not a cipher) from libsodium. It doesn't use
-proprietary algorithms. App Store Connect's questionnaire asks whether the app uses encryption,
-whether it's exempt, and about France. Answer it with your own judgement or advice, then set
-`ITSAppUsesNonExemptEncryption` in `project.yml` to match so each build skips the question.
-This repo doesn't make that legal call for you.
+Answered by the owner on 2026-10-22 as "None of the algorithms mentioned above": the app
+implements no encryption of its own. Every cipher comes from Apple's operating system, AES-256-GCM
+through CryptoKit and CommonCrypto for reading Acrylic Wallet files. From libsodium it uses only
+Argon2id, a password hash rather than a cipher. `project.yml` sets
+`ITSAppUsesNonExemptEncryption` to `NO`, so builds skip the question. Revisit this if the app ever
+calls a non-Apple cipher (for example from libsodium) or adds its own protocol.

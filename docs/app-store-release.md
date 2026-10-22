@@ -132,8 +132,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 - **App Privacy:** "Data Not Collected", matching `PrivacyInfo.xcprivacy`.
 - **Age rating questionnaire:** all "None", which gives the lowest rating.
 - **Accessibility Nutrition Labels:** declare only the features verified on each platform.
-- **Export compliance.** The app uses encryption, through CryptoKit and libsodium's Argon2id. Answer the App Store Connect questionnaire, then set `ITSAppUsesNonExemptEncryption` to match, so each build skips the prompt.
-  - **To verify:** before submission, check the current US export rules (BIS mass-market and open-source publication) and the France declaration requirement against what App Store Connect asks at that time. I'm not certain of the current specifics.
+- **Export compliance** (done 2026-10-22): answered "None of the algorithms mentioned above", since every cipher comes from Apple's OS, and `ITSAppUsesNonExemptEncryption` is `NO` (AppStore/README.md).
 - **Production smoke test, instead of TestFlight:** Release builds sync to CloudKit Production
   (`icloud-container-environment` in the Release entitlements). Back up the vault folder, then run
   a team-signed Release build on the Mac (`-configuration Release -allowProvisioningUpdates`) and
