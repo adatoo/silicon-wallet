@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.4] - 2026-10-22
+
+### Changed
+
+- The App Store listing and review notes describe Face ID at setup, the Use Password button,
+  attachment preview and the 30-day password check, and the release plan skips TestFlight
+  testing in favour of a local Release build against CloudKit Production.
+
 ## [0.27.3] - 2026-10-20
 
 ### Changed
