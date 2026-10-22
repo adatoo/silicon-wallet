@@ -6,7 +6,8 @@ Everything App Store Connect asks for apart from builds (docs/app-store-release.
   name and subtitle 30 characters, keywords 100, promotional text 170, description 4,000.
   Keywords must not name other apps (so not "Acrylic"); the description may mention importing.
 - `review-notes.md`: the App Review notes.
-- `screenshots/`: made by `task screenshots` (iPhone 6.9″ 1320×2868 and iPad 13″ 2064×2752),
+- `screenshots/`: made by `task screenshots` (iPhone 6.3″ 1206×2622, which App Store Connect now
+  requires, iPhone 6.9″ 1320×2868 and iPad 13″ 2064×2752),
   not committed. Mac screenshots (2880×1800) are taken by hand from `task dev` with the demo
   vault: run the built app with `-InMemoryVault -DemoVault`.
 
