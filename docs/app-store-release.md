@@ -115,7 +115,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
 - **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.
 - **Screenshots** (done, v0.12.0): `task screenshots` captures the iPhone and iPad sets from the simulators with the fake demo vault; Mac ones are taken by hand (AppStore/README.md). Sizes:
-  - iPhone 6.9″ at 1320×2868 (required);
+  - iPhone 6.3″ at 1206×2622 (required by App Store Connect since 2026; 6.9″ at 1320×2868 is optional);
   - iPad 13″ at 2064×2752 (required, because the app runs on iPad);
   - Mac at 2880×1800 (16:10).
 
@@ -146,7 +146,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   - **5.1.1 (privacy):** no account means account deletion doesn't apply. The privacy policy matches the app's behaviour.
   - **2.5.x:** only public APIs, the background mode used only for CloudKit pushes, and the sandbox justified.
 - Marketing version **1.0.0**, made by a major bump PR that updates `VERSION` and the CHANGELOG (done 2026-10-22).
-- Choose the build for iOS and for macOS in App Store Connect and submit both platforms together.
+- Choose the build for iOS and for macOS in App Store Connect and submit both platforms together (done 2026-10-23: build 42 submitted for both, manual release; waiting for review).
 - **Release settings:**
   - manual release after approval;
   - **phased release** on iOS;

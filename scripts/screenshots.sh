@@ -12,6 +12,7 @@ app="$derived/Build/Products/Debug-iphonesimulator/SiliconWallet.app"
 # name|simulator
 devices=(
   "iPhone-6.9|iPhone 17 Pro Max"
+  "iPhone-6.3|iPhone 17"
   "iPad-13|iPad Pro 13-inch (M5)"
 )
 

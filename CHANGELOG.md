@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-10-23
+
+### Changed
+
+- App Store screenshots now include the 6.3-inch iPhone size that App Store Connect requires.
+- The App Store description says the app organises entries the way Acrylic Wallet did and runs
+  natively on Apple silicon.
+
 ## [1.0.0] - 2026-10-22
 
 ### Changed
