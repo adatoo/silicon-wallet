@@ -21,7 +21,7 @@ ON ALL YOUR DEVICES
 Your vault syncs through your own iCloud account, end-to-end encrypted. Change an entry on your Mac and it's on your iPhone moments later.
 
 MOVING FROM ACRYLIC WALLET
-Silicon Wallet reads Acrylic Wallet's vault file directly: groups, field labels, entries, notes, favourites and attachments all come across. You don't need the old app installed.
+Silicon Wallet organises your secrets the way Acrylic Wallet did, in groups with their own fields, and runs natively on Apple silicon. It reads Acrylic Wallet's vault file directly: groups, field labels, entries, notes, favourites and attachments all come across. You don't need the old app installed.
 
 FREE AND OPEN SOURCE
 Silicon Wallet is free, with no ads, subscriptions or in-app purchases, and its source is open under the MIT Licence.
