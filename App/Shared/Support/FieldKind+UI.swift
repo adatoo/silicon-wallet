@@ -97,8 +97,8 @@ extension View {
 }
 
 /// A group's SF Symbol. Each symbol gets its own view, so a reused list row never draws one
-/// symbol in an image laid out for another, or keeps a replace animation half done; either left
-/// the key's shaft cut off now and then (#89).
+/// symbol in an image laid out for another, or keeps a replace animation half done. (The clipped
+/// icons of #89 turned out to be a short list row; see `EntryListView`.)
 struct GroupSymbol: View {
     let name: String
 
