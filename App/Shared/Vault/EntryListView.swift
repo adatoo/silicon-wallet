@@ -16,9 +16,16 @@ struct EntryListView: View {
         @Bindable var model = model
         let entries = model.visibleEntries
         Group {
-            switch layout {
-            case .list: list(entries)
-            case .cards: cards(entries)
+            if entries.isEmpty {
+                // No list while empty, so one is built afresh for the next entries: the Mac list
+                // drew a lettered section's row too short, clipping its icon, when it went from no
+                // entries to one.
+                Color.clear
+            } else {
+                switch layout {
+                case .list: list(entries)
+                case .cards: cards(entries)
+                }
             }
         }
         .overlay {
