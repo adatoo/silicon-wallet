@@ -151,9 +151,15 @@ struct FieldValueRow: View {
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(row.label.isEmpty ? row.kind.displayName : row.label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Text(row.label.isEmpty ? row.kind.displayName : row.label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    // From the first digits only, so it shows while the number is concealed.
+                    if PaymentCard.isCardNumberLabel(row.label), let scheme = PaymentCard.scheme(for: row.value) {
+                        CardSchemeBadge(scheme: scheme)
+                    }
+                }
                 valueText
             }
             Spacer(minLength: 8)

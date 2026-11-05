@@ -165,6 +165,7 @@ struct HelpTopic: Identifiable, Hashable {
                 "Link entries that go together, such as a bank's login and its accounts: edit one and choose **Add Related Entry…**. Each then shows the other under **Related**, and choosing it opens it. Keep a password in one entry, the login, rather than copying it into each account, so changing it is one edit. **Show Graph**, beside Related, draws the entries around one as a map: choose an entry to move it to the middle, and choose the middle one, or Open, to go to it.",
                 "Deleted entries and groups go to **Recently Deleted**, at the bottom of the sidebar. Recover them from there, or delete them for good; anything left is deleted for good after 30 days.",
                 "Search finds entries by their title and visible fields. It never searches concealed values.",
+                "A field called **Card Number** shows the card's scheme, such as VISA or Mastercard, from its first digits, even while the number is hidden. While you type one, a warning appears if the full number fails the card's check digit, which usually means a typo; you can still save it.",
             ]
         ),
         HelpTopic(
