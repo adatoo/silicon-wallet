@@ -9,6 +9,11 @@ struct EntryEditorView: View {
     @State private var draft: VaultEntry
     /// What Save would delete, while the confirmation is showing.
     @State private var pendingRemovals: EntryRemovals?
+    /// The related entries, as `VaultSession.relatedEntries(of:)` lists them, in the order shown.
+    @State private var related: [VaultEntry] = []
+    /// The IDs in `related` when the editor opened, so Save only relinks if they changed.
+    @State private var originalRelatedIDs: [UUID]?
+    @State private var pickingRelated = false
     private let isNew: Bool
     /// The entry as it was opened; nil for a new one.
     private let original: VaultEntry?
@@ -92,6 +97,31 @@ struct EntryEditorView: View {
                 }
             }
 
+            Section {
+                ForEach(related) { entry in
+                    HStack {
+                        RelatedEntryLabel(entry: entry)
+                        Spacer()
+                        Button("Remove Related Entry", systemImage: "minus.circle.fill", role: .destructive) {
+                            related.removeAll { $0.id == entry.id }
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.red)
+                        .help("Unlink \(entry.title) when you save")
+                    }
+                    .reorderable(entry, in: $related, title: entry.title)
+                }
+                #if os(iOS)
+                    .onMove { related.move(fromOffsets: $0, toOffset: $1) }
+                #endif
+                Button("Add Related Entry…", systemImage: "link") { pickingRelated = true }
+            } header: {
+                Text("Related")
+            } footer: {
+                Text("Entries that go with this one, such as a bank's login and its accounts. Each shows on the other.")
+            }
+
             Section("Notes") {
                 TextField("Notes", text: $draft.notes, axis: .vertical)
                     .lineLimit(4...)
@@ -117,6 +147,13 @@ struct EntryEditorView: View {
         }
         .onAppear {
             if group == nil, let first = groups.first { draft.groupID = first.id }
+            if originalRelatedIDs == nil {
+                related = isNew ? [] : (model.session?.relatedEntries(of: draft.id) ?? [])
+                originalRelatedIDs = related.map(\.id)
+            }
+        }
+        .sheet(isPresented: $pickingRelated) {
+            RelatedEntryPicker(excluded: Set(related.map(\.id) + [draft.id])) { related.append($0) }
         }
         .confirmationDialog(
             pendingRemovals.map(Self.confirmationTitle) ?? "",
@@ -198,11 +235,13 @@ struct EntryEditorView: View {
         entry.title = entry.title.trimmingCharacters(in: .whitespaces)
         entry.extraFields.removeAll { $0.label.isEmpty && $0.value.isEmpty }
         do {
+            let relatedIDs = related.map(\.id)
             if isNew {
+                entry.relatedIDs = relatedIDs
                 let saved = try session.addEntry(entry)
                 model.entrySelection = saved.id
             } else {
-                try session.updateEntry(entry)
+                try session.updateEntry(entry, related: relatedIDs == originalRelatedIDs ? nil : relatedIDs)
             }
             dismiss()
         } catch {

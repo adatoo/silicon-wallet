@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-05
+
+### Added
+
+- Related entries. Link entries that go together, such as a bank's login and its accounts: edit
+  one and choose Add Related Entry. Each entry lists the other under Related, and choosing it
+  opens it. Links are encrypted with the rest of the entry and kept in backups and exports.
+
 ## [1.3.5] - 2026-11-05
 
 ### Changed

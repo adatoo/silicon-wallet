@@ -334,3 +334,30 @@ private func freshSettings() -> LockSettings {
     settings.autoLockMinutes = 30
     #expect(LockSettings(defaults: defaults).autoLockMinutes == 30)
 }
+
+@MainActor
+@Test func revealingARelatedEntryShowsItWhereverItIs() async throws {
+    let model = try await makeModel()
+    let session = try #require(model.session)
+    let logins = try #require(session.groups.first { $0.name == "Logins" })
+    let bank = try #require(session.entries.first { $0.title == "Example Bank" })
+    let card = try #require(session.entries.first { $0.title == "Example Card" })
+    let shop = try #require(session.entries.first { $0.title == "Example Shop" })
+
+    // In the list already: only the selection changes.
+    model.sidebarSelection = .group(logins.id)
+    model.reveal(shop.id)
+    #expect(model.sidebarSelection == .group(logins.id) && model.entrySelection == shop.id)
+    #expect(model.compactColumn == .detail)
+
+    // In another group, hidden by the search: the sidebar follows and the search clears.
+    model.searchText = "fake.user"
+    model.reveal(card.id)
+    #expect(model.sidebarSelection == .group(card.groupID) && model.entrySelection == card.id)
+    #expect(model.searchText.isEmpty)
+
+    // From a card's sheet, the sheet shows it instead.
+    model.openedEntry = OpenedEntry(id: card.id)
+    model.reveal(bank.id)
+    #expect(model.openedEntry?.id == bank.id && model.entrySelection == card.id)
+}

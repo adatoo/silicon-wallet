@@ -44,13 +44,24 @@ enum DemoVault {
                 groupID: cards.id, title: "Example Visa",
                 values: values(cards, ["Jane Appleseed", "4111 1111 1111 1111", "12/30", "123", "0000"]),
                 isFavorite: true))
-        try session.addEntry(
+        // One login giving access to two accounts, linked as related entries.
+        let current = try session.addEntry(
             VaultEntry(
                 groupID: banks.id, title: "Example Bank",
                 values: values(
                     banks,
                     ["Example Bank plc", "00000000", "00-00-00", "GB00 EXMP 0000 0000 0000 00", "+44 20 0000 0000"]))
         )
+        let savings = try session.addEntry(
+            VaultEntry(
+                groupID: banks.id, title: "Example Bank Savings",
+                values: values(banks, ["Example Bank plc", "11111111", "00-00-00", "", "+44 20 0000 0000"])))
+        try session.addEntry(
+            VaultEntry(
+                groupID: logins.id, title: "Example Bank Online",
+                values: values(logins, ["demo-user-0000", "Bank-Demo-Pass-1", "bank.example.com"]),
+                extraFields: [CustomField(label: "App Passcode", kind: .number, isConcealed: true, value: "000000")],
+                relatedIDs: [current.id, savings.id]))
         try session.addEntry(
             VaultEntry(
                 groupID: licences.id, title: "Example Photo Editor",
