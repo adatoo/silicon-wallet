@@ -1,6 +1,6 @@
 # ADR-0008: Export as a password-protected backup or plaintext JSON, from one schema
 
-- **Status:** Accepted (2026-11-05)
+- **Status:** Accepted (2026-11-05; related entries added the same day)
 
 ## Context
 
@@ -12,7 +12,8 @@ export leaves the vault's protection, so the format decides how safe that copy i
 
 - **Two formats, one schema.** `ExportDocument` (`SiliconWalletKit/Export`) holds the groups
   and entries in use (not Recently Deleted), with their field templates, values, extra fields,
-  notes, favourites, dates and attachments. It's separate from the model's own `Codable` form, so
+  notes, favourites, dates, attachments and related entries (`related`, the IDs an entry links
+  to; left out when there are none, so older files and readers are unaffected). It's separate from the model's own `Codable` form, so
   the file format doesn't change when the model does, and it never holds an attachment's file
   key. It's versioned (`format: "silicon-wallet-export"`, `version: 1`).
 - **Silicon Wallet backup** (`.siliconwallet`, type `com.datoos.silicon-wallet.backup`):
@@ -38,7 +39,8 @@ export leaves the vault's protection, so the format decides how safe that copy i
   twice adds nothing and nothing is ever overwritten. An entry goes into its own group: one from
   the file, one already here, or one brought back from Recently Deleted (alone, as recovering an
   entry does). Values for fields its group no longer has become extra fields, labelled from the
-  file. Attachments are sealed under new file keys.
+  file. Attachments are sealed under new file keys. Links to entries the vault won't have after
+  the import are dropped.
 - **Against a hostile file:** files over 1 GiB are refused before they're read; KDF parameters
   outside `KDFParameters.isWithinLimits` are refused before deriving a key; a newer format or
   schema version is refused; lengths are checked against the file; in a backup every listed

@@ -92,6 +92,12 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   card onto a group in the sidebar (Mac and iPad; the group highlights while it's over it), or
   with Move to Group in its context menu, the way on iPhone, where the sidebar isn't on screen.
   The drag carries only the entry's ID.
+- Related entries: an entry view lists the entries linked to it under Related (group icon,
+  title and group, never a value), after Notes; choosing one opens it, switching the sidebar to
+  its group if the list doesn't show it, or in the sheet when cards are showing. The editor's
+  Related section adds entries from a searchable picker, removes and reorders them. Typical use:
+  a bank's one login (website and app) related to each of its accounts, so the password is kept
+  once.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
@@ -130,6 +136,7 @@ struct VaultEntry {
   extraFields: [CustomField]      // per-entry fields not in the group template
   notes: String; isFavorite: Bool
   attachments: [AttachmentRef]
+  relatedIDs: [UUID]              // entries this one links to, in the order shown
   created: Date; modified: Date; deleted: Date?
 }
 
@@ -143,6 +150,15 @@ Field labels live on the group, so "Gate Information" can have `side gate`, `mai
 `isMonospaced` (on template fields and on an entry's extra fields) shows the value, never the
 label, in a monospaced font. It defaults to on for passwords and concealed fields, which is also
 what a record written before the option existed decodes to.
+
+A link is stored once, on the entry where it was added, and shown on both:
+`VaultSession.relatedEntries(of:)` lists an entry's own links in order, then the entries linking
+to it, by title, each once, leaving out entries in Recently Deleted or deleted for good (a
+restored entry shows again). Saving from the editor (`updateEntry(_:related:)`) sets the list,
+drops the entry itself, repeats and unknown IDs, keeps hidden links to entries in Recently
+Deleted, and unlinks both sides of any entry left out. Other saves leave links alone. Links live
+only in the sealed payload, and records stay at schema version 1: a newer schema would hide
+the record from older builds, while an older build only drops the links of an entry it edits.
 
 The code is in `SiliconWalletKit/Model`. `VaultMeta` (KDF parameters, wrapped vault key, a
 key check that proves a biometric-held vault key belongs to this vault, format version) is the
@@ -371,7 +387,8 @@ do; it can't be made to win conflicts or pass as another kind of record.
   make either a **Silicon Wallet backup** (`.siliconwallet`), sealed under an export password
   chosen at export (Argon2id, AES-256-GCM, a fresh salt per file), or **plaintext JSON** with a
   warning. Both hold the groups and entries in use, attachments included (base64 in JSON), in
-  one versioned schema (`ExportDocument`) that never holds a file key. Both need the master
+  one versioned schema (`ExportDocument`) that never holds a file key; related entries go with
+  them as IDs. Both need the master
   password, and each saved export is in the access log. The file is made in memory and goes
   only where the person saves it. File ▸ Import… and Settings ▸ Import… read either: anything
   whose ID the vault already has, in use or in Recently Deleted, is left alone, so nothing is
