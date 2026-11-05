@@ -1,11 +1,12 @@
-// TestFlight through the App Store Connect API (docs/app-store-release.md, B2).
+// TestFlight and signing chores through the App Store Connect API (docs/app-store-release.md, B2).
 //
-//   swift scripts/testflight.swift setup  <group name> <tester email>
-//   swift scripts/testflight.swift notes  <version> <build number> <changelog path>
-//   swift scripts/testflight.swift status
-//   swift scripts/testflight.swift changelog <version> <changelog path>
+//   swift scripts/app-store-connect.swift setup  <group name> <tester email>
+//   swift scripts/app-store-connect.swift notes  <version> <build number> <changelog path>
+//   swift scripts/app-store-connect.swift status
+//   swift scripts/app-store-connect.swift changelog <version> <changelog path>
+//   swift scripts/app-store-connect.swift prune-certificates
 //
-// Run it through `task testflight:*`. It reads the API key from ASC_KEY_PATH, ASC_KEY_ID and
+// Run it through `task testflight:*` and `task release:prune-certificates`. It reads the API key from ASC_KEY_PATH, ASC_KEY_ID and
 // ASC_ISSUER_ID, signs a short-lived token with CryptoKit, and prints nothing secret.
 
 import CryptoKit
@@ -302,6 +303,28 @@ func status() async throws {
     }
 }
 
+// MARK: - prune-certificates
+
+/// The name App Store Connect gives a certificate that automatic signing creates with an API key,
+/// as it does on every CI run: a fresh runner has no development certificate.
+let apiCreatedName = "Created via API"
+
+/// Revokes the development certificates created with an API key, so they don't build up to
+/// Apple's limit. They only signed archives on throwaway machines; App Store and TestFlight builds
+/// are signed with cloud-managed distribution certificates, which this never touches. Nor does it
+/// touch any certificate made in Xcode or the developer website, which carry a person's name.
+func pruneCertificates() async throws {
+    let client = try Client()
+    let certificates = try await client.list(
+        "/v1/certificates", query: ["filter[certificateType]": "DEVELOPMENT", "limit": "200"])
+    var revoked = 0
+    for certificate in certificates where attributes(certificate)["displayName"] as? String == apiCreatedName {
+        try await client.send("DELETE", "/v1/certificates/\(id(certificate))")
+        revoked += 1
+    }
+    print("Revoked \(revoked) development certificate(s) created via the API.")
+}
+
 // MARK: - Main
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -313,10 +336,12 @@ do {
         try await notes(version: arguments[1], number: arguments[2], changelog: arguments[3])
     case "status" where arguments.count == 1:
         try await status()
+    case "prune-certificates" where arguments.count == 1:
+        try await pruneCertificates()
     case "changelog" where arguments.count == 3:
         print(try changelogNotes(version: arguments[1], path: arguments[2]))
     default:
-        throw Failure("Usage: testflight.swift setup <group> <email> | notes <version> <build> <changelog> | status | changelog <version> <changelog>")
+        throw Failure("Usage: app-store-connect.swift setup <group> <email> | notes <version> <build> <changelog> | status | changelog <version> <changelog> | prune-certificates")
     }
 } catch {
     FileHandle.standardError.write(Data("error: \(error)\n".utf8))

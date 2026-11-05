@@ -323,7 +323,7 @@ tasks:
     vars:
       GROUP: '{{.GROUP | default "Internal"}}'
     cmds:
-      - swift scripts/testflight.swift setup "{{.GROUP}}" "{{.EMAIL}}"
+      - swift scripts/app-store-connect.swift setup "{{.GROUP}}" "{{.EMAIL}}"
 
   testflight:notes:
     desc: Wait for build BUILD_NUMBER of VERSION to process, then set its What to Test from CHANGELOG.md
@@ -333,19 +333,28 @@ tasks:
     vars:
       VERSION: '{{.VERSION | default .APP_VERSION}}'
     cmds:
-      - swift scripts/testflight.swift notes "{{.VERSION}}" "{{.BUILD_NUMBER}}" CHANGELOG.md
+      - swift scripts/app-store-connect.swift notes "{{.VERSION}}" "{{.BUILD_NUMBER}}" CHANGELOG.md
 
   testflight:changelog:
     desc: Print the What to Test text for VERSION (default the VERSION file)
     vars:
       VERSION: '{{.VERSION | default .APP_VERSION}}'
     cmds:
-      - swift scripts/testflight.swift changelog "{{.VERSION}}" CHANGELOG.md
+      - swift scripts/app-store-connect.swift changelog "{{.VERSION}}" CHANGELOG.md
 
   testflight:status:
     desc: List the latest App Store Connect builds and whether they're ready to test
     cmds:
-      - swift scripts/testflight.swift status
+      - swift scripts/app-store-connect.swift status
+
+  release:prune-certificates:
+    desc: Revoke the development certificates that CI's automatic signing created via the API key
+    summary: |
+      Each release run on a fresh CI machine creates an "Apple Development: Created via API"
+      certificate, and Apple refuses new ones once a team reaches its limit. The release workflow
+      runs this after every run. Certificates made in Xcode or on the website are left alone.
+    cmds:
+      - swift scripts/app-store-connect.swift prune-certificates
 
   release:
     desc: Archive and upload both platforms to App Store Connect (TestFlight)
