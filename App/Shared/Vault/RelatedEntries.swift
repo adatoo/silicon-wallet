@@ -27,11 +27,12 @@ struct RelatedEntryLabel: View {
 struct RelatedEntriesSection: View {
     @Environment(AppModel.self) private var model
     let entry: VaultEntry
+    @State private var showingGraph = false
 
     var body: some View {
         let related = entry.deleted == nil ? (model.session?.relatedEntries(of: entry.id) ?? []) : []
         if !related.isEmpty {
-            Section("Related") {
+            Section {
                 ForEach(related) { other in
                     Button {
                         model.reveal(other.id)
@@ -49,6 +50,15 @@ struct RelatedEntriesSection: View {
                     .buttonStyle(.plain)
                     .help("Open \(other.title)")
                     .accessibilityLabel("Open \(other.title)")
+                }
+            } header: {
+                HStack {
+                    Text("Related")
+                    Spacer()
+                    Button("Show Graph", systemImage: "point.3.connected.trianglepath.dotted") { showingGraph = true }
+                        .buttonStyle(.borderless)
+                        .help("Show related entries as a graph")
+                        .sheet(isPresented: $showingGraph) { RelatedGraphSheet(entryID: entry.id) }
                 }
             }
         }

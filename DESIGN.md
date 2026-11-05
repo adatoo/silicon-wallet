@@ -97,7 +97,13 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   its group if the list doesn't show it, or in the sheet when cards are showing. The editor's
   Related section adds entries from a searchable picker, removes and reorders them. Typical use:
   a bank's one login (website and app) related to each of its accounts, so the password is kept
-  once.
+  once. Show Graph, in the Related header, opens a sheet that draws the entries up to two links
+  away (at most 30, `VaultSession.relatedGraph(from:)`) as a radial graph
+  (`RelatedGraph.layout()`): the entry in the middle, each ring one link further out, each
+  branch in its own slice, laid along the view's longer side, with links that close a cycle
+  dashed. Nodes show the group icon and title only. Choosing a node moves it to the middle;
+  choosing the middle one, or Open, opens it. Pinch, or the zoom buttons (⌘+ / ⌘−), zoom, and
+  dragging pans.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a

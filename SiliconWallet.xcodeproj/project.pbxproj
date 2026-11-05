@@ -10,6 +10,7 @@
 		061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */; };
 		09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C60B119316E39F124349191 /* GroupEditorView.swift */; };
 		0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */; };
+		1302FBE3310A0A6846BB4148 /* RelatedGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */; };
 		1A6706CABFFFF9D75D82FE20 /* RelatedEntries.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29F21E1A95FB553A6310ED3 /* RelatedEntries.swift */; };
 		3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244D550D93A11FBA8C5076F4 /* SidebarView.swift */; };
 		4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150E755B7E5B799C04F5B072 /* SetupView.swift */; };
@@ -111,6 +112,7 @@
 		E01D039A8E7DBF0A040A5C2C /* LockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockController.swift; sourceTree = "<group>"; };
 		EF419223A81F08132A022785 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F4AA743C303F6A4BA4050A97 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedGraphView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -199,6 +201,7 @@
 				ACD892512A872BD9135E5CCB /* EntryListView.swift */,
 				6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */,
 				C29F21E1A95FB553A6310ED3 /* RelatedEntries.swift */,
+				FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */,
 				244D550D93A11FBA8C5076F4 /* SidebarView.swift */,
 				8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */,
 				AF5CF27647D2249ED8F21191 /* VaultView.swift */,
@@ -465,6 +468,7 @@
 				52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */,
 				CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */,
 				1A6706CABFFFF9D75D82FE20 /* RelatedEntries.swift in Sources */,
+				1302FBE3310A0A6846BB4148 /* RelatedGraphView.swift in Sources */,
 				8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
