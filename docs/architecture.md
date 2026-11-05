@@ -12,7 +12,7 @@ silicon-wallet/
 │  ├─ iOS/  macOS/              # platform-only code, included per destination
 │  └─ Resources/                # assets, privacy manifest
 ├─ Packages/SiliconWalletKit/   # all non-UI logic, unit-tested
-│  └─ Sources/SiliconWalletKit/{Crypto,Model,Store,Sync,Vault}
+│  └─ Sources/SiliconWalletKit/{AcrylicImport,Crypto,Export,Model,Store,Sync,Vault}
 ├─ Tests/SiliconWalletTests/    # app-level tests
 └─ Config/                      # xcconfigs; Version.xcconfig is generated from VERSION
 ```

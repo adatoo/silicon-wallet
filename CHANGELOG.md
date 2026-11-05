@@ -5,6 +5,17 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-05
+
+### Added
+
+- Export your vault (File ▸ Export… or Settings ▸ Export…) as an encrypted Silicon Wallet
+  backup, protected by an export password you choose, or as plaintext JSON for moving to another
+  app. Both include attachments and need your master password.
+- Import a Silicon Wallet backup or JSON export (File ▸ Import… or Settings ▸ Import…). Anything
+  already in your vault is left as it is, so importing the same backup twice adds nothing.
+- The access log lists exports and imports from a file.
+
 ## [1.1.0] - 2026-11-05
 
 ### Added

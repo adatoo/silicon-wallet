@@ -583,22 +583,34 @@ public final class VaultSession {
 
     // MARK: - Importing
 
-    /// Adds imported groups and entries, keeping their dates, with each attachment sealed under
-    /// its own new key. Everything is saved in one batch.
+    /// Adds an Acrylic Wallet import (`AcrylicImporter`), whose items are all new.
     @discardableResult
-    public func importItems(_ plan: AcrylicImportPlan) throws -> (groups: Int, entries: Int, attachments: Int) {
-        try requireUnlocked()
-        let firstOrder = (groups.map(\.order).max() ?? -1) + 1
-        var newGroups = plan.groups
-        for index in newGroups.indices { newGroups[index].order = firstOrder + index }
-        let groupIDs = Set(newGroups.map(\.id))
+    public func importItems(_ plan: AcrylicImportPlan) throws -> ImportSummary {
+        try importItems(plan.items, recordAs: .imported)
+    }
 
-        var newEntries = plan.entries.filter { groupIDs.contains($0.groupID) }
+    /// What `importItems` would add, without changing anything.
+    public func importPreview(_ plan: VaultImportPlan) throws -> ImportSummary {
+        try requireUnlocked()
+        return resolve(plan).summary
+    }
+
+    /// Adds what the vault doesn't have yet, keeping dates (ADR-0008). Groups and entries whose ID
+    /// is already here, in use or in Recently Deleted, are left alone, so importing the same file
+    /// twice adds nothing. An entry goes into its own group: one from the plan, one already here,
+    /// or one brought back from Recently Deleted (alone). Each attachment is sealed under its own
+    /// new key, and everything is saved in one batch.
+    @discardableResult
+    public func importItems(
+        _ plan: VaultImportPlan, recordAs kind: AccessEvent.Kind = .importedFromFile
+    ) throws -> ImportSummary {
+        try requireUnlocked()
+        var resolved = resolve(plan)
         var indexByEntryID: [UUID: Int] = [:]
-        for (index, entry) in newEntries.enumerated() { indexByEntryID[entry.id] = index }
+        for (index, entry) in resolved.entries.enumerated() { indexByEntryID[entry.id] = index }
 
         var sealedFiles: [(UUID, Data)] = []
-        for attachment in plan.attachments {
+        for attachment in resolved.attachments {
             guard let index = indexByEntryID[attachment.entryID] else { continue }
             let fileKey = AttachmentSealer.generateFileKey()
             let ref = AttachmentRef(
@@ -606,21 +618,127 @@ public final class VaultSession {
                 fileKey: fileKey.withUnsafeBytes { Data($0) }, sha256: Data(SHA256.hash(data: attachment.contents)))
             sealedFiles.append(
                 (ref.id, try AttachmentSealer.seal(attachment.contents, attachmentID: ref.id, fileKey: fileKey)))
-            newEntries[index].attachments.append(ref)
+            resolved.entries[index].attachments.append(ref)
         }
 
+        let addedGroups = resolved.newGroups + resolved.restoredGroups
         for (id, ciphertext) in sealedFiles { try store.saveAttachment(id: id, ciphertext: ciphertext) }
-        try store.saveRecords(try newGroups.map(seal) + newEntries.map(seal))
-        groups += newGroups
-        entries += newEntries
+        try store.saveRecords(try addedGroups.map(seal) + resolved.entries.map(seal))
+        let restoredIDs = Set(resolved.restoredGroups.map(\.id))
+        deletedGroups.removeAll { restoredIDs.contains($0.id) }
+        groups += addedGroups
+        entries += resolved.entries
         sortGroups()
         sortEntries()
+        if !restoredIDs.isEmpty { noteTrash() }
         if let vaultKey {
             accessLog?.record(
-                AccessEvent(kind: .imported, detail: "\(newEntries.count) entries, \(newGroups.count) groups"),
+                AccessEvent(kind: kind, detail: "\(resolved.entries.count) entries, \(addedGroups.count) groups"),
                 key: vaultKey)
         }
-        return (newGroups.count, newEntries.count, sealedFiles.count)
+        return resolved.summary
+    }
+
+    private struct ResolvedImport {
+        var newGroups: [VaultGroup] = []
+        var restoredGroups: [VaultGroup] = []
+        var entries: [VaultEntry] = []
+        var attachments: [VaultImportPlan.Attachment] = []
+        var summary = ImportSummary()
+    }
+
+    /// Which of `plan`'s items the vault doesn't have yet, and where each entry goes.
+    private func resolve(_ plan: VaultImportPlan) -> ResolvedImport {
+        var resolved = ResolvedImport()
+        let groupIDsHere = Set((groups + deletedGroups).map(\.id))
+        let entryIDsHere = Set((entries + deletedEntries).map(\.id))
+        var planGroups: [UUID: VaultGroup] = [:]
+        for group in plan.groups where planGroups[group.id] == nil { planGroups[group.id] = group }
+
+        // New groups go after the existing ones, in the plan's order.
+        var order = (groups.map(\.order).max() ?? -1) + 1
+        var seenGroups = Set<UUID>()
+        let byOrder = plan.groups.enumerated().sorted { ($0.element.order, $0.offset) < ($1.element.order, $1.offset) }
+        for (_, group) in byOrder where seenGroups.insert(group.id).inserted {
+            if groupIDsHere.contains(group.id) {
+                resolved.summary.groupsAlreadyHere += 1
+                continue
+            }
+            var group = group
+            group.order = order
+            group.deleted = nil
+            order += 1
+            resolved.newGroups.append(group)
+        }
+
+        var seenEntries = Set<UUID>()
+        for entry in plan.entries where seenEntries.insert(entry.id).inserted {
+            if entryIDsHere.contains(entry.id) {
+                resolved.summary.entriesAlreadyHere += 1
+                continue
+            }
+            let target: VaultGroup
+            if let group = resolved.newGroups.first(where: { $0.id == entry.groupID })
+                ?? group(id: entry.groupID) ?? resolved.restoredGroups.first(where: { $0.id == entry.groupID })
+            {
+                target = group
+            } else if var group = deletedGroup(id: entry.groupID) {
+                group.deleted = nil
+                group.modified = .now
+                resolved.restoredGroups.append(group)
+                target = group
+            } else {
+                resolved.summary.entriesWithoutGroup += 1
+                continue
+            }
+            var entry = entry.fitted(to: target, definedBy: planGroups[entry.groupID])
+            entry.deleted = nil
+            entry.attachments = []
+            resolved.entries.append(entry)
+        }
+
+        let placed = Set(resolved.entries.map(\.id))
+        resolved.attachments = plan.attachments.filter {
+            placed.contains($0.entryID) && $0.contents.count <= Self.maximumAttachmentSize
+        }
+        resolved.summary.groups = resolved.newGroups.count
+        resolved.summary.restoredGroups = resolved.restoredGroups.count
+        resolved.summary.entries = resolved.entries.count
+        resolved.summary.attachments = resolved.attachments.count
+        return resolved
+    }
+
+    // MARK: - Exporting
+
+    /// The groups and entries in use, as an export document without attachment data (ADR-0008).
+    public func exportDocument(at date: Date = .now) throws -> ExportDocument {
+        try requireUnlocked()
+        return ExportDocument(groups: groups, entries: entries, exported: date)
+    }
+
+    /// The vault as plaintext JSON, attachments included. It isn't encrypted: the app asks for the
+    /// master password and warns first.
+    public func exportJSON() throws -> Data {
+        var document = try exportDocument()
+        for entryIndex in document.entries.indices {
+            let refs = entries.first { $0.id == document.entries[entryIndex].id }?.attachments ?? []
+            for (attachmentIndex, ref) in refs.enumerated() {
+                document.entries[entryIndex].attachments[attachmentIndex].data = try attachmentContents(ref)
+            }
+        }
+        return try ExportFile.json(document)
+    }
+
+    /// A Silicon Wallet backup sealed under `password`, attachments included. Argon2id runs off the
+    /// main actor; the attachments are opened and sealed one at a time.
+    public func exportBackup(password: String, kdf: KDFParameters = .generate()) async throws -> Data {
+        try requireUnlocked()
+        let key = try await Self.deriveKEK(password: password, kdf: kdf)
+        var writer = try ExportFile.BackupWriter(document: try exportDocument(), key: key, kdf: kdf)
+        for ref in entries.flatMap(\.attachments) {
+            try writer.append(attachmentID: ref.id, contents: try attachmentContents(ref))
+        }
+        return writer.data
     }
 
     // MARK: - Sealing

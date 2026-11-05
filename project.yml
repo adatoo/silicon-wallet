@@ -70,6 +70,12 @@ targets:
           - UTTypeIdentifier: com.datoos.silicon-wallet.entry
             UTTypeDescription: Silicon Wallet Entry
             UTTypeConformsTo: [public.data]
+          # A Silicon Wallet backup (ADR-0008, App/Shared/Export/ExportView.swift).
+          - UTTypeIdentifier: com.datoos.silicon-wallet.backup
+            UTTypeDescription: Silicon Wallet Backup
+            UTTypeConformsTo: [public.data, public.content]
+            UTTypeTagSpecification:
+              public.filename-extension: [siliconwallet]
         # CKSyncEngine is woken by CloudKit pushes (DESIGN.md §7). Ignored on macOS.
         UIBackgroundModes: [remote-notification]
         UILaunchScreen: {}

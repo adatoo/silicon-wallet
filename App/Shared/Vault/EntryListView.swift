@@ -39,6 +39,7 @@ struct EntryListView: View {
                         Button("New Entry") { editor = .newEntry(groupID: model.selectedGroup?.id) }
                             .disabled(model.session?.groups.isEmpty != false)
                         if model.session?.entries.isEmpty == true {
+                            Button("Import…") { model.isImportingFile = true }
                             Button("Import from Acrylic Wallet…") { model.isImportingAcrylic = true }
                         }
                     }

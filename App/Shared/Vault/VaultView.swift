@@ -85,6 +85,12 @@ struct VaultView: View {
         .sheet(isPresented: $model.isImportingAcrylic) {
             NavigationStack { AcrylicImportView() }
         }
+        .sheet(isPresented: $model.isImportingFile) {
+            NavigationStack { VaultFileImportView() }
+        }
+        .sheet(isPresented: $model.isExporting) {
+            NavigationStack { ExportView() }
+        }
         .sheet(isPresented: $lock.isRemindingPassword) {
             NavigationStack { PasswordReminderView() }
         }
@@ -98,7 +104,9 @@ struct VaultView: View {
             \.vaultActions,
             VaultActions(
                 newEntry: newEntry, newGroup: { editor = .newGroup },
-                importAcrylic: { model.isImportingAcrylic = true })
+                importAcrylic: { model.isImportingAcrylic = true },
+                importFile: { model.isImportingFile = true },
+                export: { model.isExporting = true })
         )
         .onChange(of: model.session?.unreadableRecordCount) { _, count in
             if let count, count > 0 {
@@ -174,6 +182,8 @@ struct VaultActions {
     var newEntry: () -> Void
     var newGroup: () -> Void
     var importAcrylic: () -> Void
+    var importFile: () -> Void
+    var export: () -> Void
 }
 
 extension FocusedValues {
@@ -201,7 +211,11 @@ struct VaultCommands: Commands {
         }
         CommandGroup(after: .newItem) {
             Divider()
+            Button("Import…") { actions?.importFile() }
+                .disabled(actions == nil)
             Button("Import from Acrylic Wallet…") { actions?.importAcrylic() }
+                .disabled(actions == nil)
+            Button("Export…") { actions?.export() }
                 .disabled(actions == nil)
         }
         CommandGroup(before: .toolbar) {

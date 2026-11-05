@@ -20,11 +20,13 @@
 		5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */; };
 		52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */; };
 		6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */; };
+		6C54A9BED366FC22CADC5694 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C6C8335A892BE3A593DE22 /* ExportView.swift */; };
 		6F92E058722F6FA885E5E611 /* EntryDragging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
 		8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17329ADEF2D57777E8BCC4BC /* Reordering.swift */; };
+		92BB4702F90BB632F34A7D09 /* VaultFileImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54004CAB94B5920F124863DD /* VaultFileImportView.swift */; };
 		97D0CE3BE312A5E9CF60A619 /* VaultActionsToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */; };
 		99D61EAE32634493A8A75F68 /* LockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E01D039A8E7DBF0A040A5C2C /* LockController.swift */; };
 		A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CB2125A7AC56544D3361520 /* EntryEditorView.swift */; };
@@ -76,6 +78,7 @@
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
 		4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManagementViews.swift; sourceTree = "<group>"; };
+		54004CAB94B5920F124863DD /* VaultFileImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultFileImportView.swift; sourceTree = "<group>"; };
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
 		6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyDeletedView.swift; sourceTree = "<group>"; };
 		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
@@ -88,6 +91,7 @@
 		879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultActionsToolbar.swift; sourceTree = "<group>"; };
 		92875FCE2F36955F82E985E1 /* SyncStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncStatusView.swift; sourceTree = "<group>"; };
+		93C6C8335A892BE3A593DE22 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		98444000E2A9EC613E31BAD8 /* DemoVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVault.swift; sourceTree = "<group>"; };
 		9CB2125A7AC56544D3361520 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
 		A66EC933A0C2F7CEBB604522 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -171,6 +175,7 @@
 			isa = PBXGroup;
 			children = (
 				62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */,
+				54004CAB94B5920F124863DD /* VaultFileImportView.swift */,
 			);
 			path = Import;
 			sourceTree = "<group>";
@@ -295,6 +300,14 @@
 			path = Tests;
 			sourceTree = "<group>";
 		};
+		F6F0D511E8C540DA35C75FFF /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				93C6C8335A892BE3A593DE22 /* ExportView.swift */,
+			);
+			path = Export;
+			sourceTree = "<group>";
+		};
 		FD304BA9638AC89F65323AF4 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
@@ -303,6 +316,7 @@
 				C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */,
 				7188C2907580D57EC6196376 /* Attachments */,
 				E1E992965D3AD287745A5FCE /* Editors */,
+				F6F0D511E8C540DA35C75FFF /* Export */,
 				34C27DCA505C5E7B8569F72C /* Help */,
 				4AC72763302BB4D34DFA0B57 /* Import */,
 				EAE29A74E559CB253052989F /* Lock */,
@@ -435,6 +449,7 @@
 				6F92E058722F6FA885E5E611 /* EntryDragging.swift in Sources */,
 				A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */,
 				EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */,
+				6C54A9BED366FC22CADC5694 /* ExportView.swift in Sources */,
 				6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */,
 				8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */,
 				09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */,
@@ -455,6 +470,7 @@
 				DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */,
 				8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */,
 				97D0CE3BE312A5E9CF60A619 /* VaultActionsToolbar.swift in Sources */,
+				92BB4702F90BB632F34A7D09 /* VaultFileImportView.swift in Sources */,
 				E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */,
 				FCB015C1AB1729EB04452F5D /* VaultView.swift in Sources */,
 				F6995663416907E2E067DCD9 /* ZoomableViews.swift in Sources */,

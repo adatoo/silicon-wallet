@@ -10,6 +10,8 @@ extension AccessEvent.Kind {
         case .passwordChanged: "Master password changed"
         case .imported: "Imported from Acrylic Wallet"
         case .exported: "Attachment saved as a copy"
+        case .importedFromFile: "Imported from a file"
+        case .vaultExported: "Vault exported"
         case .vaultCreated: "Vault created"
         }
     }
@@ -22,6 +24,8 @@ extension AccessEvent.Kind {
         case .passwordChanged: "key"
         case .imported: "square.and.arrow.down"
         case .exported: "square.and.arrow.up"
+        case .importedFromFile: "square.and.arrow.down"
+        case .vaultExported: "square.and.arrow.up.on.square"
         case .vaultCreated: "sparkles"
         }
     }

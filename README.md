@@ -11,6 +11,7 @@ Your vault is encrypted on your device and synced through your own iCloud accoun
 - A master password, plus Face ID or Touch ID, auto-lock and clipboard clearing.
 - iCloud sync through CloudKit, encrypted before anything leaves the device.
 - A password generator, an access log, and short help inside the app.
+- Encrypted backups and plaintext JSON export, with matching import.
 - Import from Acrylic Software's *Wallet*, which it is designed to replace.
 
 No account, no analytics, no tracking. Support and the privacy policy are at

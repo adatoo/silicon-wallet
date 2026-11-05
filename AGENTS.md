@@ -57,5 +57,6 @@ lock UX, CloudKit sync and attachments.
 ## Do not
 - Copy anything from Acrylic Wallet (name, icon, artwork, code), or bundle/load its SQLite SEE library.
 - Use SwiftData's CloudKit integration — sync is `CKSyncEngine` only.
-- Build export or the AutoFill extension until the user asks (DESIGN.md §9). Acrylic import
-  exists (`SiliconWalletKit/AcrylicImport`, ADR-0005).
+- Build the AutoFill extension until the user asks (DESIGN.md §9). Acrylic import
+  (`SiliconWalletKit/AcrylicImport`, ADR-0005) and export/import (`SiliconWalletKit/Export`,
+  ADR-0008) exist.

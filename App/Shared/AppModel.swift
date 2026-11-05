@@ -39,6 +39,10 @@ final class AppModel {
     var searchText = ""
     /// Whether the Acrylic Wallet import sheet is showing.
     var isImportingAcrylic = false
+    /// Whether the sheet importing a Silicon Wallet backup or JSON export is showing.
+    var isImportingFile = false
+    /// Whether the export sheet is showing.
+    var isExporting = false
     /// The message for the error alert; nil when none is showing.
     var errorMessage: String?
 
