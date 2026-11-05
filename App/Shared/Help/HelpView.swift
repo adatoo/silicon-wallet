@@ -130,6 +130,8 @@ struct HelpTopic: Identifiable, Hashable {
             "Choose **File ▸ Import from Acrylic Wallet…** (or **Settings ▸ Import from Acrylic Wallet…**). Wallet keeps its vault at `~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet`: in the file picker, press ⇧⌘G and paste that path. A Dropbox copy or a \"Wallet Database\" export works too."
         private static let attachmentsAdd =
             "Add files in an entry's **Attachments** section, or drop them there. Each one is encrypted with its own key, up to 100 MB."
+        private static let moveEntries =
+            "To move an entry to another group, drag it onto the group in the sidebar, or choose **Move to Group** from its shortcut menu. Every value comes with it: fields with the same name in the new group are filled in, and the rest become extra fields."
         private static let attachmentsZoom =
             "An image or PDF opens at its own size, up to the size of your screen; drag the edge of the preview to resize it. Zoom with a pinch, by double-clicking, or with ⌘= and ⌘- (⌘9 fits it to the window, ⌘0 shows it at actual size)."
     #else
@@ -140,6 +142,8 @@ struct HelpTopic: Identifiable, Hashable {
             "First put your `Database.wallet` file, or a \"Wallet Database\" export, in the Files app. Then choose **Settings ▸ Import from Acrylic Wallet…** and pick the file."
         private static let attachmentsAdd =
             "Add photos and files in an entry's **Attachments** section. Each one is encrypted with its own key, up to 100 MB."
+        private static let moveEntries =
+            "To move an entry to another group, touch and hold it and choose **Move to Group**. On iPad you can also drag it onto the group in the sidebar. Every value comes with it: fields with the same name in the new group are filled in, and the rest become extra fields."
         private static let attachmentsZoom =
             "Images and PDFs fit the screen when they open. Pinch or double-tap to zoom, and drag to move around; the buttons at the bottom zoom in, zoom out, fit and show actual size."
     #endif
@@ -153,6 +157,7 @@ struct HelpTopic: Identifiable, Hashable {
                 "Silicon Wallet keeps your passwords, cards, notes and files in an encrypted vault. There's no account to create: your master password is the only key.",
                 "Your vault is organised into **groups**, such as Logins or Credit Cards. Each group has its own fields, and every **entry** in it fills them in. Edit a group to add fields, rename them, mark them as concealed so their values stay hidden until you reveal them, or show their values in a monospaced font, which makes card numbers and keys easier to check. Drag fields, extra fields and attachments to change their order while editing.",
                 "Add an entry with the + button. When you need a new password, use the generator in the entry editor. Mark entries you use often as favourites.",
+                moveEntries,
                 "Deleted entries and groups go to **Recently Deleted**, at the bottom of the sidebar. Recover them from there, or delete them for good; anything left is deleted for good after 30 days.",
                 "Search finds entries by their title and visible fields. It never searches concealed values.",
             ]
