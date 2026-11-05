@@ -65,6 +65,8 @@ struct EntryDetailView: View {
                 }
             }
 
+            RelatedEntriesSection(entry: entry)
+
             AttachmentsSection(
                 entry: entry, presentation: $attachmentPresentation, isReadOnly: entry.deleted != nil)
 

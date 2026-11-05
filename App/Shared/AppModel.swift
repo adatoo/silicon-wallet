@@ -222,6 +222,23 @@ final class AppModel {
         if case .group(let shown) = sidebarSelection, shown != groupID, entrySelection == id { entrySelection = nil }
     }
 
+    /// Opens a related entry (DESIGN.md §3). With an entry open in a sheet (cards), the sheet
+    /// shows it instead. Otherwise it's selected, and if the list doesn't show it, the sidebar
+    /// switches to its group and the search is cleared.
+    func reveal(_ id: VaultEntry.ID) {
+        guard let entry = session?.entry(id: id) else { return }
+        if openedEntry != nil {
+            openedEntry = OpenedEntry(id: id)
+            return
+        }
+        if !visibleEntries.contains(where: { $0.id == id }) {
+            searchText = ""
+            sidebarSelection = .group(entry.groupID)
+        }
+        entrySelection = id
+        compactColumn = .detail
+    }
+
     // Recently Deleted (DESIGN.md §5). Each action drops a selection it leaves behind.
 
     func moveGroupToTrash(_ id: UUID) {
