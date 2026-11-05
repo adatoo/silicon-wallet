@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2026-11-05
+
+### Added
+
+- Card scanning finds the card. On iPhone and iPad, hold the card inside the frame: its edge
+  and the text read are outlined as you go, and it's captured by itself once the number reads
+  clearly, or with the shutter. A torch button lights the card.
+- Check a scan before using it: the card is shown with a box over each piece of text read,
+  coloured by what it was read as. Choose any box to use it for a different field, or clear a
+  value that's wrong. This works for photos taken from a Mac with your iPhone too, including
+  Scan Documents.
+
 ## [1.9.0] - 2026-11-05
 
 ### Added
