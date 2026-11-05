@@ -176,3 +176,80 @@ private func titles(_ entries: [VaultEntry]) -> [String] { entries.map(\.title) 
     let text = try #require(String(data: try source.exportJSON(), encoding: .utf8))
     #expect(!text.contains("\"related\""))
 }
+
+// MARK: - Graph
+
+@MainActor
+@Test func theGraphWalksOutwardsByDepth() async throws {
+    let (session, login, current, deposit) = try await bankSession()
+    let card = try session.addEntry(VaultEntry(groupID: current.groupID, title: "Example Bank Card"))
+    try session.setRelated([current.id, deposit.id], for: login.id)
+    // The editor saves the whole list it shows, the login included.
+    try session.setRelated([login.id, card.id], for: current.id)
+
+    let graph = session.relatedGraph(from: login.id)
+    #expect(graph.centre == login.id)
+    #expect(graph.nodes.map(\.depth) == [0, 1, 1, 2])
+    #expect(graph.nodes.last?.id == card.id && graph.nodes.last?.parent == current.id)
+    #expect(Set(graph.edges) == [.init(login.id, current.id), .init(login.id, deposit.id), .init(current.id, card.id)])
+    #expect(!graph.isTruncated)
+
+    // One link out, the card isn't shown.
+    #expect(session.relatedGraph(from: login.id, depth: 1).nodes.count == 3)
+    // From the card, the login is two links away.
+    #expect(session.relatedGraph(from: card.id).nodes.map(\.id) == [card.id, current.id, login.id])
+}
+
+@MainActor
+@Test func aCycleIsFollowedOnceAndClosedByAnEdge() async throws {
+    let (session, login, current, deposit) = try await bankSession()
+    try session.setRelated([current.id, deposit.id], for: login.id)
+    try session.setRelated([login.id, deposit.id], for: current.id)
+
+    let graph = session.relatedGraph(from: login.id)
+    #expect(graph.nodes.count == 3)
+    #expect(graph.edges.count == 3)
+    let closing = RelatedGraph.Edge(current.id, deposit.id)
+    #expect(graph.edges.contains(closing) && !graph.isTreeEdge(closing))
+    #expect(graph.isTreeEdge(.init(login.id, current.id)))
+}
+
+@MainActor
+@Test func theGraphStopsAtItsLimitAndSkipsRecentlyDeleted() async throws {
+    let (session, login, current, deposit) = try await bankSession()
+    var others: [UUID] = []
+    for index in 0..<5 {
+        others.append(try session.addEntry(VaultEntry(groupID: login.groupID, title: "Fake \(index)")).id)
+    }
+    try session.setRelated([current.id, deposit.id] + others, for: login.id)
+
+    let capped = session.relatedGraph(from: login.id, limit: 4)
+    #expect(capped.nodes.count == 4 && capped.isTruncated)
+    #expect(capped.edges.count == 3)
+
+    try session.moveEntryToTrash(id: current.id)
+    #expect(!session.relatedGraph(from: login.id).nodes.contains { $0.id == current.id })
+    #expect(session.relatedGraph(from: current.id).nodes.isEmpty)
+}
+
+@Test func theLayoutPutsEachDepthOnItsRingWithTheFirstAtTheTop() {
+    let centre = UUID()
+    let a = UUID()
+    let b = UUID()
+    let c = UUID()
+    let graph = RelatedGraph(
+        nodes: [
+            .init(id: centre, depth: 0, parent: nil), .init(id: a, depth: 1, parent: centre),
+            .init(id: b, depth: 1, parent: centre), .init(id: c, depth: 2, parent: a),
+        ],
+        edges: [.init(centre, a), .init(centre, b), .init(a, c)], isTruncated: false)
+    let points = graph.layout()
+    func radius(_ id: UUID) -> Double { hypot(points[id]!.x, points[id]!.y) }
+
+    #expect(points[centre] == RelatedGraph.Point(x: 0, y: 0))
+    #expect(abs(radius(a) - 1) < 1e-9 && abs(radius(b) - 1) < 1e-9 && abs(radius(c) - 2) < 1e-9)
+    #expect(abs(points[a]!.x) < 1e-9 && points[a]!.y < 0)
+    // The second ring's node stays in its parent's direction.
+    #expect(abs(points[c]!.x) < 1e-9 && points[c]!.y < 0)
+    #expect(abs(points[b]!.x) < 1e-9 && points[b]!.y > 0)
+}
