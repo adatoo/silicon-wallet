@@ -128,6 +128,8 @@ struct HelpTopic: Identifiable, Hashable {
             "The vault locks itself after 5 minutes without use, and when the Mac sleeps, starts its screen saver or locks its screen. Change this in **Settings ▸ Locking**. To lock straight away, choose **Vault ▸ Lock** (⌃⌘L)."
         private static let importSteps =
             "Choose **File ▸ Import from Acrylic Wallet…** (or **Settings ▸ Import from Acrylic Wallet…**). Wallet keeps its vault at `~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet`: in the file picker, press ⇧⌘G and paste that path. A Dropbox copy or a \"Wallet Database\" export works too."
+        private static let exportSteps =
+            "Choose **File ▸ Export…** (or **Settings ▸ Export…**), pick a format, and enter your master password. Exporting needs the vault unlocked, and each export is listed in the access log."
         private static let attachmentsAdd =
             "Add files in an entry's **Attachments** section, or drop them there. Each one is encrypted with its own key, up to 100 MB."
         private static let moveEntries =
@@ -140,6 +142,8 @@ struct HelpTopic: Identifiable, Hashable {
             "The vault locks itself after 5 minutes without use, and when Silicon Wallet goes into the background. Change both in **Settings ▸ Locking**. To lock straight away, choose **Settings ▸ Lock Now**."
         private static let importSteps =
             "First put your `Database.wallet` file, or a \"Wallet Database\" export, in the Files app. Then choose **Settings ▸ Import from Acrylic Wallet…** and pick the file."
+        private static let exportSteps =
+            "Choose **Settings ▸ Export…**, pick a format, and enter your master password. Save the file to the Files app or share it. Each export is listed in the access log."
         private static let attachmentsAdd =
             "Add photos and files in an entry's **Attachments** section. Each one is encrypted with its own key, up to 100 MB."
         private static let moveEntries =
@@ -205,6 +209,17 @@ struct HelpTopic: Identifiable, Hashable {
                 "Images, PDFs and text files are shown straight from memory. Other files open in Quick Look from a temporary decrypted copy, which is deleted when you close it and when the vault locks.",
                 "**Save a Copy** writes an unencrypted copy wherever you choose. Delete it when you've finished with it.",
                 "To remove an attachment, use its menu in the entry, or the red remove button next to it while editing; that one takes effect when you save, which asks first.",
+            ]
+        ),
+        HelpTopic(
+            id: "export",
+            title: "Backups and Export",
+            symbol: "square.and.arrow.up.on.square",
+            paragraphs: [
+                exportSteps,
+                "A **Silicon Wallet backup** holds everything, attachments included, encrypted with an export password you choose. You need that password to import it, so keep it safe; nobody can recover it.",
+                "**JSON** is the same content as readable text, for moving to another app. It isn't encrypted: anyone with the file can read every password in it. Delete it as soon as you've finished with it.",
+                "To restore, choose **Import…** and pick the file. Anything already in your vault is left as it is, so importing the same backup twice adds nothing.",
             ]
         ),
         HelpTopic(

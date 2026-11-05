@@ -74,6 +74,24 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.datoos.silicon-wallet.entry</string>
 		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Silicon Wallet Backup</string>
+			<key>UTTypeIdentifier</key>
+			<string>com.datoos.silicon-wallet.backup</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>siliconwallet</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 </dict>
 </plist>

@@ -21,6 +21,10 @@ enum Envelope {
         case attachment
         /// An empty value sealed under the vault key, to check a key without a password.
         case keyCheck = "key-check"
+        /// An export's document, in a Silicon Wallet backup (ADR-0008).
+        case exportManifest = "export-manifest"
+        /// An attachment's contents, in a Silicon Wallet backup, sealed with its ID.
+        case exportAttachment = "export-attachment"
     }
 
     static func associatedData(_ purpose: Purpose, id: UUID?) -> Data {

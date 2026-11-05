@@ -52,6 +52,7 @@ silicon-wallet/
 │  └─ iOS/                         # scene-phase lock, iPhone-specific bits
 └─ Packages/SiliconWalletKit/      # all non-UI logic, fully unit-tested
    ├─ Crypto/                      # KDF, vault key, AEAD, key wrapping
+   ├─ Export/                      # backup and JSON export files, import plans (ADR-0008)
    ├─ Model/                       # plaintext domain types (in memory only)
    ├─ Store/                       # SwiftData encrypted records + attachment files
    ├─ Sync/                        # CKSyncEngine delegate, record mapping, conflicts
@@ -223,7 +224,8 @@ do; it can't be made to win conflicts or pass as another kind of record.
   since the timer doesn't outlive it.
 - Password generator (random characters and word-based): `PasswordGenerator`, with a built-in
   list of about 1,660 common words (about 10.7 bits each; six words by default).
-- Access log (encrypted, local per device): unlocks, failed attempts, exports.
+- Access log (encrypted, local per device): unlocks, failed attempts, imports and exports
+  (of the vault, or of an attachment saved as a copy).
   `AccessLog` seals it under the vault key, capped at 1,000 events. Failed attempts happen while
   locked, so they wait in a pending file of event kinds and times only (no names, nothing
   typed) and are sealed in at the next unlock. Shown in Settings ▸ Access Log.
@@ -353,7 +355,18 @@ do; it can't be made to win conflicts or pass as another kind of record.
     keeps import working after that.
   - Fixtures are fake vaults made on a Mac that never held a real vault; the real vault is
     never touched by this code.
-- Export: encrypted backup file plus optional plaintext CSV/JSON with warnings.
+- **Export and import** (built 2026-11-05, ADR-0008). File ▸ Export… and Settings ▸ Export…
+  make either a **Silicon Wallet backup** (`.siliconwallet`), sealed under an export password
+  chosen at export (Argon2id, AES-256-GCM, a fresh salt per file), or **plaintext JSON** with a
+  warning. Both hold the groups and entries in use, attachments included (base64 in JSON), in
+  one versioned schema (`ExportDocument`) that never holds a file key. Both need the master
+  password, and each saved export is in the access log. The file is made in memory and goes
+  only where the person saves it. File ▸ Import… and Settings ▸ Import… read either: anything
+  whose ID the vault already has, in use or in Recently Deleted, is left alone, so nothing is
+  overwritten and importing twice adds nothing; an entry whose group is in Recently Deleted
+  brings it back alone. Hostile-file limits as for Acrylic import: 1 GiB, KDF limits, every
+  backup part authenticated and accounted for, attachments over 100 MB left out. CSV and other
+  apps' formats aren't supported.
 - Password AutoFill extension (iOS, iPadOS, macOS).
 - Widgets / Apple Watch (maybe).
 

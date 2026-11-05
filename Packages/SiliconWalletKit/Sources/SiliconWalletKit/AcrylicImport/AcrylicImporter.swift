@@ -4,12 +4,7 @@ import Foundation
 /// What an Acrylic Wallet file becomes in Silicon Wallet, ready for `VaultSession.importItems`.
 /// It holds plaintext, so it lives only in memory and only until the import finishes.
 public struct AcrylicImportPlan: Sendable {
-    public struct Attachment: Sendable {
-        public let entryID: UUID
-        public let filename: String
-        public let uti: String
-        public let contents: Data
-    }
+    public typealias Attachment = VaultImportPlan.Attachment
 
     public var groups: [VaultGroup]
     public var entries: [VaultEntry]
@@ -22,6 +17,13 @@ public struct AcrylicImportPlan: Sendable {
     public var oversizedAttachmentCount = 0
 
     public var fieldCount: Int { entries.reduce(0) { $0 + $1.values.count + $1.extraFields.count } }
+
+    /// What `VaultSession.importItems` takes.
+    public var items: VaultImportPlan {
+        var items = VaultImportPlan(groups: groups, entries: entries, attachments: attachments)
+        items.leftOutAttachmentCount = oversizedAttachmentCount
+        return items
+    }
 }
 
 /// Maps a decrypted Acrylic Wallet 3.5 vault onto Silicon Wallet's model (DESIGN.md §4, §9).

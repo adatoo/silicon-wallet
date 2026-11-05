@@ -8,8 +8,14 @@ public struct AccessEvent: Codable, Equatable, Identifiable, Sendable {
         case unlockedWithBiometrics
         case failedUnlock
         case passwordChanged
+        /// From Acrylic Wallet.
         case imported
+        /// An attachment saved as a copy.
         case exported
+        /// From a Silicon Wallet backup or JSON export.
+        case importedFromFile
+        /// The vault exported as a backup or JSON.
+        case vaultExported
         case vaultCreated
     }
 
