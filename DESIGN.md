@@ -97,8 +97,13 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   its group if the list doesn't show it, or in the sheet when cards are showing. The editor's
   Related section adds entries from a searchable picker, removes and reorders them. Typical use:
   a bank's one login (website and app) related to each of its accounts, so the password is kept
-  once. Show Graph, in the Related header, opens a sheet that draws the entries up to two links
-  away (at most 30, `VaultSession.relatedGraph(from:)`) as a radial graph
+  once. The Related section starts with a compact graph (`RelatedGraphCanvas`, compact): the
+  entry in the middle and its related entries around it, two links out where the column is at
+  least 420 pt wide and one link on a phone, at most 12 entries, with no zoom or pan so the
+  form still scrolls. Choosing an entry opens it, with its own graph; VoiceOver skips the graph
+  because the rows below list the same entries. The expand button in the Related header opens
+  a sheet that draws the entries up to two links away (at most 30,
+  `VaultSession.relatedGraph(from:)`) as a radial graph
   (`RelatedGraph.layout()`): the entry in the middle, each ring one link further out, each
   branch in its own slice, laid along the view's longer side, with links that close a cycle
   dashed. Nodes show the group icon and title only. Choosing a node moves it to the middle;
