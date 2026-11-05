@@ -384,6 +384,42 @@ public final class VaultSession {
         return related
     }
 
+    /// The entries around `entryID` by related-entry links, up to `depth` links away and at most
+    /// `limit` of them, nearest first. Cycles are followed once; every link between two shown
+    /// entries is an edge. Entries in Recently Deleted are left out, as in `relatedEntries(of:)`.
+    public func relatedGraph(from entryID: UUID, depth: Int = 2, limit: Int = 30) -> RelatedGraph {
+        guard entry(id: entryID) != nil, limit > 0 else { return .empty }
+        var nodes = [RelatedGraph.Node(id: entryID, depth: 0, parent: nil)]
+        var neighbours: [UUID: [UUID]] = [:]
+        var shown: Set<UUID> = [entryID]
+        var isTruncated = false
+        var next = 0
+        while next < nodes.count {
+            let node = nodes[next]
+            next += 1
+            let related = relatedEntries(of: node.id).map(\.id)
+            neighbours[node.id] = related
+            guard node.depth < depth else { continue }
+            for id in related where !shown.contains(id) {
+                guard nodes.count < limit else {
+                    isTruncated = true
+                    break
+                }
+                shown.insert(id)
+                nodes.append(RelatedGraph.Node(id: id, depth: node.depth + 1, parent: node.id))
+            }
+        }
+        var edges: [RelatedGraph.Edge] = []
+        var seen = Set<RelatedGraph.Edge>()
+        for node in nodes {
+            for id in neighbours[node.id] ?? [] where shown.contains(id) {
+                let edge = RelatedGraph.Edge(node.id, id)
+                if seen.insert(edge).inserted { edges.append(edge) }
+            }
+        }
+        return RelatedGraph(nodes: nodes, edges: edges, isTruncated: isTruncated)
+    }
+
     /// `ids` without the entry itself, repeats or entries the vault doesn't have, followed by any
     /// of `previous` that are in Recently Deleted (hidden from the editor, so not in `ids`).
     private func keptRelatedIDs(_ ids: [UUID], for entryID: UUID, previous: [UUID]) -> [UUID] {
