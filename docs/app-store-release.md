@@ -73,6 +73,12 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
   `ASC_KEY_ID` and `ASC_ISSUER_ID` from `.env.local`. Internal testers must be App Store Connect
   users; no Beta App Review is needed, and `ITSAppUsesNonExemptEncryption = NO` means builds are
   ready to test as soon as they've processed. External testing isn't set up.
+- **CI signing certificates** (issue #127): archiving on a fresh runner makes automatic signing
+  create an "Apple Development: Created via API" certificate, and Apple refuses new ones once the
+  team reaches its limit (hit on 2026-11-05 after ten runs). The release workflow runs
+  `task release:prune-certificates` when it finishes, pass or fail, which revokes only those;
+  certificates made in Xcode or on the website, and the cloud-managed distribution certificate,
+  are left alone.
 - **Accessibility from the start:** VoiceOver labels, Dynamic Type, keyboard navigation on Mac, and Reduce Motion.
 
 ## B3. Build steps 6 and 7: CloudKit sync and attachments

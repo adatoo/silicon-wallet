@@ -52,7 +52,9 @@ jobs:
           BUILD_NUMBER: ${{ github.run_number }}
         run: |
           key_dir="$(mktemp -d)"
-          trap 'rm -rf "$key_dir"' EXIT
+          # Signing on a fresh runner creates a development certificate; revoke it whether the
+          # run passes or fails, so they don't build up to Apple's limit, then drop the key.
+          trap 'task release:prune-certificates || true; rm -rf "$key_dir"' EXIT
           printf '%s' "$ASC_KEY_P8" > "$key_dir/AuthKey_$ASC_KEY_ID.p8"
           chmod 600 "$key_dir/AuthKey_$ASC_KEY_ID.p8"
           export ASC_KEY_PATH="$key_dir/AuthKey_$ASC_KEY_ID.p8"
