@@ -55,4 +55,8 @@ jobs:
           trap 'rm -rf "$key_dir"' EXIT
           printf '%s' "$ASC_KEY_P8" > "$key_dir/AuthKey_$ASC_KEY_ID.p8"
           chmod 600 "$key_dir/AuthKey_$ASC_KEY_ID.p8"
-          ASC_KEY_PATH="$key_dir/AuthKey_$ASC_KEY_ID.p8" task release BUILD_NUMBER="$BUILD_NUMBER"
+          export ASC_KEY_PATH="$key_dir/AuthKey_$ASC_KEY_ID.p8"
+          task release BUILD_NUMBER="$BUILD_NUMBER"
+          # The builds are uploaded; What to Test is a nicety, so a failure here only warns.
+          task testflight:notes BUILD_NUMBER="$BUILD_NUMBER" \
+            || echo "::warning::The builds uploaded, but their TestFlight notes weren't set."

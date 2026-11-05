@@ -10,6 +10,10 @@ version: '3'
 set: [errexit, nounset, pipefail]
 silent: true
 
+# Local settings, never committed: the App Store Connect API key (ASC_KEY_PATH, ASC_KEY_ID,
+# ASC_ISSUER_ID) for `task release:*` and `task testflight:*`. CI sets them itself.
+dotenv: ['.env.local']
+
 vars:
   DERIVED_DATA: '{{.ROOT_DIR}}/DerivedData'
   SCHEME: SiliconWallet
@@ -22,6 +26,8 @@ vars:
     sh: 'command -v xcbeautify >/dev/null 2>&1 && echo "xcbeautify --quiet" || echo cat'
   SWIFT_DIRS: App Tests Packages
   TEAM_ID: QKAYS6D525
+  APP_VERSION:
+    sh: tr -d '[:space:]' < VERSION
   CK_CONTAINER: iCloud.com.datoos.silicon-wallet
   # The App Store Connect API key, when set (`task release:*`, the release workflow).
   AUTH_FLAGS:
@@ -305,6 +311,41 @@ tasks:
         -exportPath "build/export-{{.PLATFORM}}"
         -allowProvisioningUpdates {{.AUTH_FLAGS}}
         | {{.PRETTY}}
+
+  testflight:setup:
+    desc: Create the internal TestFlight group that gets every build, and add EMAIL to it
+    summary: |
+      Through the App Store Connect API key in .env.local (ASC_KEY_PATH, ASC_KEY_ID, ASC_ISSUER_ID).
+      EMAIL must be a user in App Store Connect ▸ Users and Access. GROUP defaults to "Internal".
+      Changes only what's missing, so it's safe to run again.
+    requires:
+      vars: [EMAIL]
+    vars:
+      GROUP: '{{.GROUP | default "Internal"}}'
+    cmds:
+      - swift scripts/testflight.swift setup "{{.GROUP}}" "{{.EMAIL}}"
+
+  testflight:notes:
+    desc: Wait for build BUILD_NUMBER of VERSION to process, then set its What to Test from CHANGELOG.md
+    summary: The release workflow runs this after each upload. VERSION defaults to the VERSION file.
+    requires:
+      vars: [BUILD_NUMBER]
+    vars:
+      VERSION: '{{.VERSION | default .APP_VERSION}}'
+    cmds:
+      - swift scripts/testflight.swift notes "{{.VERSION}}" "{{.BUILD_NUMBER}}" CHANGELOG.md
+
+  testflight:changelog:
+    desc: Print the What to Test text for VERSION (default the VERSION file)
+    vars:
+      VERSION: '{{.VERSION | default .APP_VERSION}}'
+    cmds:
+      - swift scripts/testflight.swift changelog "{{.VERSION}}" CHANGELOG.md
+
+  testflight:status:
+    desc: List the latest App Store Connect builds and whether they're ready to test
+    cmds:
+      - swift scripts/testflight.swift status
 
   release:
     desc: Archive and upload both platforms to App Store Connect (TestFlight)

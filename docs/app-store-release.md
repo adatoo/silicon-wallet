@@ -7,9 +7,10 @@ the end.
 
 Decisions already made: the repo went public after the pre-beta security pass (B4, done
 2026-10-20), and the App Store primary language is English (UK). Release 1.0 is tracked in
-issue #101. There is no TestFlight testing phase (decided 2026-10-22): builds still upload to
-App Store Connect, but Production sync is checked with a local Release build (B5) and 1.0 is
-submitted directly, with manual release.
+issue #101. 1.0 was submitted without a TestFlight phase (decided 2026-10-22): Production sync
+was checked with a local Release build (B5). Since 2026-11-05 every build goes to **internal
+TestFlight testing** (issue #125), so each release is tried on real devices before it's chosen
+for the App Store (B7).
 
 
 Each item below becomes an issue or PR when its turn comes. The steps are DESIGN.md §8's build order, with release work threaded in early so that nothing blocks at the end.
@@ -63,7 +64,15 @@ Each item below becomes an issue or PR when its turn comes. The steps are DESIGN
   - **Versions:** `MARKETING_VERSION` comes from `VERSION`, and `CURRENT_PROJECT_VERSION` is `github.run_number`, which is unique and only goes up.
   - **Entitlements:** Release builds use `aps-environment: production`.
   - **Local tasks:** `task release:archive PLATFORM=ios|macos` and `task release:upload`.
-- **TestFlight internal testing:** skipped (see the decisions above). Uploaded builds still show in TestFlight if it's ever wanted.
+- **TestFlight internal testing** (since 2026-11-05, issue #125): an internal group, "Internal",
+  gets every build automatically, with the owner as its tester. `task testflight:setup EMAIL=…`
+  creates or repairs it through the App Store Connect API (idempotent). After each upload the
+  release workflow runs `task testflight:notes`, which waits for the builds to process and sets
+  their What to Test from the version's CHANGELOG section (`task testflight:changelog` previews
+  it). `task testflight:status` lists recent builds. Locally these read `ASC_KEY_PATH`,
+  `ASC_KEY_ID` and `ASC_ISSUER_ID` from `.env.local`. Internal testers must be App Store Connect
+  users; no Beta App Review is needed, and `ITSAppUsesNonExemptEncryption = NO` means builds are
+  ready to test as soon as they've processed. External testing isn't set up.
 - **Accessibility from the start:** VoiceOver labels, Dynamic Type, keyboard navigation on Mac, and Reduce Motion.
 
 ## B3. Build steps 6 and 7: CloudKit sync and attachments
@@ -158,8 +167,13 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 - **Every later release** follows one cycle:
   1. A PR, with its version bump, is merged.
   2. The merge is tagged.
-  3. The release workflow uploads the build to App Store Connect.
-  4. The build is chosen for a new version and submitted for review in App Store Connect.
+  3. The release workflow uploads the builds to App Store Connect, and they reach the internal
+     TestFlight group with the changelog as What to Test.
+  4. Test them from the TestFlight app on the Mac and iPhone (and close any `needs-manual-test`
+     issues they settle).
+  5. When a tested build is worth shipping, create the App Store version for its marketing
+     version, choose that build for iOS and macOS, and submit. Builds in between stay on
+     TestFlight only; each expires after 90 days.
 - Phase 2 and 3 work, starting only when you ask: Acrylic import, export, AutoFill extension.
 
 ## Milestone summary
