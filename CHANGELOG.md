@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-11-05
+
+### Added
+
+- Scan a card. In a card entry's editor, Scan Card reads the number, expiry and name, and Scan
+  Back suggests the security code. On iPhone and iPad it uses the camera live; on a Mac it uses
+  a photo taken with your iPhone. Everything is read on the device, no photo is kept, and you're
+  asked before anything already filled in is replaced.
+
 ## [1.6.0] - 2026-11-05
 
 ### Added
