@@ -321,24 +321,77 @@ public final class VaultSession {
         entry.created = .now
         entry.modified = entry.created
         entry.deleted = nil
+        entry.relatedIDs = keptRelatedIDs(entry.relatedIDs, for: entry.id, previous: [])
         try store.saveRecords([seal(entry)])
         entries.append(entry)
         sortEntries()
         return entry
     }
 
-    public func updateEntry(_ entry: VaultEntry) throws {
+    /// Saves `entry`. With `related` (from the editor, which shows `relatedEntries(of:)`), it also
+    /// sets the entry's links in that order and unlinks, on both sides, any entry left out; links
+    /// to entries in Recently Deleted, which the editor doesn't show, are kept. Without it, the
+    /// entry's `relatedIDs` are saved as they are.
+    public func updateEntry(_ entry: VaultEntry, related: [UUID]? = nil) throws {
         try requireUnlocked()
         guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { throw VaultError.notFound }
         guard group(id: entry.groupID) != nil else { throw VaultError.unknownGroup }
+        let now = Date.now
         var entry = entry
-        entry.modified = .now
+        entry.modified = now
         entry.deleted = nil
+        var unlinked: [VaultEntry] = []
+        if let related {
+            entry.relatedIDs = keptRelatedIDs(related, for: entry.id, previous: entries[index].relatedIDs)
+            let kept = Set(entry.relatedIDs)
+            for other in entries
+            where other.id != entry.id && !kept.contains(other.id) && other.relatedIDs.contains(entry.id) {
+                var other = other
+                other.relatedIDs.removeAll { $0 == entry.id }
+                other.modified = now
+                unlinked.append(other)
+            }
+        }
         let removed = Set(entries[index].attachments.map(\.id)).subtracting(entry.attachments.map(\.id))
-        try store.saveRecords([seal(entry)])
+        try store.saveRecords(try ([entry] + unlinked).map(seal))
         try store.deleteAttachments(ids: Array(removed))
         entries[index] = entry
+        for other in unlinked {
+            if let otherIndex = entries.firstIndex(where: { $0.id == other.id }) { entries[otherIndex] = other }
+        }
         sortEntries()
+    }
+
+    /// Sets the entries related to `entryID`, in this order, as `updateEntry(_:related:)` does.
+    public func setRelated(_ ids: [UUID], for entryID: UUID) throws {
+        guard let entry = entry(id: entryID) else { throw VaultError.notFound }
+        try updateEntry(entry, related: ids)
+    }
+
+    /// The entries in use related to `entryID` (DESIGN.md §4): the ones it links to, in its order,
+    /// then the ones linking to it, by title. Each appears once. Entries in Recently Deleted or
+    /// deleted for good are left out; a restored entry shows again.
+    public func relatedEntries(of entryID: UUID) -> [VaultEntry] {
+        let inUse = Dictionary(entries.map { ($0.id, $0) }) { first, _ in first }
+        var seen: Set<UUID> = [entryID]
+        var related: [VaultEntry] = []
+        for id in (entry(id: entryID) ?? deletedEntry(id: entryID))?.relatedIDs ?? []
+        where seen.insert(id).inserted {
+            if let entry = inUse[id] { related.append(entry) }
+        }
+        // `entries` is already sorted by title.
+        related += entries.filter { !seen.contains($0.id) && $0.relatedIDs.contains(entryID) }
+        return related
+    }
+
+    /// `ids` without the entry itself, repeats or entries the vault doesn't have, followed by any
+    /// of `previous` that are in Recently Deleted (hidden from the editor, so not in `ids`).
+    private func keptRelatedIDs(_ ids: [UUID], for entryID: UUID, previous: [UUID]) -> [UUID] {
+        let inUse = Set(entries.map(\.id))
+        let trashed = Set(deletedEntries.map(\.id))
+        var seen: Set<UUID> = [entryID]
+        let kept = ids.filter { inUse.contains($0) && seen.insert($0).inserted }
+        return kept + previous.filter { trashed.contains($0) && seen.insert($0).inserted }
     }
 
     /// Moves an entry to another group, keeping every value (`VaultEntry.moved(from:to:)`):
@@ -715,7 +768,12 @@ public final class VaultSession {
             resolved.entries.append(entry)
         }
 
+        // Links only to entries the vault will have: here already, in Recently Deleted, or added now.
         let placed = Set(resolved.entries.map(\.id))
+        let linkable = entryIDsHere.union(placed)
+        for index in resolved.entries.indices {
+            resolved.entries[index].relatedIDs.removeAll { !linkable.contains($0) }
+        }
         resolved.attachments = plan.attachments.filter {
             placed.contains($0.entryID) && $0.contents.count <= Self.maximumAttachmentSize
         }

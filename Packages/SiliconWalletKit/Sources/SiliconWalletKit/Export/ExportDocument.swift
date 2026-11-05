@@ -58,6 +58,9 @@ public struct ExportEntry: Codable, Equatable, Sendable {
     public var created: Date
     public var modified: Date
     public var attachments: [ExportAttachment]
+    /// The IDs of the entries this one links to, in order. Absent from files made before links
+    /// existed, and when there are none.
+    public var related: [UUID]?
 }
 
 public struct ExportAttachment: Codable, Equatable, Sendable {
@@ -100,7 +103,8 @@ extension ExportDocument {
                     attachments: entry.attachments.map {
                         ExportAttachment(
                             id: $0.id, filename: $0.filename, type: $0.uti, size: $0.size, sha256: $0.sha256)
-                    })
+                    },
+                    related: entry.relatedIDs.isEmpty ? nil : entry.relatedIDs)
             })
     }
 

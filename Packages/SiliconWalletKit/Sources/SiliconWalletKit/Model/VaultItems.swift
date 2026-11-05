@@ -40,6 +40,9 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
     public var notes: String
     public var isFavorite: Bool
     public var attachments: [AttachmentRef]
+    /// Entries this one links to, in the order shown (DESIGN.md §4). A link is stored on one side
+    /// and shown on both (`VaultSession.relatedEntries(of:)`); it lives only in the sealed payload.
+    public var relatedIDs: [UUID]
     public var created: Date
     public var modified: Date
     /// When the entry was moved to Recently Deleted; nil while it's in use.
@@ -48,7 +51,8 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
     public init(
         id: UUID = UUID(), groupID: UUID, title: String, values: [UUID: String] = [:],
         extraFields: [CustomField] = [], notes: String = "", isFavorite: Bool = false,
-        attachments: [AttachmentRef] = [], created: Date = .now, modified: Date = .now, deleted: Date? = nil
+        attachments: [AttachmentRef] = [], relatedIDs: [UUID] = [], created: Date = .now, modified: Date = .now,
+        deleted: Date? = nil
     ) {
         self.id = id
         self.groupID = groupID
@@ -58,9 +62,27 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
         self.notes = notes
         self.isFavorite = isFavorite
         self.attachments = attachments
+        self.relatedIDs = relatedIDs
         self.created = created
         self.modified = modified
         self.deleted = deleted
+    }
+
+    /// Records written before `relatedIDs` existed have no links.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        groupID = try container.decode(UUID.self, forKey: .groupID)
+        title = try container.decode(String.self, forKey: .title)
+        values = try container.decode([UUID: String].self, forKey: .values)
+        extraFields = try container.decode([CustomField].self, forKey: .extraFields)
+        notes = try container.decode(String.self, forKey: .notes)
+        isFavorite = try container.decode(Bool.self, forKey: .isFavorite)
+        attachments = try container.decode([AttachmentRef].self, forKey: .attachments)
+        relatedIDs = try container.decodeIfPresent([UUID].self, forKey: .relatedIDs) ?? []
+        created = try container.decode(Date.self, forKey: .created)
+        modified = try container.decode(Date.self, forKey: .modified)
+        deleted = try container.decodeIfPresent(Date.self, forKey: .deleted)
     }
 }
 
