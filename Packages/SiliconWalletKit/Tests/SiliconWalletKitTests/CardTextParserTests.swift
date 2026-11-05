@@ -71,3 +71,34 @@ import Testing
     #expect(CardField(label: "PIN") == nil)
     #expect(CardField.securityCode.value(in: ScannedCard(securityCode: "123")) == "123")
 }
+
+@Test func eachValueIsTracedToTheLineItWasReadFrom() {
+    let lines = ["EXAMPLE BANK", "4111 1111", "1111 1111", "VALID FROM 01/24  EXPIRES END 12/30", "JANE APPLESEED"]
+    let card = CardTextParser.front(lines)
+    #expect(card.number == "4111 1111 1111 1111")
+    let sources = CardTextParser.sources(of: card, in: lines)
+    #expect(sources == [1: .number, 2: .number, 3: .expiry, 4: .cardholder])
+
+    let back = ["CUSTOMER SERVICES 0345 300 0000", "AUTHORISED SIGNATURE", "1111 123"]
+    let code = CardTextParser.back(back, cardNumber: "4111 1111 1111 1111")
+    #expect(CardTextParser.sources(of: code, in: back) == [2: .securityCode])
+    #expect(CardTextParser.sources(of: ScannedCard(), in: back).isEmpty)
+}
+
+@Test func aLineCanBeReassignedToAnotherField() {
+    #expect(CardTextParser.value(for: .number, fromLine: "4111 1111 1111 1112") == "4111 1111 1111 1112")
+    #expect(CardTextParser.value(for: .number, fromLine: "1111 123") == nil)
+    #expect(CardTextParser.value(for: .expiry, fromLine: "GOOD THRU 09/29") == "09/29")
+    #expect(CardTextParser.value(for: .expiry, fromLine: "JANE APPLESEED") == nil)
+    #expect(CardTextParser.value(for: .cardholder, fromLine: "  MR J APPLESEED ") == "MR J APPLESEED")
+    #expect(CardTextParser.value(for: .cardholder, fromLine: "   ") == nil)
+    #expect(CardTextParser.value(for: .securityCode, fromLine: "1111 123") == "123")
+    #expect(CardTextParser.value(for: .securityCode, fromLine: "CID 1234") == "1234")
+    #expect(CardTextParser.value(for: .securityCode, fromLine: "NO DIGITS") == nil)
+
+    var card = ScannedCard(number: "4111 1111 1111 1111")
+    card[.expiry] = "09/29"
+    card[.number] = nil
+    #expect(card == ScannedCard(expiry: "09/29"))
+    #expect(card[.expiry] == "09/29")
+}

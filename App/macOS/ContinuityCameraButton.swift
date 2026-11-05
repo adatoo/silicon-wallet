@@ -83,11 +83,39 @@ struct ContinuityCameraButton: NSViewRepresentable {
         }
 
         func readSelection(from pasteboard: NSPasteboard) -> Bool {
+            // Scan Documents sends a PDF, whose size is in points; drawn at that size its text
+            // is too small to read, so it's drawn at three times.
+            if let data = pasteboard.data(forType: .pdf), let page = Self.render(pdf: data, scale: 3) {
+                onPhoto?(page)
+                return true
+            }
             guard let image = NSImage(pasteboard: pasteboard),
                 let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
             else { return false }
             onPhoto?(cgImage)
             return true
+        }
+
+        /// The PDF's first page as an image, in memory.
+        static func render(pdf data: Data, scale: CGFloat) -> CGImage? {
+            guard let provider = CGDataProvider(data: data as CFData),
+                let document = CGPDFDocument(provider), let page = document.page(at: 1)
+            else { return nil }
+            let box = page.getBoxRect(.cropBox)
+            let width = Int(box.width * scale)
+            let height = Int(box.height * scale)
+            guard width > 0, height > 0,
+                let context = CGContext(
+                    data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                    space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+            else { return nil }
+            context.setFillColor(.white)
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+            context.scaleBy(x: scale, y: scale)
+            context.translateBy(x: -box.minX, y: -box.minY)
+            context.drawPDFPage(page)
+            return context.makeImage()
         }
 
         func writeSelection(to pasteboard: NSPasteboard, types: [NSPasteboard.PasteboardType]) -> Bool { false }

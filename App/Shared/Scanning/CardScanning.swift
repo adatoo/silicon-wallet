@@ -1,37 +1,10 @@
-import CoreGraphics
 import SiliconWalletKit
 import SwiftUI
-import Vision
 
 /// Which side of a card a scan reads (DESIGN.md §3, ADR-0009).
 enum CardScanSide: String, Identifiable {
     case front, back
     var id: String { rawValue }
-}
-
-/// Reads the lines of text in a photo of a card, on this device, with Vision. The image is
-/// only ever in memory, and nothing it reads is logged.
-enum CardTextRecognizer {
-    static func lines(in image: CGImage) async throws -> [String] {
-        var request = RecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        // Names and numbers aren't words; correction would "fix" them.
-        request.usesLanguageCorrection = false
-        let observations = try await request.perform(on: image)
-        // Top to bottom, then left to right. Vision's origin is the bottom left.
-        let sorted = observations.sorted {
-            let a = $0.boundingBox.origin
-            let b = $1.boundingBox.origin
-            return abs(a.y - b.y) > 0.02 ? a.y > b.y : a.x < b.x
-        }
-        return sorted.compactMap { $0.topCandidates(1).first?.string }
-    }
-
-    /// The details on one side of a card, from a photo of it.
-    static func card(in image: CGImage, side: CardScanSide, cardNumber: String?) async throws -> ScannedCard {
-        let lines = try await lines(in: image)
-        return side == .front ? CardTextParser.front(lines) : CardTextParser.back(lines, cardNumber: cardNumber)
-    }
 }
 
 extension ScannedCard {

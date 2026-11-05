@@ -8,38 +8,46 @@ struct CardPhoto: Identifiable {
     let side: CardScanSide
 }
 
-/// Reads a photo of a card on this Mac and shows what it found, for the person to check before
-/// Use fills the entry (ADR-0009). The photo is dropped when the sheet closes.
+/// Finds the card in a photo on this Mac, reads it, and shows what it found over the card for
+/// the person to check and correct before Use fills the entry (ADR-0009). The photo is dropped
+/// when the sheet closes.
 struct CardPhotoReviewSheet: View {
     @Environment(\.dismiss) private var dismiss
     let photo: CardPhoto
     let cardNumber: String?
     let onUse: (ScannedCard) -> Void
-    @State private var found: ScannedCard?
+    @State private var analysis: CardAnalysis?
+    @State private var lines: [RecognisedLine] = []
+    @State private var card = ScannedCard()
     @State private var failed = false
 
     var body: some View {
         NavigationStack {
-            Form {
-                if let found, !found.isEmpty {
-                    Section {
-                        ScannedCardSummary(card: found, side: photo.side)
-                    } footer: {
-                        Text("Check these before you use them.")
+            ScrollView {
+                Group {
+                    if let analysis {
+                        CardScanReview(
+                            image: analysis.image ?? photo.image, side: photo.side, lines: $lines, card: $card)
+                        if card.isEmpty {
+                            Text(
+                                photo.side == .front
+                                    ? "Nothing found yet. Choose text on the card, or try again with the front of the card filling the photo, in good light."
+                                    : "Nothing found yet. Choose the code on the card, or try again with the signature strip in the photo, in good light."
+                            )
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        }
+                    } else if failed {
+                        ContentUnavailableView(
+                            "Couldn't Read the Photo", systemImage: "creditcard.trianglebadge.exclamationmark",
+                            description: Text("Try taking it again."))
+                    } else {
+                        ProgressView("Reading the card…")
+                            .frame(maxWidth: .infinity, minHeight: 200)
                     }
-                } else if found != nil || failed {
-                    ContentUnavailableView(
-                        "Nothing Found", systemImage: "creditcard.trianglebadge.exclamationmark",
-                        description: Text(
-                            photo.side == .front
-                                ? "Try again with the front of the card filling the photo, in good light."
-                                : "Try again with the signature strip in the photo, in good light."))
-                } else {
-                    ProgressView("Reading the card…")
-                        .frame(maxWidth: .infinity)
                 }
+                .padding()
             }
-            .formStyle(.grouped)
             .navigationTitle(photo.side == .front ? "Card Details" : "Security Code")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -47,17 +55,21 @@ struct CardPhotoReviewSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Use") {
-                        if let found { onUse(found) }
+                        onUse(card)
                         dismiss()
                     }
-                    .disabled(found?.isEmpty ?? true)
+                    .disabled(card.isEmpty)
                 }
             }
         }
-        .frame(minWidth: 420, idealWidth: 460, minHeight: 280)
+        .frame(minWidth: 480, idealWidth: 560, minHeight: 420, idealHeight: 560)
         .task {
             do {
-                found = try await CardTextRecognizer.card(in: photo.image, side: photo.side, cardNumber: cardNumber)
+                let found = try await CardImageAnalyzer.analyse(
+                    photo.image, side: photo.side, cardNumber: cardNumber, detail: .still)
+                analysis = found
+                lines = found.lines
+                card = found.card
             } catch {
                 failed = true
             }

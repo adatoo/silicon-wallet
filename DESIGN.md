@@ -123,13 +123,25 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   each time; nothing extra is stored, and there's no card-number `FieldKind`, since a kind an
   older build doesn't know would stop it decoding the group.
 - Card scanning (ADR-0009): in the editor of an entry with a Card Number field, Scan Card (and
-  Scan Back, when there's a security code field) reads the card on the device. On iPhone and
-  iPad, VisionKit's live scanner shows what it has found so far, and Use hands it back. On the
-  Mac, Scan Card with iPhone… takes a Continuity Camera photo, Vision reads it in memory, and
-  a review sheet shows the result before Use. `CardTextParser` (SiliconWalletKit) finds the
+  Scan Back, when there's a security code field) reads the card on the device.
+  `CardImageAnalyzer` finds the card's edge (Vision rectangle detection, an ID-1 card's shape),
+  straightens it (`CIPerspectiveCorrection`) and reads its lines, each with its box.
+  - iPhone and iPad: the app's own camera view (`AVCaptureSession`, about three frames a
+    second). A card-shaped guide shows until the card's edge is found; then the edge and the
+    text boxes are drawn over the picture. The frame is captured by itself, with a haptic, once
+    the card's edge is in view and the same number (front) or code (back) reads twice in a row.
+    The shutter captures by hand, and the torch button lights the card.
+  - Mac: Scan Card with iPhone… takes a Continuity Camera photo (Take Photo, or Scan Documents,
+    which finds the card's edge on the iPhone; its PDF is drawn at three times its size).
+  - Both then show the review: the straightened card with a box over each line read, tinted
+    and labelled by the field it gave. Choosing a box uses it for another field
+    (`CardTextParser.value(for:fromLine:)`), each value can be cleared, and Use hands them
+    back. `CardTextParser.sources(of:in:)` ties each value to its lines.
+  `CardTextParser` (SiliconWalletKit) finds the
   number (Luhn-checked, with common recognition slips mended), the latest expiry, the
   cardholder, and from the back a suggested security code. Fields are matched by label
-  (`CardField`). Empty ones are filled; replacing a filled one asks first. No image is saved.
+  (`CardField`). Empty ones are filled; replacing a filled one asks first. Frames and the
+  captured image are only in memory, and go when the scan closes; no image is saved.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a
