@@ -43,7 +43,8 @@ struct EntryEditorView: View {
                     ForEach(group.fields) { field in
                         FieldInput(
                             label: field.label, kind: field.kind, isConcealed: field.isConcealed,
-                            isMonospaced: field.isMonospaced, value: valueBinding(field.id))
+                            isMonospaced: field.isMonospaced, value: valueBinding(field.id),
+                            isCardNumber: PaymentCard.isCardNumberLabel(field.label))
                     }
                 }
             }
@@ -259,6 +260,8 @@ struct FieldInput: View {
     let isConcealed: Bool
     let isMonospaced: Bool
     @Binding var value: String
+    /// Shows the card's scheme and warns when a full number fails its check digit.
+    var isCardNumber = false
     @State private var isRevealed = false
     @State private var generating = false
 
@@ -274,28 +277,42 @@ struct FieldInput: View {
                 }
             } else {
                 LabeledContent {
-                    HStack {
-                        Group {
-                            if isConcealed && !isRevealed {
-                                SecureField(label, text: $value)
-                            } else {
-                                TextField(label, text: $value, axis: .vertical)
-                                    .lineLimit(1...)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Group {
+                                if isConcealed && !isRevealed {
+                                    SecureField(label, text: $value)
+                                } else {
+                                    TextField(label, text: $value, axis: .vertical)
+                                        .lineLimit(1...)
+                                }
                             }
-                        }
-                        .fieldStyle(kind, isMonospaced: isMonospaced)
-                        if isConcealed {
-                            Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
-                                isRevealed.toggle()
+                            .fieldStyle(kind, isMonospaced: isMonospaced)
+                            if isCardNumber, let scheme = PaymentCard.scheme(for: value) {
+                                CardSchemeBadge(scheme: scheme)
                             }
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.borderless)
-                        }
-                        if kind == .password {
-                            Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
+                            if isConcealed {
+                                Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
+                                    isRevealed.toggle()
+                                }
                                 .labelStyle(.iconOnly)
                                 .buttonStyle(.borderless)
-                                .help("Generate a password")
+                            }
+                            if kind == .password {
+                                Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
+                                    .labelStyle(.iconOnly)
+                                    .buttonStyle(.borderless)
+                                    .help("Generate a password")
+                            }
+                        }
+                        // Only a warning: Save still works.
+                        if isCardNumber, PaymentCard.failsCheckDigit(value) {
+                            Label(
+                                "This number doesn't pass the card check digit; check for a typo.",
+                                systemImage: "exclamationmark.triangle"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                         }
                     }
                 } label: {
@@ -364,7 +381,7 @@ struct ExtraFieldInput: View {
             }
             FieldInput(
                 label: "Value", kind: field.kind, isConcealed: field.isConcealed, isMonospaced: field.isMonospaced,
-                value: $field.value)
+                value: $field.value, isCardNumber: PaymentCard.isCardNumberLabel(field.label))
         }
         .onChange(of: field.kind) { old, new in
             if old.isConcealedByDefault != new.isConcealedByDefault {

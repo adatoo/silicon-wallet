@@ -18,6 +18,9 @@ struct EntryCard: View {
                     .background(.tint.opacity(0.12), in: .rect(cornerRadius: 9))
                     .accessibilityHidden(true)
                 Spacer(minLength: 0)
+                if let scheme = entry.cardScheme(in: group) {
+                    CardSchemeBadge(scheme: scheme)
+                }
                 if entry.isFavorite {
                     Image(systemName: "star.fill")
                         .foregroundStyle(.yellow)

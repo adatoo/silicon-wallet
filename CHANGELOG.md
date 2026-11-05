@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-11-05
+
+### Added
+
+- Card numbers show their scheme (Visa, Mastercard, American Express and others) as a badge in
+  the entry, on its card and in the editor, even while the number is hidden.
+- While you type a card number, a warning appears if it fails the card's check digit, which
+  usually means a typo.
+
 ## [1.5.0] - 2026-11-05
 
 ### Added

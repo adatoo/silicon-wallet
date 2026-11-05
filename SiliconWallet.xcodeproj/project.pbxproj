@@ -11,6 +11,7 @@
 		09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C60B119316E39F124349191 /* GroupEditorView.swift */; };
 		0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */; };
 		1302FBE3310A0A6846BB4148 /* RelatedGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */; };
+		13D7D273C8B2C6ECAC623B96 /* CardSchemeBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = A401DDA8769A4A1A626C60F8 /* CardSchemeBadge.swift */; };
 		1A6706CABFFFF9D75D82FE20 /* RelatedEntries.swift in Sources */ = {isa = PBXBuildFile; fileRef = C29F21E1A95FB553A6310ED3 /* RelatedEntries.swift */; };
 		3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 244D550D93A11FBA8C5076F4 /* SidebarView.swift */; };
 		4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 150E755B7E5B799C04F5B072 /* SetupView.swift */; };
@@ -96,6 +97,7 @@
 		93C6C8335A892BE3A593DE22 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		98444000E2A9EC613E31BAD8 /* DemoVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVault.swift; sourceTree = "<group>"; };
 		9CB2125A7AC56544D3361520 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
+		A401DDA8769A4A1A626C60F8 /* CardSchemeBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardSchemeBadge.swift; sourceTree = "<group>"; };
 		A66EC933A0C2F7CEBB604522 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		ACD892512A872BD9135E5CCB /* EntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryListView.swift; sourceTree = "<group>"; };
 		ADA40B1A128244E04793739F /* GeneratorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratorView.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 			isa = PBXGroup;
 			children = (
 				20DB2732C95570E9BBC25DC5 /* AppLinks.swift */,
+				A401DDA8769A4A1A626C60F8 /* CardSchemeBadge.swift */,
 				05AAF8DA641C137E55BC0347 /* Clipboard.swift */,
 				7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */,
 				98444000E2A9EC613E31BAD8 /* DemoVault.swift */,
@@ -447,6 +450,7 @@
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
 				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
 				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
+				13D7D273C8B2C6ECAC623B96 /* CardSchemeBadge.swift in Sources */,
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,
 				EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */,
 				42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */,
