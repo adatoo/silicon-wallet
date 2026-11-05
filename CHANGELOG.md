@@ -5,6 +5,13 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-11-05
+
+### Added
+
+- UK sort codes read as 12-34-56. Type or paste the six digits and the hyphens are added;
+  sort codes you've already saved show the same way.
+
 ## [1.8.0] - 2026-11-05
 
 ### Changed
