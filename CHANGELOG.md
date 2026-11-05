@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-05
+
+### Added
+
+- After five wrong master passwords in a row at the lock screen, you have to wait a minute
+  before trying again, and each further wrong password doubles the wait, up to an hour. The lock
+  screen shows how many tries are left and counts down the wait. Face ID and Touch ID still
+  unlock while you wait.
+
 ## [1.2.0] - 2026-11-05
 
 ### Added
