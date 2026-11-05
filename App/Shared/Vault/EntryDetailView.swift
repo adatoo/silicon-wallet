@@ -49,10 +49,23 @@ struct EntryDetailView: View {
             }
 
             let rows = fieldRows
-            if !rows.isEmpty {
-                Section("Details") {
+            let passwordField = group?.fields.first { $0.kind == .password }
+            let inApplePasswords = entry.passwordInApplePasswords && passwordField != nil
+            if !rows.isEmpty || inApplePasswords {
+                Section {
                     ForEach(rows) { row in
                         FieldValueRow(row: row)
+                    }
+                    if let passwordField, inApplePasswords {
+                        ApplePasswordsRow(label: passwordField.label.isEmpty ? "Password" : passwordField.label)
+                    }
+                } header: {
+                    Text("Details")
+                } footer: {
+                    if inApplePasswords {
+                        Text(
+                            "Open the website and AutoFill offers the password, or find it in the Passwords app."
+                        )
                     }
                 }
             }

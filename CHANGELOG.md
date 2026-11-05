@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-11-05
+
+### Added
+
+- Keep a login's password in Apple Passwords and everything else here. Turn on Password Kept
+  in Apple Passwords in the entry's editor: the password isn't stored in Silicon Wallet, while
+  details such as memorable information or an app passcode stay. On a Mac, Open Passwords
+  takes you to the Passwords app.
+
 ## [1.10.0] - 2026-11-05
 
 ### Added

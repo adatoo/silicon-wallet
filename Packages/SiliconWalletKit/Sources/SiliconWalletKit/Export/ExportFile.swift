@@ -208,7 +208,8 @@ public enum ExportFile {
                 VaultEntry(
                     id: source.id, groupID: source.groupID, title: source.title, values: values,
                     extraFields: extraFields, notes: source.notes, isFavorite: source.favourite,
-                    relatedIDs: source.related ?? [], created: source.created, modified: source.modified))
+                    relatedIDs: source.related ?? [], passwordInApplePasswords: source.inApplePasswords ?? false,
+                    created: source.created, modified: source.modified))
 
             for attachment in source.attachments where seenAttachments.insert(attachment.id).inserted {
                 guard let data = try contents(attachment) else {

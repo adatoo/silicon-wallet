@@ -17,6 +17,9 @@ struct EntryEditorView: View {
     /// A card scan that found values different from ones already filled in, while Save asks
     /// whether to replace them.
     @State private var pendingScan: PendingScan?
+    /// Turning on "kept in Apple Passwords" with a password filled in, while the editor asks
+    /// whether to remove it here.
+    @State private var confirmingPasswordRemoval = false
 
     private struct PendingScan {
         let card: ScannedCard
@@ -47,95 +50,14 @@ struct EntryEditorView: View {
             }
 
             if let group, !group.fields.isEmpty {
-                Section(group.name) {
-                    if hasCardField(.number), CardScanButtons.isAvailable {
-                        CardScanButtons(
-                            cardNumber: cardValue(.number), canScanBack: hasCardField(.securityCode),
-                            onScanned: scanned)
-                    }
-                    ForEach(group.fields) { field in
-                        FieldInput(
-                            label: field.label, kind: field.kind, isConcealed: field.isConcealed,
-                            isMonospaced: field.isMonospaced, value: valueBinding(field.id),
-                            isCardNumber: PaymentCard.isCardNumberLabel(field.label),
-                            isSortCode: SortCode.isSortCodeLabel(field.label))
-                    }
-                }
+                groupSection(group)
             }
 
-            Section {
-                ForEach($draft.extraFields) { $field in
-                    ExtraFieldInput(field: $field) {
-                        draft.extraFields.removeAll { $0.id == field.id }
-                    }
-                    .reorderable(field, in: $draft.extraFields, title: field.label)
-                }
-                #if os(iOS)
-                    .onMove { draft.extraFields.move(fromOffsets: $0, toOffset: $1) }
-                #endif
-                Button("Add Field", systemImage: "plus") {
-                    draft.extraFields.append(CustomField(label: ""))
-                }
-            } header: {
-                Text("Extra Fields")
-            } footer: {
-                Text("Fields for this entry only. To give every entry in the group a field, edit the group.")
-            }
+            extraFieldsSection
 
-            if !draft.attachments.isEmpty {
-                Section {
-                    ForEach(draft.attachments) { attachment in
-                        HStack {
-                            AttachmentRow(
-                                attachment: attachment,
-                                isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
-                            Spacer()
-                            Button("Remove Attachment", systemImage: "minus.circle.fill", role: .destructive) {
-                                draft.attachments.removeAll { $0.id == attachment.id }
-                            }
-                            .labelStyle(.iconOnly)
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(.red)
-                            .help("Remove \(attachment.filename) when you save")
-                        }
-                        .reorderable(attachment, in: $draft.attachments, title: attachment.filename)
-                    }
-                    #if os(iOS)
-                        .onMove { draft.attachments.move(fromOffsets: $0, toOffset: $1) }
-                    #endif
-                } header: {
-                    Text("Attachments")
-                } footer: {
-                    Text(
-                        "Drag to change the order. A removed attachment is deleted when you save. Add and open attachments from the entry itself."
-                    )
-                }
-            }
+            attachmentsSection
 
-            Section {
-                ForEach(related) { entry in
-                    HStack {
-                        RelatedEntryLabel(entry: entry)
-                        Spacer()
-                        Button("Remove Related Entry", systemImage: "minus.circle.fill", role: .destructive) {
-                            related.removeAll { $0.id == entry.id }
-                        }
-                        .labelStyle(.iconOnly)
-                        .buttonStyle(.borderless)
-                        .foregroundStyle(.red)
-                        .help("Unlink \(entry.title) when you save")
-                    }
-                    .reorderable(entry, in: $related, title: entry.title)
-                }
-                #if os(iOS)
-                    .onMove { related.move(fromOffsets: $0, toOffset: $1) }
-                #endif
-                Button("Add Related Entry…", systemImage: "link") { pickingRelated = true }
-            } header: {
-                Text("Related")
-            } footer: {
-                Text("Entries that go with this one, such as a bank's login and its accounts. Each shows on the other.")
-            }
+            relatedSection
 
             Section("Notes") {
                 TextField("Notes", text: $draft.notes, axis: .vertical)
@@ -285,6 +207,147 @@ struct EntryEditorView: View {
     /// A value without spacing or case, so "4111111111111111" matches "4111 1111 1111 1111".
     private static func comparable(_ value: String) -> String {
         value.filter { !$0.isWhitespace }.uppercased()
+    }
+
+    // Each section is its own property, so the compiler type-checks `body` in reasonable time.
+
+    private var extraFieldsSection: some View {
+        Section {
+            ForEach($draft.extraFields) { $field in
+                ExtraFieldInput(field: $field) {
+                    draft.extraFields.removeAll { $0.id == field.id }
+                }
+                .reorderable(field, in: $draft.extraFields, title: field.label)
+            }
+            #if os(iOS)
+                .onMove { draft.extraFields.move(fromOffsets: $0, toOffset: $1) }
+            #endif
+            Button("Add Field", systemImage: "plus") {
+                draft.extraFields.append(CustomField(label: ""))
+            }
+        } header: {
+            Text("Extra Fields")
+        } footer: {
+            Text("Fields for this entry only. To give every entry in the group a field, edit the group.")
+        }
+    }
+
+    @ViewBuilder
+    private var attachmentsSection: some View {
+        if !draft.attachments.isEmpty {
+            Section {
+                ForEach(draft.attachments) { attachment in
+                    HStack {
+                        AttachmentRow(
+                            attachment: attachment,
+                            isAvailable: model.session?.isAttachmentAvailable(attachment) ?? false)
+                        Spacer()
+                        Button("Remove Attachment", systemImage: "minus.circle.fill", role: .destructive) {
+                            draft.attachments.removeAll { $0.id == attachment.id }
+                        }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .foregroundStyle(.red)
+                        .help("Remove \(attachment.filename) when you save")
+                    }
+                    .reorderable(attachment, in: $draft.attachments, title: attachment.filename)
+                }
+                #if os(iOS)
+                    .onMove { draft.attachments.move(fromOffsets: $0, toOffset: $1) }
+                #endif
+            } header: {
+                Text("Attachments")
+            } footer: {
+                Text(
+                    "Drag to change the order. A removed attachment is deleted when you save. Add and open attachments from the entry itself."
+                )
+            }
+        }
+    }
+
+    private var relatedSection: some View {
+        Section {
+            ForEach(related) { entry in
+                HStack {
+                    RelatedEntryLabel(entry: entry)
+                    Spacer()
+                    Button("Remove Related Entry", systemImage: "minus.circle.fill", role: .destructive) {
+                        related.removeAll { $0.id == entry.id }
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.red)
+                    .help("Unlink \(entry.title) when you save")
+                }
+                .reorderable(entry, in: $related, title: entry.title)
+            }
+            #if os(iOS)
+                .onMove { related.move(fromOffsets: $0, toOffset: $1) }
+            #endif
+            Button("Add Related Entry…", systemImage: "link") { pickingRelated = true }
+        } header: {
+            Text("Related")
+        } footer: {
+            Text("Entries that go with this one, such as a bank's login and its accounts. Each shows on the other.")
+        }
+    }
+
+    /// The group's own fields, with the card scan buttons and the Apple Passwords option where
+    /// they apply. Kept out of `body` so the compiler type-checks it in reasonable time.
+    private func groupSection(_ group: VaultGroup) -> some View {
+        Section(group.name) {
+            if hasCardField(.number), CardScanButtons.isAvailable {
+                CardScanButtons(
+                    cardNumber: cardValue(.number), canScanBack: hasCardField(.securityCode), onScanned: scanned)
+            }
+            if !group.passwordFieldIDs.isEmpty {
+                Toggle(isOn: applePasswordsBinding) {
+                    Label("Password Kept in Apple Passwords", systemImage: "key.icloud")
+                }
+                .help("Keep the password only in Apple Passwords, and the other details here")
+                .confirmationDialog(
+                    "Remove the Password Saved Here?", isPresented: $confirmingPasswordRemoval,
+                    titleVisibility: .visible
+                ) {
+                    Button("Remove", role: .destructive) {
+                        for id in group.passwordFieldIDs { draft.values[id] = nil }
+                        draft.passwordInApplePasswords = true
+                    }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text(
+                        "It will be kept only in Apple Passwords, so check it's saved there first. It's removed from Silicon Wallet when you save; the other details stay."
+                    )
+                }
+            }
+            ForEach(shownFields(of: group)) { field in
+                FieldInput(
+                    label: field.label, kind: field.kind, isConcealed: field.isConcealed,
+                    isMonospaced: field.isMonospaced, value: valueBinding(field.id),
+                    isCardNumber: PaymentCard.isCardNumberLabel(field.label),
+                    isSortCode: SortCode.isSortCodeLabel(field.label))
+            }
+        }
+    }
+
+    /// The group's fields, less the password ones while it's kept in Apple Passwords.
+    private func shownFields(of group: VaultGroup) -> [FieldTemplate] {
+        guard draft.passwordInApplePasswords else { return group.fields }
+        return group.fields.filter { $0.kind != .password }
+    }
+
+    /// Turning the Apple Passwords option on asks first when a password is filled in here.
+    private var applePasswordsBinding: Binding<Bool> {
+        Binding(
+            get: { draft.passwordInApplePasswords },
+            set: { isOn in
+                let hasPassword = (group?.passwordFieldIDs ?? []).contains { !(draft.values[$0] ?? "").isEmpty }
+                if isOn && hasPassword {
+                    confirmingPasswordRemoval = true
+                } else {
+                    draft.passwordInApplePasswords = isOn
+                }
+            })
     }
 
     /// Changing the group carries every value across (`VaultEntry.moved(from:to:)`).

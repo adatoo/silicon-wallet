@@ -1,6 +1,7 @@
 # ADR-0008: Export as a password-protected backup or plaintext JSON, from one schema
 
-- **Status:** Accepted (2026-11-05; related entries added the same day)
+- **Status:** Accepted (2026-11-05; related entries and the Apple Passwords marker added the
+  same day)
 
 ## Context
 
@@ -12,8 +13,10 @@ export leaves the vault's protection, so the format decides how safe that copy i
 
 - **Two formats, one schema.** `ExportDocument` (`SiliconWalletKit/Export`) holds the groups
   and entries in use (not Recently Deleted), with their field templates, values, extra fields,
-  notes, favourites, dates, attachments and related entries (`related`, the IDs an entry links
-  to; left out when there are none, so older files and readers are unaffected). It's separate from the model's own `Codable` form, so
+  notes, favourites, dates, attachments, related entries (`related`, the IDs an entry links
+  to) and whether the password is kept in Apple Passwords (`inApplePasswords`). Both are left
+  out when empty or false, so older files and readers are unaffected. It's separate from the
+  model's own `Codable` form, so
   the file format doesn't change when the model does, and it never holds an attachment's file
   key. It's versioned (`format: "silicon-wallet-export"`, `version: 1`).
 - **Silicon Wallet backup** (`.siliconwallet`, type `com.datoos.silicon-wallet.backup`):

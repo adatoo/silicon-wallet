@@ -43,6 +43,9 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
     /// Entries this one links to, in the order shown (DESIGN.md §4). A link is stored on one side
     /// and shown on both (`VaultSession.relatedEntries(of:)`); it lives only in the sealed payload.
     public var relatedIDs: [UUID]
+    /// The password is kept in Apple Passwords rather than here (DESIGN.md §3): the group's
+    /// password fields are hidden and left empty, and the other values stay. Sealed like the rest.
+    public var passwordInApplePasswords: Bool
     public var created: Date
     public var modified: Date
     /// When the entry was moved to Recently Deleted; nil while it's in use.
@@ -51,8 +54,8 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
     public init(
         id: UUID = UUID(), groupID: UUID, title: String, values: [UUID: String] = [:],
         extraFields: [CustomField] = [], notes: String = "", isFavorite: Bool = false,
-        attachments: [AttachmentRef] = [], relatedIDs: [UUID] = [], created: Date = .now, modified: Date = .now,
-        deleted: Date? = nil
+        attachments: [AttachmentRef] = [], relatedIDs: [UUID] = [], passwordInApplePasswords: Bool = false,
+        created: Date = .now, modified: Date = .now, deleted: Date? = nil
     ) {
         self.id = id
         self.groupID = groupID
@@ -63,12 +66,14 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
         self.isFavorite = isFavorite
         self.attachments = attachments
         self.relatedIDs = relatedIDs
+        self.passwordInApplePasswords = passwordInApplePasswords
         self.created = created
         self.modified = modified
         self.deleted = deleted
     }
 
-    /// Records written before `relatedIDs` existed have no links.
+    /// Records written before `relatedIDs` existed have no links, and those written before
+    /// `passwordInApplePasswords` keep their password here.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -80,6 +85,8 @@ public struct VaultEntry: Codable, Hashable, Identifiable, Sendable {
         isFavorite = try container.decode(Bool.self, forKey: .isFavorite)
         attachments = try container.decode([AttachmentRef].self, forKey: .attachments)
         relatedIDs = try container.decodeIfPresent([UUID].self, forKey: .relatedIDs) ?? []
+        passwordInApplePasswords =
+            try container.decodeIfPresent(Bool.self, forKey: .passwordInApplePasswords) ?? false
         created = try container.decode(Date.self, forKey: .created)
         modified = try container.decode(Date.self, forKey: .modified)
         deleted = try container.decodeIfPresent(Date.self, forKey: .deleted)
@@ -132,4 +139,10 @@ public struct VaultMeta: Codable, Equatable, Sendable {
         self.created = created
         self.modified = modified
     }
+}
+
+extension VaultGroup {
+    /// The group's password fields: the ones hidden and left empty when an entry keeps its
+    /// password in Apple Passwords. Empty when the group has none, and the option isn't offered.
+    public var passwordFieldIDs: [UUID] { fields.filter { $0.kind == .password }.map(\.id) }
 }

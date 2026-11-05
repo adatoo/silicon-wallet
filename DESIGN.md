@@ -109,6 +109,15 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   dashed. Nodes show the group icon and title only. Choosing a node moves it to the middle;
   choosing the middle one, or Open, opens it. Pinch, or the zoom buttons (⌘+ / ⌘−), zoom, and
   dragging pans.
+- Apple Passwords: other apps can't read or link to Apple Passwords items, so to avoid keeping
+  a password twice, an entry whose group has a password field can be marked "Password Kept in
+  Apple Passwords" (`VaultEntry.passwordInApplePasswords`, inside the sealed payload; no schema
+  or export version change). The editor then hides the group's password fields
+  (`VaultGroup.passwordFieldIDs`); turning it on with a password filled in asks before removing
+  it here. The other values, such as memorable information or an app passcode, stay. The entry
+  view shows "In Apple Passwords" in the password's place, with Open Passwords on the Mac (the
+  Passwords app by bundle ID) and a note that AutoFill offers it on the website. Becoming an
+  AutoFill provider instead is an idea, not planned (§9).
 - Sort codes: in a field labelled "Sort Code" (ignoring case, spaces and hyphens), six digits
   typed or pasted become `12-34-56` in the editor (`SortCode.formatted`), and a stored value of
   six digits shows that way in the entry, list and cards. Copy copies the stored value, and a

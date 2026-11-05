@@ -51,6 +51,7 @@
 		D480EFF4503E898DC090082B /* CardImageAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1A3AAD6D1E0902D6271691 /* CardImageAnalyzer.swift */; };
 		D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */; };
 		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
+		E296D452D94E6CA7E033DA83 /* ApplePasswordsRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D5528B40E5E1A59EAD2552B /* ApplePasswordsRow.swift */; };
 		E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */; };
 		EA7BA7D832764B49BBB9554B /* PreviewGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C999E31F3061FBE1C25D0A5 /* PreviewGeometry.swift */; };
 		EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD892512A872BD9135E5CCB /* EntryListView.swift */; };
@@ -100,6 +101,7 @@
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
 		6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyDeletedView.swift; sourceTree = "<group>"; };
 		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
+		6D5528B40E5E1A59EAD2552B /* ApplePasswordsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplePasswordsRow.swift; sourceTree = "<group>"; };
 		71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRecognizer.swift; sourceTree = "<group>"; };
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudEntitlement.swift; sourceTree = "<group>"; };
@@ -227,6 +229,7 @@
 		6E431CF5DF7362B9250D309C /* Vault */ = {
 			isa = PBXGroup;
 			children = (
+				6D5528B40E5E1A59EAD2552B /* ApplePasswordsRow.swift */,
 				31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */,
 				772BFA3C071751268172F197 /* EntryDetailView.swift */,
 				7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */,
@@ -485,6 +488,7 @@
 				F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */,
 				A90B0C80261C98D37BDDCD63 /* AppLinks.swift in Sources */,
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
+				E296D452D94E6CA7E033DA83 /* ApplePasswordsRow.swift in Sources */,
 				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
 				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
 				D480EFF4503E898DC090082B /* CardImageAnalyzer.swift in Sources */,
