@@ -202,6 +202,13 @@ final class AppModel {
         session?.lock()
     }
 
+    /// Moves an entry to another group, keeping every value: dropped on a group in the sidebar,
+    /// or from Move to Group. If the entry was selected in the group it left, it's deselected.
+    func moveEntry(_ id: UUID, to groupID: UUID) {
+        perform { try session?.moveEntry(id: id, toGroup: groupID) }
+        if case .group(let shown) = sidebarSelection, shown != groupID, entrySelection == id { entrySelection = nil }
+    }
+
     // Recently Deleted (DESIGN.md §5). Each action drops a selection it leaves behind.
 
     func moveGroupToTrash(_ id: UUID) {

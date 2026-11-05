@@ -87,7 +87,10 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   under their label. Return adds a line in Long Text and notes (on the Mac too, where a text field
   would end editing); elsewhere a line break typed into a value with none becomes a space.
   Moving an entry to another group keeps every value: matching labels move across, the rest
-  become extra fields.
+  become extra fields. Besides the editor's group picker, an entry moves by dragging its row or
+  card onto a group in the sidebar (Mac and iPad; the group highlights while it's over it), or
+  with Move to Group in its context menu, the way on iPhone, where the sidebar isn't on screen.
+  The drag carries only the entry's ID.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a

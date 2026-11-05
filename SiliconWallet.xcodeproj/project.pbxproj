@@ -20,6 +20,7 @@
 		5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */; };
 		52624A5B97784362DDDD3007 /* PushRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */; };
 		6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */; };
+		6F92E058722F6FA885E5E611 /* EntryDragging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
@@ -82,6 +83,7 @@
 		772BFA3C071751268172F197 /* EntryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDetailView.swift; sourceTree = "<group>"; };
 		7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudEntitlement.swift; sourceTree = "<group>"; };
 		7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FieldKind+UI.swift"; sourceTree = "<group>"; };
+		7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryDragging.swift; sourceTree = "<group>"; };
 		8015C5FAC376E3A45DB07475 /* PasswordReminderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordReminderView.swift; sourceTree = "<group>"; };
 		879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8F36EFC889ED466A5973918E /* VaultActionsToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultActionsToolbar.swift; sourceTree = "<group>"; };
@@ -186,6 +188,7 @@
 			children = (
 				31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */,
 				772BFA3C071751268172F197 /* EntryDetailView.swift */,
+				7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */,
 				ACD892512A872BD9135E5CCB /* EntryListView.swift */,
 				6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */,
 				244D550D93A11FBA8C5076F4 /* SidebarView.swift */,
@@ -429,6 +432,7 @@
 				42D71772EB46CE6C431286C8 /* DemoVault.swift in Sources */,
 				D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */,
 				F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */,
+				6F92E058722F6FA885E5E611 /* EntryDragging.swift in Sources */,
 				A53BAC5D2CB0C96AC92E8826 /* EntryEditorView.swift in Sources */,
 				EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */,
 				6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */,

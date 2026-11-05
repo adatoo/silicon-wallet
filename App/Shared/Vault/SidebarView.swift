@@ -7,6 +7,8 @@ struct SidebarView: View {
     @Environment(AppModel.self) private var model
     @Binding var editor: EditorTarget?
     @State private var groupToDelete: VaultGroup?
+    /// The group an entry is being dragged over, highlighted to show where it will go.
+    @State private var dropTarget: UUID?
     /// iOS: show Sync, Lock, Settings and Help here. VaultView decides, from the window's
     /// size class: an iPad's sidebar column reports compact even when the window is regular.
     var showsVaultActions = false
@@ -24,16 +26,8 @@ struct SidebarView: View {
                     .tag(SidebarItem.favorites)
             }
             Section("Groups") {
-                ForEach(session?.groups ?? []) { group in
-                    Label(group.name, systemImage: group.icon)
-                        .badge(session?.entries(inGroup: group.id).count ?? 0)
-                        .tag(SidebarItem.group(group.id))
-                        .contextMenu {
-                            Button("Edit Group…", systemImage: "pencil") { editor = .group(group) }
-                            Button("Delete Group…", systemImage: "trash", role: .destructive) { groupToDelete = group }
-                        }
-                }
-                .onMove(perform: move)
+                ForEach(session?.groups ?? [], content: groupRow)
+                    .onMove(perform: move)
             }
             if let session, !model.isTrashEmpty {
                 Section {
@@ -71,8 +65,41 @@ struct SidebarView: View {
         }
     }
 
+    /// A group: drag an entry onto it to move the entry there. Split out of `body`, which the
+    /// compiler couldn't type-check in reasonable time with it inline.
+    private func groupRow(_ group: VaultGroup) -> some View {
+        Label(group.name, systemImage: group.icon)
+            .badge(model.session?.entries(inGroup: group.id).count ?? 0)
+            .tag(SidebarItem.group(group.id))
+            .background(
+                Color.accentColor.opacity(dropTarget == group.id ? 0.25 : 0),
+                in: .rect(cornerRadius: 6)
+            )
+            .dropDestination(for: DraggedEntry.self) { dragged, _ in
+                dropTarget = nil
+                return moveEntries(dragged.map(\.id), to: group.id)
+            } isTargeted: { isTargeted in
+                if isTargeted {
+                    dropTarget = group.id
+                } else if dropTarget == group.id {
+                    dropTarget = nil
+                }
+            }
+            .contextMenu {
+                Button("Edit Group…", systemImage: "pencil") { editor = .group(group) }
+                Button("Delete Group…", systemImage: "trash", role: .destructive) { groupToDelete = group }
+            }
+    }
+
     private var deleteBinding: Binding<Bool> {
         Binding(get: { groupToDelete != nil }, set: { if !$0 { groupToDelete = nil } })
+    }
+
+    /// Moves entries dropped on a group into it. Dropping one on its own group does nothing.
+    private func moveEntries(_ ids: [UUID], to groupID: UUID) -> Bool {
+        let moving = ids.filter { model.session?.entry(id: $0).map { $0.groupID != groupID } ?? false }
+        for id in moving { model.moveEntry(id, to: groupID) }
+        return !moving.isEmpty
     }
 
     private func move(from source: IndexSet, to destination: Int) {

@@ -95,6 +95,7 @@ struct EntryListView: View {
     private func row(_ entry: VaultEntry) -> some View {
         EntryRow(entry: entry, group: model.session?.group(id: entry.groupID))
             .tag(entry.id)
+            .draggable(DraggedEntry(id: entry.id)) { dragPreview(entry) }
             .contextMenu { menuItems(for: entry) }
             .swipeActions {
                 Button("Delete", systemImage: "trash", role: .destructive) { model.moveEntryToTrash(entry.id) }
@@ -135,7 +136,13 @@ struct EntryListView: View {
             EntryCard(entry: entry, group: model.session?.group(id: entry.groupID))
         }
         .buttonStyle(.plain)
+        .draggable(DraggedEntry(id: entry.id)) { dragPreview(entry) }
         .contextMenu { menuItems(for: entry) }
+    }
+
+    /// Dragging an entry onto a group in the sidebar moves it there (`SidebarView`).
+    private func dragPreview(_ entry: VaultEntry) -> some View {
+        DraggedEntryPreview(entry: entry, group: model.session?.group(id: entry.groupID))
     }
 
     @ViewBuilder
@@ -144,6 +151,14 @@ struct EntryListView: View {
             model.perform { try model.session?.setFavorite(!entry.isFavorite, entryID: entry.id) }
         }
         Button("Edit…", systemImage: "pencil") { editor = .entry(entry) }
+        // The way to move an entry where the sidebar isn't on screen to drag it to (iPhone).
+        if let others = model.session?.groups.filter({ $0.id != entry.groupID }), !others.isEmpty {
+            Menu("Move to Group", systemImage: "folder") {
+                ForEach(others) { group in
+                    Button(group.name, systemImage: group.icon) { model.moveEntry(entry.id, to: group.id) }
+                }
+            }
+        }
         // Deleting moves the entry to Recently Deleted, so it needs no confirmation.
         Button("Delete", systemImage: "trash", role: .destructive) { model.moveEntryToTrash(entry.id) }
     }

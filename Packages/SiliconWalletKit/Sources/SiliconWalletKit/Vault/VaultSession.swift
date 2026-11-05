@@ -323,6 +323,16 @@ public final class VaultSession {
         sortEntries()
     }
 
+    /// Moves an entry to another group, keeping every value (`VaultEntry.moved(from:to:)`):
+    /// for dragging an entry onto a group. Moving it to its own group changes nothing.
+    public func moveEntry(id: UUID, toGroup groupID: UUID) throws {
+        try requireUnlocked()
+        guard let entry = entry(id: id), let old = group(id: entry.groupID) else { throw VaultError.notFound }
+        guard let new = group(id: groupID) else { throw VaultError.unknownGroup }
+        guard old.id != new.id else { return }
+        try updateEntry(entry.moved(from: old, to: new))
+    }
+
     /// Moves an entry to Recently Deleted. Its attachments stay until it's deleted for good.
     public func moveEntryToTrash(id: UUID) throws {
         try requireUnlocked()
