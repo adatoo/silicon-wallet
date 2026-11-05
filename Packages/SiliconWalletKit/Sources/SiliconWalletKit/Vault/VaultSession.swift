@@ -11,6 +11,8 @@ public enum VaultError: Error, Equatable, Sendable {
     /// The vault is locked; unlock it first.
     case locked
     case wrongPassword
+    /// Too many wrong passwords: the next attempt may be made at this time (`UnlockThrottle`).
+    case tooManyAttempts(until: Date)
     /// The vault was written by a newer format than this build reads.
     case unsupportedFormat(Int)
     /// No group, entry or attachment has that ID.
@@ -79,6 +81,7 @@ public final class VaultSession {
     /// The device's access log, if this session keeps one (DESIGN.md §5).
     @ObservationIgnored public let accessLog: AccessLog?
     @ObservationIgnored private let trashLedger: TrashLedger
+    @ObservationIgnored private let unlockThrottle: UnlockThrottle
     @ObservationIgnored private var vaultKey: SymmetricKey?
     @ObservationIgnored private let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
@@ -88,11 +91,13 @@ public final class VaultSession {
     @ObservationIgnored private let decoder = JSONDecoder()
 
     public init(
-        store: any VaultStore, accessLog: AccessLog? = nil, trashLedger: TrashLedger = TrashLedger(directory: nil)
+        store: any VaultStore, accessLog: AccessLog? = nil, trashLedger: TrashLedger = TrashLedger(directory: nil),
+        unlockThrottle: UnlockThrottle = UnlockThrottle(directory: nil)
     ) throws {
         self.store = store
         self.accessLog = accessLog
         self.trashLedger = trashLedger
+        self.unlockThrottle = unlockThrottle
         self.state = try store.loadMeta() == nil ? .noVault : .locked
     }
 
@@ -130,18 +135,28 @@ public final class VaultSession {
         accessLog?.record(AccessEvent(kind: .vaultCreated), key: key)
     }
 
-    /// Unlocks with the master password. Argon2id runs off the main actor.
+    /// When the next master password attempt may be made, after too many wrong ones; nil if now.
+    public var nextPasswordAttempt: Date? { unlockThrottle.nextAttempt() }
+
+    /// Wrong passwords left before one makes the next attempt wait.
+    public var passwordAttemptsBeforeDelay: Int { unlockThrottle.attemptsBeforeDelay }
+
+    /// Unlocks with the master password. Argon2id runs off the main actor. After too many wrong
+    /// passwords it refuses, without checking, until `nextPasswordAttempt`.
     public func unlock(password: String) async throws {
         let meta = try requireMeta()
+        if let next = unlockThrottle.nextAttempt() { throw VaultError.tooManyAttempts(until: next) }
         let kek = try await Self.deriveKEK(password: password, kdf: meta.kdf)
         let key: SymmetricKey
         do {
             key = try VaultKey.unwrap(meta.wrappedVaultKey, kek: kek)
         } catch CryptoError.authenticationFailed {
             accessLog?.recordWhileLocked(.failedUnlock)
+            unlockThrottle.recordFailure()
             throw VaultError.wrongPassword
         }
         try open(with: key, purging: true)
+        unlockThrottle.reset()
         accessLog?.record(AccessEvent(kind: .unlockedWithPassword), key: key)
     }
 
@@ -153,6 +168,7 @@ public final class VaultSession {
             throw VaultError.wrongPassword
         }
         try open(with: key, purging: true)
+        unlockThrottle.reset()
         accessLog?.record(AccessEvent(kind: .unlockedWithBiometrics), key: key)
     }
 
@@ -210,6 +226,7 @@ public final class VaultSession {
         lock()
         accessLog?.clear()
         trashLedger.clear()
+        unlockThrottle.reset()
         state = .noVault
     }
 
@@ -218,6 +235,7 @@ public final class VaultSession {
         try store.deleteAll()
         accessLog?.clear()
         trashLedger.clear()
+        unlockThrottle.reset()
         lock()
         state = .noVault
     }

@@ -13,6 +13,8 @@ struct UnlockView: View {
     @State private var password = ""
     @State private var isWorking = false
     @State private var failed = false
+    /// After too many wrong passwords, when the next attempt may be made (`UnlockThrottle`).
+    @State private var retryAt: Date?
     @State private var triedBiometrics = false
     /// Asked for the password field, by "Use Password" or by cancelling the biometric prompt.
     @State private var wantsPassword = false
@@ -52,7 +54,17 @@ struct UnlockView: View {
         .background { LockBackdrop() }
         .onAppear {
             isFocused = showsPassword
+            retryAt = model.session?.nextPasswordAttempt
             startBiometricsOnce()
+        }
+        .task(id: retryAt) {
+            // The field comes back when the wait is over.
+            guard let retryAt else { return }
+            try? await Task.sleep(for: .seconds(max(0, retryAt.timeIntervalSinceNow)))
+            if !Task.isCancelled {
+                self.retryAt = nil
+                if showsPassword { isFocused = true }
+            }
         }
         .onChange(of: showsPassword) { _, shows in
             // The field only exists once it shows, so focus it then.
@@ -82,10 +94,8 @@ struct UnlockView: View {
                     .focused($isFocused)
                     .onSubmit(unlock)
                     .frame(maxWidth: 320)
-                Text(failed ? "That password is wrong. Try again." : " ")
-                    .font(.footnote)
-                    .foregroundStyle(.red)
-                    .accessibilityHidden(!failed)
+                    .disabled(retryAt != nil)
+                passwordMessage
             }
 
             HStack(spacing: 12) {
@@ -97,7 +107,7 @@ struct UnlockView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(password.isEmpty || isWorking)
+                .disabled(password.isEmpty || isWorking || retryAt != nil)
                 .keyboardShortcut(.defaultAction)
 
                 #if os(iOS)
@@ -118,6 +128,41 @@ struct UnlockView: View {
                         .buttonStyle(.borderless)
                 }
             #endif
+        }
+    }
+
+    /// Under the field: a countdown while too many wrong passwords hold it back, how many tries
+    /// are left before that, or that the password was wrong.
+    @ViewBuilder
+    private var passwordMessage: some View {
+        if let retryAt {
+            VStack(spacing: 2) {
+                Text("Too many wrong passwords.")
+                Text("Try again in \(Text(timerInterval: Date.now...retryAt, countsDown: true)).")
+                    .monospacedDigit()
+            }
+            .font(.footnote)
+            .foregroundStyle(.red)
+            .multilineTextAlignment(.center)
+        } else if failed {
+            Text(wrongPasswordMessage)
+                .font(.footnote)
+                .foregroundStyle(.red)
+                .multilineTextAlignment(.center)
+        } else {
+            Text(" ")
+                .font(.footnote)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var wrongPasswordMessage: String {
+        let left = model.session?.passwordAttemptsBeforeDelay ?? UnlockThrottle.freeAttempts
+        switch left {
+        case 1: return "That password is wrong. One more wrong password and you'll have to wait a minute."
+        case 2: return "That password is wrong. Two more wrong passwords and you'll have to wait a minute."
+        case 0: return "That password is wrong."
+        default: return "That password is wrong. Try again."
         }
     }
 
@@ -215,7 +260,7 @@ struct UnlockView: View {
     #endif
 
     private func unlock() {
-        guard !password.isEmpty, !isWorking, let session = model.session else { return }
+        guard !password.isEmpty, !isWorking, retryAt == nil, let session = model.session else { return }
         isWorking = true
         failed = false
         Task {
@@ -226,7 +271,11 @@ struct UnlockView: View {
             } catch VaultError.wrongPassword {
                 failed = true
                 password = ""
-                isFocused = true
+                retryAt = session.nextPasswordAttempt
+                isFocused = retryAt == nil
+            } catch VaultError.tooManyAttempts(let until) {
+                password = ""
+                retryAt = until
             } catch {
                 model.errorMessage = AppModel.describe(error)
             }

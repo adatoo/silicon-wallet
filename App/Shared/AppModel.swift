@@ -89,8 +89,9 @@ final class AppModel {
             }
             let store = SyncedVaultStore(base: try SwiftDataVaultStore(directory: directory))
             let session = try VaultSession(
-                store: store, accessLog: AccessLog(directory: directory), trashLedger: TrashLedger(directory: directory)
-            )
+                store: store, accessLog: AccessLog(directory: directory),
+                trashLedger: TrashLedger(directory: directory),
+                unlockThrottle: UnlockThrottle(directory: directory))
             let sync =
                 CloudEntitlement.isAvailable
                 ? VaultSync(
@@ -263,6 +264,8 @@ final class AppModel {
     static func describe(_ error: Error) -> String {
         switch error {
         case VaultError.wrongPassword: "That password is wrong."
+        case VaultError.tooManyAttempts(let until):
+            "Too many wrong passwords. Try again \(until.formatted(.relative(presentation: .named)))."
         case VaultError.locked: "The vault is locked."
         case VaultError.notFound: "That item no longer exists."
         case VaultError.unknownGroup: "Choose a group for this entry."

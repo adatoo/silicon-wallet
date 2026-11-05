@@ -204,6 +204,16 @@ do; it can't be made to win conflicts or pass as another kind of record.
   On the Mac, Touch ID is part of the lock screen (`LocalAuthenticationView`), not a floating
   panel: the screen's `LAContext` is approved with Touch ID, then reused for the Keychain read so
   there's no second prompt. Typing the password stops it. iOS uses the system Face ID prompt.
+- Wrong passwords at the lock screen (`UnlockThrottle`): the first five cost nothing extra; after
+  that each one makes the next attempt wait, 1 minute doubling up to 1 hour, refused without
+  checking the password. The lock screen says how many tries are left before a wait, then counts
+  down with the field disabled. The count is local, kept in the clear in the vault folder (a
+  count and a time, nothing else), survives relaunch, and clears on any successful unlock or when
+  the vault is deleted. Face ID / Touch ID still unlock during a wait (they have their own
+  limits); password checks while unlocked (export, password change, the reminder) aren't held
+  back. A clock set back can't shorten a wait; one set forward can, which is accepted: this only
+  slows guessing in the app, and a copy of the vault's files is protected by Argon2id instead.
+  There's no wipe after failures: it wouldn't touch iCloud, and would let anyone erase the vault.
 - Auto-lock: after inactivity (default 5 min). On macOS also on sleep, screensaver and
   screen lock. On iOS when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
