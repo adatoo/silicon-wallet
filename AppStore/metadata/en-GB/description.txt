@@ -6,6 +6,7 @@ Everything is encrypted before it's saved or synced, with a key made from your m
 ORGANISED YOUR WAY
 • Groups with their own fields: give "Wi-Fi" a network and password, or "Membership" a number and renewal date
 • Favourites, notes and extra fields on any entry
+• Drag entries between groups, or move them from their menu; every value comes along
 • Fast search that ignores case and accents, and never looks inside hidden fields
 • Attachments such as scans and PDFs, previewed in the app and each encrypted with its own key
 
@@ -15,10 +16,14 @@ SAFE TO USE EVERY DAY
 • Hidden fields stay hidden until you reveal them
 • Copied passwords clear themselves from the clipboard
 • A generator for strong passwords and easy-to-type passphrases
+• After repeated wrong master passwords, longer and longer waits before the next try
 • An access log of unlocks and failed attempts on each device
 
 ON ALL YOUR DEVICES
 Your vault syncs through your own iCloud account, end-to-end encrypted. Change an entry on your Mac and it's on your iPhone moments later.
+
+BACK UP AND TAKE IT WITH YOU
+Export your vault as an encrypted backup protected by its own password, or as plain JSON for another app, attachments included. Import either one back without touching what's already there.
 
 MOVING FROM ACRYLIC WALLET
 Silicon Wallet organises your secrets the way Acrylic Wallet did, in groups with their own fields, and runs natively on Apple silicon. It reads Acrylic Wallet's vault file directly: groups, field labels, entries, notes, favourites and attachments all come across. You don't need the old app installed.

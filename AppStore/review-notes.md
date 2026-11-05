@@ -19,6 +19,14 @@ fully without it. Everything is encrypted on the device before it is stored or s
 (AES-256-GCM, with the key derived from the master password using Argon2id), so no
 plaintext ever reaches CloudKit.
 
+Export and import (File menu on the Mac; Settings on iPhone and iPad) need the master password.
+An encrypted backup is protected by a separate export password chosen at the time; JSON is
+plaintext and the app warns before saving it. Importing adds only items that aren't already in
+the vault, so importing the same file twice changes nothing.
+
+After five wrong master passwords in a row, the lock screen asks you to wait a minute before the
+next try (doubling up to an hour); the countdown is shown. Face ID and Touch ID still unlock.
+
 "Import from Acrylic Wallet" reads a vault file from Acrylic Software's discontinued Wallet
 app, if the person has one. It isn't needed to use the app.
 
