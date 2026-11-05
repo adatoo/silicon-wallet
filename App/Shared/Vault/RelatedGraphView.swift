@@ -56,48 +56,24 @@ struct RelatedGraphSheet: View {
     }
 
     private func canvas(_ graph: RelatedGraph) -> some View {
-        let points = graph.layout()
-        let rings = graph.nodes.map(\.depth).max() ?? 0
-        return GeometryReader { proxy in
-            let frame = Frame(size: proxy.size, rings: rings, zoom: zoom, offset: offset)
-            ZStack {
-                ForEach(graph.edges) { edge in
-                    let isTree = graph.isTreeEdge(edge)
-                    EdgeLine(from: frame.place(points[edge.first]), to: frame.place(points[edge.second]))
-                        .stroke(
-                            Color.secondary.opacity(isTree ? 0.6 : 0.35),
-                            style: StrokeStyle(lineWidth: 1.5, dash: isTree ? [] : [4, 4])
-                        )
-                        .accessibilityHidden(true)
-                }
-                ForEach(graph.nodes) { node in
-                    if let entry = model.session?.entry(id: node.id) {
-                        GraphNode(entry: entry, isCentre: node.depth == 0) {
-                            if node.depth == 0 {
-                                open(node.id)
-                            } else {
-                                recentre(on: node.id)
-                            }
-                        } open: {
-                            open(node.id)
-                        }
-                        .position(frame.place(points[node.id]))
-                        .transition(.opacity)
-                    }
-                }
+        RelatedGraphCanvas(graph: graph, isCompact: false, zoom: zoom, offset: offset) { node in
+            if node.depth == 0 {
+                open(node.id)
+            } else {
+                recentre(on: node.id)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-            .contentShape(.rect)
-            .gesture(drag)
-            .simultaneousGesture(magnify)
-            .accessibilityElement(children: .contain)
-            .overlay(alignment: .bottom) {
-                if graph.isTruncated {
-                    Text("Showing the nearest \(graph.nodes.count) entries.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .padding(8)
-                }
+        } onOpen: { id in
+            open(id)
+        }
+        .contentShape(.rect)
+        .gesture(drag)
+        .simultaneousGesture(magnify)
+        .overlay(alignment: .bottom) {
+            if graph.isTruncated {
+                Text("Showing the nearest \(graph.nodes.count) entries.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(8)
             }
         }
     }
@@ -137,34 +113,97 @@ struct RelatedGraphSheet: View {
     }
 }
 
+/// Draws a related graph: lines, then the nodes on top. The sheet's full size pans and zooms;
+/// the compact one sits inline in the entry view (DESIGN.md §3), fitted to a short, wide row.
+struct RelatedGraphCanvas: View {
+    @Environment(AppModel.self) private var model
+    let graph: RelatedGraph
+    let isCompact: Bool
+    var zoom: CGFloat = 1
+    var offset: CGSize = .zero
+    let onTap: (RelatedGraph.Node) -> Void
+    let onOpen: (UUID) -> Void
+
+    var body: some View {
+        let points = graph.layout()
+        let rings = graph.nodes.map(\.depth).max() ?? 0
+        let depths = Dictionary(graph.nodes.map { ($0.id, $0.depth) }) { first, _ in first }
+        GeometryReader { proxy in
+            let frame = Frame(size: proxy.size, rings: rings, zoom: zoom, offset: offset, isCompact: isCompact)
+            ZStack {
+                ForEach(graph.edges) { edge in
+                    let isTree = graph.isTreeEdge(edge)
+                    EdgeLine(
+                        from: frame.place(points[edge.first]), to: frame.place(points[edge.second]),
+                        fromInset: radius(isCentre: depths[edge.first] == 0),
+                        toInset: radius(isCentre: depths[edge.second] == 0)
+                    )
+                    .stroke(
+                        Color.secondary.opacity(isTree ? 0.6 : 0.35),
+                        style: StrokeStyle(lineWidth: isCompact ? 1.2 : 1.5, dash: isTree ? [] : [4, 4])
+                    )
+                    .accessibilityHidden(true)
+                }
+                ForEach(graph.nodes) { node in
+                    if let entry = model.session?.entry(id: node.id) {
+                        GraphNode(entry: entry, isCentre: node.depth == 0, isCompact: isCompact) {
+                            onTap(node)
+                        } open: {
+                            onOpen(node.id)
+                        }
+                        .position(frame.place(points[node.id]))
+                        .transition(.opacity)
+                    }
+                }
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .accessibilityElement(children: .contain)
+        }
+    }
+
+    private func radius(isCentre: Bool) -> CGFloat {
+        GraphNode.diameter(isCentre: isCentre, isCompact: isCompact) / 2
+    }
+}
+
 /// Maps the layout's graph units to points in the view.
 private struct Frame {
     let size: CGSize
     let rings: Int
     let zoom: CGFloat
     let offset: CGSize
-
-    /// Room at the edge for a node's icon and title.
-    private static let margin: CGFloat = 64
+    let isCompact: Bool
 
     func place(_ point: RelatedGraph.Point?) -> CGPoint {
-        let radius: CGFloat = min(size.width, size.height) / 2 - Self.margin
-        let unit: CGFloat = max(70, radius / CGFloat(max(rings, 1))) * zoom
+        let rings = CGFloat(max(rings, 1))
+        // The full graph keeps its rings round; the compact one stretches them to the row, and
+        // leaves room below the bottom ring for its titles.
+        let unitX: CGFloat
+        let unitY: CGFloat
+        if isCompact {
+            unitX = max(44, (size.width / 2 - 56) / rings)
+            unitY = max(28, (size.height / 2 - 40) / rings)
+        } else {
+            let unit: CGFloat = max(70, (min(size.width, size.height) / 2 - 64) / rings) * zoom
+            (unitX, unitY) = (unit, unit)
+        }
         // The layout puts the first ring's first entry at the top; in a wide view it goes to the
         // right instead, so the graph spreads along the longer side.
         let isWide = size.width > size.height
         let gx: CGFloat = CGFloat(isWide ? -(point?.y ?? 0) : (point?.x ?? 0))
         let gy: CGFloat = CGFloat(isWide ? (point?.x ?? 0) : (point?.y ?? 0))
-        let x: CGFloat = size.width / 2 + offset.width + gx * unit
-        let y: CGFloat = size.height / 2 + offset.height + gy * unit
+        let x: CGFloat = size.width / 2 + offset.width + gx * unitX
+        let y: CGFloat = size.height / 2 + offset.height + gy * unitY
         return CGPoint(x: x, y: y)
     }
 }
 
-/// A straight line whose ends animate with the nodes they join.
+/// A straight line between two nodes, stopping at their circles, whose ends animate with them.
 private struct EdgeLine: Shape {
     var from: CGPoint
     var to: CGPoint
+    let fromInset: CGFloat
+    let toInset: CGFloat
 
     var animatableData: AnimatablePair<CGPoint.AnimatableData, CGPoint.AnimatableData> {
         get { AnimatablePair(from.animatableData, to.animatableData) }
@@ -175,9 +214,15 @@ private struct EdgeLine: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: from)
-            path.addLine(to: to)
+        let dx = to.x - from.x
+        let dy = to.y - from.y
+        let length = (dx * dx + dy * dy).squareRoot()
+        guard length > fromInset + toInset else { return Path() }
+        let ux = dx / length
+        let uy = dy / length
+        return Path { path in
+            path.move(to: CGPoint(x: from.x + ux * fromInset, y: from.y + uy * fromInset))
+            path.addLine(to: CGPoint(x: to.x - ux * toInset, y: to.y - uy * toInset))
         }
     }
 }
@@ -187,43 +232,72 @@ private struct GraphNode: View {
     @Environment(AppModel.self) private var model
     let entry: VaultEntry
     let isCentre: Bool
+    let isCompact: Bool
     let action: () -> Void
     let open: () -> Void
+
+    static func diameter(isCentre: Bool, isCompact: Bool) -> CGFloat {
+        switch (isCompact, isCentre) {
+        case (false, true): 56
+        case (false, false): 44
+        case (true, true): 44
+        case (true, false): 34
+        }
+    }
 
     var body: some View {
         let group = model.session?.group(id: entry.groupID)
         let title = entry.title.isEmpty ? "Untitled" : entry.title
-        let diameter: CGFloat = isCentre ? 56 : 44
+        let diameter = Self.diameter(isCentre: isCentre, isCompact: isCompact)
         Button(action: action) {
             // Only the circle takes up space, so the node's position is the circle's centre and
             // the lines meet it there; the title hangs underneath.
             GroupSymbol(group?.icon)
-                .font(isCentre ? .title2 : .title3)
+                .font(isCompact ? (isCentre ? .title3 : .body) : (isCentre ? .title2 : .title3))
                 .foregroundStyle(isCentre ? AnyShapeStyle(.white) : AnyShapeStyle(.tint))
                 .frame(width: diameter, height: diameter)
-                // Opaque underneath, so the lines stop at the circle rather than show through.
                 .background(isCentre ? AnyShapeStyle(.tint) : AnyShapeStyle(.tint.opacity(0.14)), in: .circle)
-                .background(.background, in: .circle)
                 .overlay(alignment: .top) {
-                    Text(title)
-                        .font(isCentre ? .caption.weight(.semibold) : .caption)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .padding(.horizontal, 4)
-                        .background(.background.opacity(0.9), in: .rect(cornerRadius: 4))
-                        .frame(width: 120)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .alignmentGuide(.top) { _ in -(diameter + 4) }
+                    // Inline, the middle is the entry on screen, already titled above.
+                    if !(isCompact && isCentre) {
+                        nodeTitle(title, diameter: diameter)
+                    }
                 }
                 .contentShape(.circle)
         }
         .buttonStyle(.plain)
-        .help(isCentre ? "Open \(title)" : "Show what's related to \(title)")
+        .allowsHitTesting(!(isCompact && isCentre))
+        .help(helpText(title))
         .accessibilityLabel("\(title), \(group?.name ?? "No group")")
         .accessibilityHint(isCentre ? "Opens this entry." : "Moves this entry to the middle of the graph.")
         .contextMenu {
-            Button("Open", systemImage: "arrow.forward.circle", action: open)
+            if !(isCompact && isCentre) {
+                Button("Open", systemImage: "arrow.forward.circle", action: open)
+            }
         }
+    }
+
+    private func nodeTitle(_ title: String, diameter: CGFloat) -> some View {
+        Text(title)
+            .font(isCentre ? .caption.weight(.semibold) : .caption)
+            .multilineTextAlignment(.center)
+            .lineLimit(isCompact ? 1 : 2)
+            .truncationMode(.tail)
+            .padding(.horizontal, isCompact ? 0 : 4)
+            // Full size, a dashed cycle line can pass under a title; keep it readable.
+            .background(
+                isCompact ? AnyShapeStyle(.clear) : AnyShapeStyle(.background.opacity(0.9)),
+                in: .rect(cornerRadius: 4)
+            )
+            .frame(width: isCompact ? 84 : 120)
+            .fixedSize(horizontal: false, vertical: true)
+            // Below the circle; an offset doesn't change the node's size or centre.
+            .offset(y: diameter + 3)
+    }
+
+    private func helpText(_ title: String) -> String {
+        if isCompact { return "Open \(title)" }
+        return isCentre ? "Open \(title)" : "Show what's related to \(title)"
     }
 }
 

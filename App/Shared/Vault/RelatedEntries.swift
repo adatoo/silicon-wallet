@@ -33,6 +33,7 @@ struct RelatedEntriesSection: View {
         let related = entry.deleted == nil ? (model.session?.relatedEntries(of: entry.id) ?? []) : []
         if !related.isEmpty {
             Section {
+                InlineRelatedGraph(entryID: entry.id)
                 ForEach(related) { other in
                     Button {
                         model.reveal(other.id)
@@ -55,13 +56,52 @@ struct RelatedEntriesSection: View {
                 HStack {
                     Text("Related")
                     Spacer()
-                    Button("Show Graph", systemImage: "point.3.connected.trianglepath.dotted") { showingGraph = true }
+                    Button("Expand Graph", systemImage: "arrow.up.left.and.arrow.down.right") { showingGraph = true }
+                        .labelStyle(.iconOnly)
                         .buttonStyle(.borderless)
-                        .help("Show related entries as a graph")
+                        .help("Open the graph full size, to zoom and move around")
                         .sheet(isPresented: $showingGraph) { RelatedGraphSheet(entryID: entry.id) }
                 }
             }
         }
+    }
+}
+
+/// The compact graph at the top of the Related section: up to two links away and twelve
+/// entries, no zooming. Choosing an entry opens it, with its own graph. VoiceOver skips it,
+/// since the rows below list the same entries.
+private struct InlineRelatedGraph: View {
+    @Environment(AppModel.self) private var model
+    let entryID: UUID
+
+    @State private var width: CGFloat = 0
+
+    private static let limit = 12
+
+    var body: some View {
+        // Two rings need the width of a Mac or iPad detail column; a phone shows one.
+        let depth = width >= 420 ? 2 : 1
+        let graph = model.session?.relatedGraph(from: entryID, depth: depth, limit: Self.limit) ?? .empty
+        let rings = graph.nodes.map(\.depth).max() ?? 0
+        VStack(spacing: 4) {
+            RelatedGraphCanvas(graph: graph, isCompact: true) { node in
+                if node.depth > 0 { model.reveal(node.id) }
+            } onOpen: { id in
+                model.reveal(id)
+            }
+            .frame(height: rings > 1 ? 300 : 200)
+            if graph.isTruncated {
+                Text("Showing the nearest \(Self.limit); expand to see all.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .onGeometryChange(for: CGFloat.self) {
+            $0.size.width
+        } action: {
+            width = $0
+        }
+        .accessibilityHidden(true)
     }
 }
 
