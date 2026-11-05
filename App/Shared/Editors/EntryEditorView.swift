@@ -133,7 +133,7 @@ struct EntryEditorView: View {
 
     /// Saves, unless that would delete attachments or filled-in extra fields: then it asks first.
     private func requestSave() {
-        let removals = original.map { draft.removals(since: $0) }
+        let removals = original.map { draft.removals(since: $0, in: group) }
         if let removals, !removals.isEmpty {
             pendingRemovals = removals
         } else {

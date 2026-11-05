@@ -58,3 +58,40 @@ private let original = VaultEntry(
     #expect(removals.extraFields.map(\.label) == ["Fake PIN", "Fake Member"])
     #expect(removals.attachments.map(\.filename) == ["fake-a.pdf", "fake-c.txt"])
 }
+
+// Moving to another group: an extra field whose label matches one of the new group's fields
+// moves into it (`moved(from:to:)`), so it isn't a removal.
+
+private let fakeOldGroup = VaultGroup(name: "Fake Custom Cards", fields: [FieldTemplate(label: "Card Number")])
+private let fakeNewGroup = VaultGroup(
+    name: "Fake Cards",
+    fields: [FieldTemplate(label: "Card Number"), FieldTemplate(label: "pin ", kind: .number, isConcealed: true)])
+private let fakeCard = VaultEntry(
+    groupID: fakeOldGroup.id, title: "Fake Card", values: [fakeOldGroup.fields[0].id: "0000 0000 0000 0000"],
+    extraFields: [
+        CustomField(label: "PIN", kind: .number, isConcealed: true, value: "0000"),
+        CustomField(label: "Fake Member", value: "FAKE-1"),
+    ])
+
+@Test func aFieldMovedIntoTheNewGroupsFieldIsNotARemoval() {
+    let moved = fakeCard.moved(from: fakeOldGroup, to: fakeNewGroup)
+    #expect(moved.values[fakeNewGroup.fields[1].id] == "0000")
+    #expect(moved.removals(since: fakeCard, in: fakeNewGroup).isEmpty)
+}
+
+@Test func aFieldRemovedAfterMovingIsStillListed() {
+    var moved = fakeCard.moved(from: fakeOldGroup, to: fakeNewGroup)
+    moved.extraFields.removeAll { $0.label == "Fake Member" }
+    #expect(moved.removals(since: fakeCard, in: fakeNewGroup).extraFields.map(\.label) == ["Fake Member"])
+}
+
+@Test func aMovedFieldClearedInItsNewPlaceIsListed() {
+    var moved = fakeCard.moved(from: fakeOldGroup, to: fakeNewGroup)
+    moved.values[fakeNewGroup.fields[1].id] = nil
+    #expect(moved.removals(since: fakeCard, in: fakeNewGroup).extraFields.map(\.label) == ["PIN"])
+}
+
+@Test func withoutTheGroupAMovedFieldCountsAsRemoved() {
+    let moved = fakeCard.moved(from: fakeOldGroup, to: fakeNewGroup)
+    #expect(moved.removals(since: fakeCard).extraFields.map(\.label) == ["PIN"])
+}

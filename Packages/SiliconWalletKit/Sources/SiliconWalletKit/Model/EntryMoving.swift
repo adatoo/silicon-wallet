@@ -36,7 +36,8 @@ extension VaultEntry {
         return moved
     }
 
-    private static func sameLabel(_ a: String, _ b: String) -> Bool {
+    /// Labels match ignoring case and surrounding spaces.
+    static func sameLabel(_ a: String, _ b: String) -> Bool {
         a.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(b.trimmingCharacters(in: .whitespaces))
             == .orderedSame
     }
