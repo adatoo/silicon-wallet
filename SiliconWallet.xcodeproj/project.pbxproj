@@ -31,6 +31,7 @@
 		7BF6FD45429C997D7330850A /* ContinuityCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEEA27E8F9EF53AA0B68A4C /* ContinuityCameraTests.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
+		88B730B66B4C44EDCFF8A0AA /* CardScanReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FFCD4C9DC0CAFA749F626D7 /* CardScanReview.swift */; };
 		8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADA40B1A128244E04793739F /* GeneratorView.swift */; };
 		8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17329ADEF2D57777E8BCC4BC /* Reordering.swift */; };
 		92BB4702F90BB632F34A7D09 /* VaultFileImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54004CAB94B5920F124863DD /* VaultFileImportView.swift */; };
@@ -47,6 +48,7 @@
 		C9771FF340427DA1856D281D /* CardScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F51302D6483AB048B06C884 /* CardScanTests.swift */; };
 		CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */; };
 		D2E8F03BB82956CD144E8566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF419223A81F08132A022785 /* Assets.xcassets */; };
+		D480EFF4503E898DC090082B /* CardImageAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1A3AAD6D1E0902D6271691 /* CardImageAnalyzer.swift */; };
 		D668ED4A86BE3805AEB40CCC /* EntryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA3030D78EC8B624B8E4D5 /* EntryCard.swift */; };
 		DEB8D34F795FA6CFBA320896 /* SyncStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92875FCE2F36955F82E985E1 /* SyncStatusView.swift */; };
 		E5AD4277925DF8A1C0EAA092 /* VaultManagementViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */; };
@@ -89,8 +91,10 @@
 		4266E3C1040523BF58616363 /* CardScanButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScanButtons.swift; sourceTree = "<group>"; };
 		459841ABE8974838A298AE03 /* CardScanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScanning.swift; sourceTree = "<group>"; };
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
+		4A1A3AAD6D1E0902D6271691 /* CardImageAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardImageAnalyzer.swift; sourceTree = "<group>"; };
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
 		4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManagementViews.swift; sourceTree = "<group>"; };
+		4FFCD4C9DC0CAFA749F626D7 /* CardScanReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScanReview.swift; sourceTree = "<group>"; };
 		54004CAB94B5920F124863DD /* VaultFileImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultFileImportView.swift; sourceTree = "<group>"; };
 		540ED315C4F1D3AA5B087506 /* ContinuityCameraButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuityCameraButton.swift; sourceTree = "<group>"; };
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
@@ -203,8 +207,10 @@
 		582A8A3D6F94A781D821D363 /* Scanning */ = {
 			isa = PBXGroup;
 			children = (
+				4A1A3AAD6D1E0902D6271691 /* CardImageAnalyzer.swift */,
 				4266E3C1040523BF58616363 /* CardScanButtons.swift */,
 				459841ABE8974838A298AE03 /* CardScanning.swift */,
+				4FFCD4C9DC0CAFA749F626D7 /* CardScanReview.swift */,
 			);
 			path = Scanning;
 			sourceTree = "<group>";
@@ -481,8 +487,10 @@
 				4B289FEEC42D20F8F8484737 /* AppModel.swift in Sources */,
 				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
 				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
+				D480EFF4503E898DC090082B /* CardImageAnalyzer.swift in Sources */,
 				79C839AA7E789050796D3865 /* CardPhotoReviewSheet.swift in Sources */,
 				9B85565C35ECE179F79FE07C /* CardScanButtons.swift in Sources */,
+				88B730B66B4C44EDCFF8A0AA /* CardScanReview.swift in Sources */,
 				B5D90B24903F2A3462EA43A2 /* CardScannerView.swift in Sources */,
 				4B361BC5E72724DF63A1505D /* CardScanning.swift in Sources */,
 				13D7D273C8B2C6ECAC623B96 /* CardSchemeBadge.swift in Sources */,
