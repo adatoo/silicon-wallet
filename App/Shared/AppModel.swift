@@ -29,6 +29,13 @@ final class AppModel {
     /// iOS: the app was woken in the background before the device was unlocked, so the vault's
     /// files can't be opened yet (DESIGN.md §6). The app relaunches the model once they can.
     let isWaitingForDeviceUnlock: Bool
+    /// The vault is the in-memory one for demos, screenshots and tests (`-InMemoryVault`). It
+    /// gets its own Face ID / Touch ID key and lock settings, so the real vault's are never
+    /// touched.
+    let isInMemory: Bool
+
+    /// The Keychain item for this vault's Face ID / Touch ID key.
+    var biometricItem: BiometricKeychain.Item { isInMemory ? .demo : .vault }
 
     var sidebarSelection: SidebarItem? = .all
     /// Which column a compact (iPhone) split view shows.
@@ -48,12 +55,13 @@ final class AppModel {
 
     init(
         session: VaultSession?, sync: VaultSync? = nil, startupError: String? = nil,
-        isWaitingForDeviceUnlock: Bool = false
+        isWaitingForDeviceUnlock: Bool = false, isInMemory: Bool = false
     ) {
         self.session = session
         self.sync = sync
         self.startupError = startupError
         self.isWaitingForDeviceUnlock = isWaitingForDeviceUnlock
+        self.isInMemory = isInMemory
         if let session, let sync {
             sync.onRemoteChanges = { [weak self, weak session] in
                 try? session?.reload()
@@ -62,7 +70,7 @@ final class AppModel {
             sync.onVaultDeletedRemotely = { [weak session] in
                 // The same clean-up as deleting the vault here (VaultManagementViews).
                 session?.vaultWasDeletedElsewhere()
-                BiometricKeychain.delete()
+                BiometricKeychain.delete(.vault)
                 TemporaryPreviews.removeAll()
                 Clipboard.clearIfOurs()
             }
@@ -81,7 +89,7 @@ final class AppModel {
             let underTest = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
             if arguments.contains("-InMemoryVault") || underTest {
                 let session = try VaultSession(store: SwiftDataVaultStore.inMemory())
-                return AppModel(session: session)
+                return AppModel(session: session, isInMemory: true)
             }
             let directory = try SwiftDataVaultStore.defaultDirectory()
             if SwiftDataVaultStore.isWaitingForDeviceUnlock(directory: directory) {

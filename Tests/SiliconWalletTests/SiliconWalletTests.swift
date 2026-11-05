@@ -293,3 +293,44 @@ private func freshSettings() -> LockSettings {
     #expect(PreviewGeometry.doubleTapScale(fit: 1) == 2.5)
     #expect(PreviewGeometry.doubleTapScale(fit: 5) == PreviewGeometry.maximumScale)
 }
+
+// MARK: - Demo isolation (#114)
+
+@MainActor
+@Test func theInMemoryVaultUsesItsOwnKeychainItemAndUnsavedLockSettings() {
+    let model = AppModel.launch(arguments: ["-InMemoryVault"])
+    #expect(model.isInMemory)
+    #expect(model.biometricItem == .demo)
+    let lock = LockController(model: model, settings: .for(model))
+    #expect(!lock.settings.isSaved)
+
+    let real = AppModel(session: nil)
+    #expect(real.biometricItem == .vault)
+    #expect(LockSettings.for(real).isSaved)
+}
+
+@MainActor
+@Test func unsavedLockSettingsStartFromTheDefaultsAndAreNeverKept() {
+    let demo = LockSettings.inMemory()
+    #expect(demo.autoLockMinutes == 5)
+    #expect(demo.lockOnSleep)
+    #expect(!demo.biometricsEnabled)
+    demo.autoLockMinutes = 30
+    demo.biometricsEnabled = true
+    demo.nextPasswordReminder = .now
+
+    let next = LockSettings.inMemory()
+    #expect(next.autoLockMinutes == 5)
+    #expect(!next.biometricsEnabled)
+    #expect(next.nextPasswordReminder == nil)
+}
+
+@MainActor
+@Test func savedLockSettingsAreKept() throws {
+    let suite = "com.datoos.silicon-wallet.tests.\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let settings = LockSettings(defaults: defaults)
+    settings.autoLockMinutes = 30
+    #expect(LockSettings(defaults: defaults).autoLockMinutes == 30)
+}

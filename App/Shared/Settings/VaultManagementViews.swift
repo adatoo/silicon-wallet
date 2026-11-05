@@ -135,7 +135,7 @@ struct DeleteVaultView: View {
                 }
                 TemporaryPreviews.removeAll()
                 Clipboard.clearIfOurs()
-                BiometricKeychain.delete()
+                BiometricKeychain.delete(model.biometricItem)
                 try session.deleteVault()
                 model.entrySelection = nil
                 model.sidebarSelection = .all
