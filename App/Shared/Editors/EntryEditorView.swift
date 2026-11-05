@@ -57,7 +57,8 @@ struct EntryEditorView: View {
                         FieldInput(
                             label: field.label, kind: field.kind, isConcealed: field.isConcealed,
                             isMonospaced: field.isMonospaced, value: valueBinding(field.id),
-                            isCardNumber: PaymentCard.isCardNumberLabel(field.label))
+                            isCardNumber: PaymentCard.isCardNumberLabel(field.label),
+                            isSortCode: SortCode.isSortCodeLabel(field.label))
                     }
                 }
             }
@@ -337,6 +338,8 @@ struct FieldInput: View {
     @Binding var value: String
     /// Shows the card's scheme and warns when a full number fails its check digit.
     var isCardNumber = false
+    /// Writes six digits as `12-34-56` once they're typed or pasted.
+    var isSortCode = false
     @State private var isRevealed = false
     @State private var generating = false
 
@@ -400,6 +403,8 @@ struct FieldInput: View {
             // already in a value are left alone.
             if kind != .multiline, !old.contains(where: \.isNewline), new.contains(where: \.isNewline) {
                 value = new.split(whereSeparator: \.isNewline).joined(separator: " ")
+            } else if isSortCode, let formatted = SortCode.formatted(new), formatted != new {
+                value = formatted
             }
         }
         .sheet(isPresented: $generating) {
@@ -456,7 +461,8 @@ struct ExtraFieldInput: View {
             }
             FieldInput(
                 label: "Value", kind: field.kind, isConcealed: field.isConcealed, isMonospaced: field.isMonospaced,
-                value: $field.value, isCardNumber: PaymentCard.isCardNumberLabel(field.label))
+                value: $field.value, isCardNumber: PaymentCard.isCardNumberLabel(field.label),
+                isSortCode: SortCode.isSortCodeLabel(field.label))
         }
         .onChange(of: field.kind) { old, new in
             if old.isConcealedByDefault != new.isConcealedByDefault {
