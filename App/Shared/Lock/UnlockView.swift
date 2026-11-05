@@ -32,6 +32,7 @@ struct UnlockView: View {
                 .accessibilityHidden(true)
             Text("Silicon Wallet Is Locked")
                 .font(.title.bold())
+                .multilineTextAlignment(.center)
 
             if showsPassword {
                 passwordForm
@@ -132,37 +133,38 @@ struct UnlockView: View {
     }
 
     /// Under the field: a countdown while too many wrong passwords hold it back, how many tries
-    /// are left before that, or that the password was wrong.
-    @ViewBuilder
+    /// are left before that, or that the password was wrong. Every message takes the same box, the
+    /// field's width and two lines tall at the current text size, so the card never changes size.
     private var passwordMessage: some View {
+        ZStack {
+            // The longest message, unseen, sets the box's height.
+            Text("Too many wrong passwords.\nTry again in 0:00:00.")
+                .hidden()
+                .accessibilityHidden(true)
+            message
+        }
+        .font(.footnote)
+        .monospacedDigit()
+        .foregroundStyle(.red)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: 320)
+    }
+
+    @ViewBuilder
+    private var message: some View {
         if let retryAt {
-            VStack(spacing: 2) {
-                Text("Too many wrong passwords.")
-                Text("Try again in \(Text(timerInterval: Date.now...retryAt, countsDown: true)).")
-                    .monospacedDigit()
-            }
-            .font(.footnote)
-            .foregroundStyle(.red)
-            .multilineTextAlignment(.center)
+            Text(
+                "Too many wrong passwords.\nTry again in \(Text(timerInterval: Date.now...retryAt, countsDown: true)).")
         } else if failed {
             Text(wrongPasswordMessage)
-                .font(.footnote)
-                .foregroundStyle(.red)
-                .multilineTextAlignment(.center)
-        } else {
-            Text(" ")
-                .font(.footnote)
-                .accessibilityHidden(true)
         }
     }
 
     private var wrongPasswordMessage: String {
-        let left = model.session?.passwordAttemptsBeforeDelay ?? UnlockThrottle.freeAttempts
-        switch left {
-        case 1: return "That password is wrong. One more wrong password and you'll have to wait a minute."
-        case 2: return "That password is wrong. Two more wrong passwords and you'll have to wait a minute."
-        case 0: return "That password is wrong."
-        default: return "That password is wrong. Try again."
+        switch model.session?.passwordAttemptsBeforeDelay ?? UnlockThrottle.freeAttempts {
+        case 1: "Wrong password. 1 more try before a 1-minute wait."
+        case 2: "Wrong password. 2 more tries before a 1-minute wait."
+        default: "That password is wrong."
         }
     }
 
@@ -259,20 +261,27 @@ struct UnlockView: View {
         }
     #endif
 
+    /// Reads a message out with VoiceOver, which doesn't notice text changing under the field.
+    private func announce(_ message: String) {
+        AccessibilityNotification.Announcement(message).post()
+    }
+
     private func unlock() {
         guard !password.isEmpty, !isWorking, retryAt == nil, let session = model.session else { return }
+        // The last message stays while this attempt is checked, rather than blinking out.
         isWorking = true
-        failed = false
         Task {
             do {
                 try await session.unlock(password: password)
                 password = ""
+                failed = false
                 lock.didUnlockWithPassword()
             } catch VaultError.wrongPassword {
                 failed = true
                 password = ""
                 retryAt = session.nextPasswordAttempt
                 isFocused = retryAt == nil
+                announce(retryAt == nil ? wrongPasswordMessage : "Too many wrong passwords. Wait before trying again.")
             } catch VaultError.tooManyAttempts(let until) {
                 password = ""
                 retryAt = until
