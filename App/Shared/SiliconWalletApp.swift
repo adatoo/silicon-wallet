@@ -14,7 +14,7 @@ struct SiliconWalletApp: App {
     init() {
         let model = AppModel.launch()
         _model = State(initialValue: model)
-        _lock = State(initialValue: LockController(model: model))
+        _lock = State(initialValue: LockController(model: model, settings: .for(model)))
     }
 
     /// Opens the vault once the device has been unlocked, if the app was woken in the background
@@ -24,7 +24,7 @@ struct SiliconWalletApp: App {
         let relaunched = AppModel.launch()
         guard !relaunched.isWaitingForDeviceUnlock else { return }
         model = relaunched
-        lock = LockController(model: relaunched)
+        lock = LockController(model: relaunched, settings: .for(relaunched))
         lock.start()
         relaunched.sync?.start()
     }

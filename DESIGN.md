@@ -109,7 +109,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   About links to the support page, the privacy policy and the source (`AppLinks`).
 - Launch arguments `-InMemoryVault -DemoVault` (optionally `-Locked`) open a throwaway vault
   filled with obviously fake entries, for UI tests and screenshots. `-entryLayout cards` shows
-  the card view for that launch.
+  the card view for that launch. That vault keeps its Face ID / Touch ID key in its own Keychain
+  item (`BiometricKeychain.Item.demo`, cleared at launch) and its lock settings in memory, so it
+  never reads, replaces or deletes the real vault's key or changes its settings.
 
 ## 4. Data model (plaintext, in memory only)
 

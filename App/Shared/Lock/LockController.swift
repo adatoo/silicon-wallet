@@ -33,9 +33,11 @@ final class LockController {
         @ObservationIgnored private var eventMonitor: Any?
     #endif
 
-    init(model: AppModel, settings: LockSettings = LockSettings()) {
+    init(model: AppModel, settings: LockSettings) {
         self.model = model
         self.settings = settings
+        // A new demo vault starts with Face ID / Touch ID off, so drop any key a previous one left.
+        if model.isInMemory { BiometricKeychain.delete(.demo) }
         Clipboard.clearAfter = settings.clipboardSeconds
         TemporaryPreviews.removeAll()
     }
@@ -132,7 +134,7 @@ final class LockController {
         if settings.biometricsEnabled, let key = model.session?.vaultKeyForBiometricUnlock() {
             // Store it again, so it always matches this vault and the faces or fingerprints
             // enrolled now.
-            try? BiometricKeychain.store(key)
+            try? BiometricKeychain.store(key, in: model.biometricItem)
         } else if !settings.biometricsOffered, biometricKind != .none {
             isOfferingBiometrics = true
         }
@@ -143,7 +145,8 @@ final class LockController {
     /// Whether the unlock screen should offer Face ID or Touch ID now. Once turned on, they work
     /// until the stored key is gone: the faces or fingerprints changed, or this is a new device.
     var canUnlockWithBiometrics: Bool {
-        settings.biometricsEnabled && biometricKind != .none && BiometricKeychain.hasStoredKey
+        settings.biometricsEnabled && biometricKind != .none
+            && BiometricKeychain.hasStoredKey(in: model.biometricItem)
     }
 
     /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
@@ -156,9 +159,9 @@ final class LockController {
         do {
             let key =
                 if let context {
-                    try await BiometricKeychain.load(context: context, reason: reason)
+                    try await BiometricKeychain.load(from: model.biometricItem, context: context, reason: reason)
                 } else {
-                    try await BiometricKeychain.load(reason: reason)
+                    try await BiometricKeychain.load(from: model.biometricItem, reason: reason)
                 }
             try session.unlock(vaultKey: key)
             recordActivity()
@@ -172,7 +175,7 @@ final class LockController {
             // Fall back to the password field.
         } catch BiometricError.noStoredKey, VaultError.wrongPassword {
             // Biometrics stay on: the next password unlock stores a fresh key.
-            BiometricKeychain.delete()
+            BiometricKeychain.delete(model.biometricItem)
             notice =
                 "\(biometricKind.name) needs your password once, because the faces or fingerprints on this device changed."
         } catch {
@@ -186,7 +189,7 @@ final class LockController {
         if enabled {
             guard let key = model.session?.vaultKeyForBiometricUnlock() else { return }
             do {
-                try BiometricKeychain.store(key)
+                try BiometricKeychain.store(key, in: model.biometricItem)
                 settings.biometricsEnabled = true
                 if settings.nextPasswordReminder == nil {
                     settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
@@ -196,7 +199,7 @@ final class LockController {
                 model.errorMessage = "\(biometricKind.name) couldn't be turned on: \(error.localizedDescription)"
             }
         } else {
-            BiometricKeychain.delete()
+            BiometricKeychain.delete(model.biometricItem)
             settings.biometricsEnabled = false
         }
         settings.biometricsOffered = true

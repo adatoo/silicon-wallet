@@ -108,3 +108,15 @@ func aFaceOrFingerThatIsNotRecognisedFallsBackQuietly(status: OSStatus) {
     #expect(BiometricKeychain.readFailure(-8) == .lockedOut)
     #expect(BiometricKeychain.readFailure(errSecMissingEntitlement) == .keychain(errSecMissingEntitlement))
 }
+
+// MARK: - Keychain items
+
+@Test func theDemoKeyLivesInItsOwnKeychainItem() {
+    let vault = BiometricKeychain.query(for: .vault)
+    let demo = BiometricKeychain.query(for: .demo)
+    #expect(vault[kSecAttrService as String] as? String == demo[kSecAttrService as String] as? String)
+    #expect(vault[kSecAttrAccount as String] as? String == "vault")
+    #expect(demo[kSecAttrAccount as String] as? String == "demo")
+    // Never synced, in either.
+    #expect(demo[kSecAttrSynchronizable as String] as? Bool == false)
+}

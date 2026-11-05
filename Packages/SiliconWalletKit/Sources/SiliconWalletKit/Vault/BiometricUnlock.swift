@@ -34,7 +34,13 @@ extension BiometricError: LocalizedError {
 /// or face invalidates the item, so the master password is needed again.
 public enum BiometricKeychain {
     static let service = "com.datoos.silicon-wallet.vault-key"
-    static let account = "vault"
+
+    /// Which Keychain item holds the key. The demo vault (`-InMemoryVault`) has its own, so
+    /// trying it out never replaces, reads or deletes the real vault's key.
+    public enum Item: String, Sendable {
+        case vault
+        case demo
+    }
 
     public enum Kind: Sendable {
         case none
@@ -55,15 +61,15 @@ public enum BiometricKeychain {
         }
     }
 
-    public static func store(_ vaultKey: SymmetricKey) throws {
+    public static func store(_ vaultKey: SymmetricKey, in item: Item = .vault) throws {
         guard availableKind != .none else { throw BiometricError.unavailable }
         guard
             let access = SecAccessControlCreateWithFlags(
                 nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, .biometryCurrentSet, nil)
         else { throw BiometricError.unavailable }
 
-        delete()
-        var query = baseQuery
+        delete(item)
+        var query = query(for: item)
         query[kSecAttrAccessControl as String] = access
         query[kSecValueData as String] = vaultKey.withUnsafeBytes { Data($0) }
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -72,13 +78,13 @@ public enum BiometricKeychain {
 
     /// Asks for Face ID or Touch ID, then returns the stored vault key. The Keychain shows its
     /// own prompt.
-    public static func load(reason: String) async throws -> SymmetricKey {
+    public static func load(from item: Item = .vault, reason: String) async throws -> SymmetricKey {
         let context = LAContext()
         context.localizedReason = reason
         context.localizedCancelTitle = "Use Password"
         // No "Enter Password" button after a failed attempt: the password field is right there.
         context.localizedFallbackTitle = ""
-        return try await read(context: context)
+        return try await read(item, context: context)
     }
 
     /// Asks for Touch ID through `context`, then returns the stored vault key. On the Mac the
@@ -86,7 +92,9 @@ public enum BiometricKeychain {
     /// the window rather than as a floating panel. The Keychain read reuses the approved context,
     /// so it doesn't ask again.
     @MainActor
-    public static func load(context: LAContext, reason: String) async throws -> SymmetricKey {
+    public static func load(from item: Item = .vault, context: LAContext, reason: String) async throws
+        -> SymmetricKey
+    {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { _, error in
                 if let error {
@@ -99,14 +107,14 @@ public enum BiometricKeychain {
         // The lock screen keeps the context only to display it; nothing else uses it until the
         // read returns.
         nonisolated(unsafe) let approved = context
-        return try await read(context: approved)
+        return try await read(item, context: approved)
     }
 
     /// Reads the key with `context`. The Keychain call blocks while any prompt shows, so it runs
     /// off the main actor.
-    private static func read(context: sending LAContext) async throws -> SymmetricKey {
+    private static func read(_ item: Item, context: sending LAContext) async throws -> SymmetricKey {
         let data: Data = try await Task.detached(priority: .userInitiated) {
-            var query = baseQuery
+            var query = query(for: item)
             query[kSecReturnData as String] = true
             query[kSecMatchLimit as String] = kSecMatchLimitOne
             query[kSecUseAuthenticationContext as String] = context
@@ -151,25 +159,25 @@ public enum BiometricKeychain {
         }
     }
 
-    public static func delete() {
-        SecItemDelete(baseQuery as CFDictionary)
+    public static func delete(_ item: Item = .vault) {
+        SecItemDelete(query(for: item) as CFDictionary)
     }
 
     /// Whether a key is stored, without prompting.
-    public static var hasStoredKey: Bool {
+    public static func hasStoredKey(in item: Item = .vault) -> Bool {
         let context = LAContext()
         context.interactionNotAllowed = true
-        var query = baseQuery
+        var query = query(for: item)
         query[kSecUseAuthenticationContext as String] = context
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         return status == errSecSuccess || status == errSecInteractionNotAllowed
     }
 
-    private static var baseQuery: [String: Any] {
+    static func query(for item: Item) -> [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: item.rawValue,
             kSecAttrSynchronizable as String: false,
             kSecUseDataProtectionKeychain as String: true,
         ]
