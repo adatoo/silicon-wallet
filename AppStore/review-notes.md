@@ -30,6 +30,11 @@ next try (doubling up to an hour); the countdown is shown. Face ID and Touch ID 
 "Import from Acrylic Wallet" reads a vault file from Acrylic Software's discontinued Wallet
 app, if the person has one. It isn't needed to use the app.
 
+Card scanning (in a Credit Cards entry's editor, Scan Card) uses the camera on iPhone and iPad
+to read a card's number, expiry and name on the device; on the Mac it uses a photo taken with
+a nearby iPhone through Continuity Camera. Frames and photos stay in memory and are never saved
+or sent anywhere. Any card works for testing, including a printed example card.
+
 The app collects no data, has no analytics, and makes no network requests other than
 CloudKit sync.
 
