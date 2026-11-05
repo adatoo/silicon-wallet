@@ -109,6 +109,10 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   dashed. Nodes show the group icon and title only. Choosing a node moves it to the middle;
   choosing the middle one, or Open, opens it. Pinch, or the zoom buttons (⌘+ / ⌘−), zoom, and
   dragging pans.
+- Sort codes: in a field labelled "Sort Code" (ignoring case, spaces and hyphens), six digits
+  typed or pasted become `12-34-56` in the editor (`SortCode.formatted`), and a stored value of
+  six digits shows that way in the entry, list and cards. Copy copies the stored value, and a
+  stored value changes only when it's edited; anything other than six digits is left as written.
 - Card numbers: a field labelled "Card Number" (ignoring case and accents, or "Card No"), in
   the group or an entry's extra fields, shows the card's scheme as a badge, the scheme's name
   in a coloured capsule drawn by the app (`CardSchemeBadge`), never the schemes' logos, which
