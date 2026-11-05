@@ -134,6 +134,8 @@ struct HelpTopic: Identifiable, Hashable {
             "Add files in an entry's **Attachments** section, or drop them there. Each one is encrypted with its own key, up to 100 MB."
         private static let moveEntries =
             "To move an entry to another group, drag it onto the group in the sidebar, or choose **Move to Group** from its shortcut menu. Every value comes with it: fields with the same name in the new group are filled in, and the rest become extra fields."
+        private static let scanCards =
+            "In a card entry's editor, **Scan Card with iPhone…** takes a photo with a nearby iPhone or iPad and reads the number, expiry and name on this Mac; **Scan Back with iPhone…** suggests the security code. Check what it found, then choose **Use**. Empty fields are filled, and you're asked before anything already there is replaced. The photo isn't kept."
         private static let attachmentsZoom =
             "An image or PDF opens at its own size, up to the size of your screen; drag the edge of the preview to resize it. Zoom with a pinch, by double-clicking, or with ⌘= and ⌘- (⌘9 fits it to the window, ⌘0 shows it at actual size)."
     #else
@@ -148,6 +150,8 @@ struct HelpTopic: Identifiable, Hashable {
             "Add photos and files in an entry's **Attachments** section. Each one is encrypted with its own key, up to 100 MB."
         private static let moveEntries =
             "To move an entry to another group, touch and hold it and choose **Move to Group**. On iPad you can also drag it onto the group in the sidebar. Every value comes with it: fields with the same name in the new group are filled in, and the rest become extra fields."
+        private static let scanCards =
+            "In a card entry's editor, **Scan Card** reads the number, expiry and name with the camera, and **Scan Back** suggests the security code. What it has found shows as it reads; choose **Use** when it's right. Empty fields are filled, and you're asked before anything already there is replaced. Nothing is photographed or kept."
         private static let attachmentsZoom =
             "Images and PDFs fit the screen when they open. Pinch or double-tap to zoom, and drag to move around; the buttons at the bottom zoom in, zoom out, fit and show actual size."
     #endif
@@ -166,6 +170,7 @@ struct HelpTopic: Identifiable, Hashable {
                 "Deleted entries and groups go to **Recently Deleted**, at the bottom of the sidebar. Recover them from there, or delete them for good; anything left is deleted for good after 30 days.",
                 "Search finds entries by their title and visible fields. It never searches concealed values.",
                 "A field called **Card Number** shows the card's scheme, such as VISA or Mastercard, from its first digits, even while the number is hidden. While you type one, a warning appears if the full number fails the card's check digit, which usually means a typo; you can still save it.",
+                scanCards,
             ]
         ),
         HelpTopic(

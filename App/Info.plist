@@ -24,6 +24,8 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Silicon Wallet uses the camera only to read a card's details on this device. No photo is kept.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Face ID unlocks your vault without typing your master password.</string>
 	<key>NSHumanReadableCopyright</key>
