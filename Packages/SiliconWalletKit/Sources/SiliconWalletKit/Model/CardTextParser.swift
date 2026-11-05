@@ -18,6 +18,19 @@ public struct ScannedCard: Equatable, Sendable {
     }
 
     public var isEmpty: Bool { number == nil && expiry == nil && cardholder == nil && securityCode == nil }
+
+    /// One field's value, for a review that reassigns or clears it.
+    public subscript(field: CardField) -> String? {
+        get { field.value(in: self) }
+        set {
+            switch field {
+            case .number: number = newValue
+            case .expiry: expiry = newValue
+            case .cardholder: cardholder = newValue
+            case .securityCode: securityCode = newValue
+            }
+        }
+    }
 }
 
 /// The card fields a scan can fill, found by their labels.
@@ -71,6 +84,49 @@ public enum CardTextParser {
         // Some cards print the number on the back.
         card.number = number(in: lines)
         return card
+    }
+
+    // MARK: - Where each value was read
+
+    /// The line each found value was read from, by line index, so a review can box it. A line
+    /// gives at most one field; a number split over lines marks each of its lines.
+    public static func sources(of card: ScannedCard, in lines: [String]) -> [Int: CardField] {
+        var found: [Int: CardField] = [:]
+        let numberDigits = card.number.flatMap(PaymentCard.digits(in:))
+        for (index, line) in lines.enumerated() {
+            let groups = digitGroups(line)
+            let digits = groups.joined()
+            if let numberDigits, !digits.isEmpty, numberDigits.contains(digits),
+                digits == numberDigits || digits.count >= 8
+            {
+                found[index] = .number
+            } else if let expiry = card.expiry, Self.expiry(in: [line]) == expiry {
+                found[index] = .expiry
+            } else if let code = card.securityCode, groups.contains(code) {
+                found[index] = .securityCode
+            } else if let name = card.cardholder, line.trimmingCharacters(in: .whitespaces) == name {
+                found[index] = .cardholder
+            }
+        }
+        return found
+    }
+
+    /// What `line` gives as `field`, when the person says that's what it is; nil if it can't be.
+    /// A number needs 12 to 19 digits but not a valid check digit (the editor warns about that).
+    public static func value(for field: CardField, fromLine line: String) -> String? {
+        let groups = digitGroups(line)
+        switch field {
+        case .number:
+            let digits = groups.joined()
+            return (12...19).contains(digits.count) ? PaymentCard.formatted(digits) : nil
+        case .expiry:
+            return expiry(in: [line])
+        case .cardholder:
+            let text = line.trimmingCharacters(in: .whitespaces)
+            return text.isEmpty || text.count > 40 ? nil : text
+        case .securityCode:
+            return groups.last { (3...4).contains($0.count) }
+        }
     }
 
     // MARK: - Number
