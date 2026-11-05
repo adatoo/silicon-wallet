@@ -1,1 +1,7 @@
-The first release of Silicon Wallet: an encrypted vault for passwords, cards and notes, with iCloud sync, Face ID and Touch ID, a password generator, and import from Acrylic Wallet.
+Move entries between groups: drag an entry onto a group in the sidebar on Mac and iPad, or choose Move to Group from its menu on any device. Every value comes with it.
+
+Export your vault as an encrypted Silicon Wallet backup, protected by a password you choose, or as plain JSON for moving to another app. Import either one back; nothing already in your vault is changed.
+
+After five wrong master passwords in a row, the lock screen makes you wait before trying again, and the wait grows with each further wrong password, up to an hour. Face ID and Touch ID still work.
+
+Also fixed: moving a card into Credit Cards no longer warns that its PIN will be deleted, the lock screen keeps its size as warnings appear, and a list row on the Mac is no longer cut off.
