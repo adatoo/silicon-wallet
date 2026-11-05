@@ -14,6 +14,14 @@ struct EntryEditorView: View {
     /// The IDs in `related` when the editor opened, so Save only relinks if they changed.
     @State private var originalRelatedIDs: [UUID]?
     @State private var pickingRelated = false
+    /// A card scan that found values different from ones already filled in, while Save asks
+    /// whether to replace them.
+    @State private var pendingScan: PendingScan?
+
+    private struct PendingScan {
+        let card: ScannedCard
+        let labels: [String]
+    }
     private let isNew: Bool
     /// The entry as it was opened; nil for a new one.
     private let original: VaultEntry?
@@ -40,6 +48,11 @@ struct EntryEditorView: View {
 
             if let group, !group.fields.isEmpty {
                 Section(group.name) {
+                    if hasCardField(.number), CardScanButtons.isAvailable {
+                        CardScanButtons(
+                            cardNumber: cardValue(.number), canScanBack: hasCardField(.securityCode),
+                            onScanned: scanned)
+                    }
                     ForEach(group.fields) { field in
                         FieldInput(
                             label: field.label, kind: field.kind, isConcealed: field.isConcealed,
@@ -153,6 +166,16 @@ struct EntryEditorView: View {
                 originalRelatedIDs = related.map(\.id)
             }
         }
+        .confirmationDialog(
+            "Replace \(pendingScan?.labels.formatted(.list(type: .and)) ?? "")?",
+            isPresented: Binding(get: { pendingScan != nil }, set: { if !$0 { pendingScan = nil } }),
+            titleVisibility: .visible, presenting: pendingScan
+        ) { pending in
+            Button("Replace") { fill(from: pending.card, replacing: true) }
+            Button("Keep Current", role: .cancel) {}
+        } message: { _ in
+            Text("The scan read something different. What's there now stays unless you replace it.")
+        }
         .sheet(isPresented: $pickingRelated) {
             RelatedEntryPicker(excluded: Set(related.map(\.id) + [draft.id])) { related.append($0) }
         }
@@ -209,6 +232,58 @@ struct EntryEditorView: View {
         case 1: "1 \(one)"
         default: "\(n) \(many)"
         }
+    }
+
+    // MARK: - Card scans (ADR-0009)
+
+    /// The template and extra fields that a scan can fill, with their current values.
+    private var cardFields: [(kind: CardField, label: String, value: String)] {
+        let template = (group?.fields ?? []).compactMap { field in
+            CardField(label: field.label).map { ($0, field.label, draft.values[field.id] ?? "") }
+        }
+        let extra = draft.extraFields.compactMap { field in
+            CardField(label: field.label).map { ($0, field.label, field.value) }
+        }
+        return template + extra
+    }
+
+    private func hasCardField(_ kind: CardField) -> Bool { cardFields.contains { $0.kind == kind } }
+
+    private func cardValue(_ kind: CardField) -> String? {
+        cardFields.first { $0.kind == kind && !$0.value.isEmpty }?.value
+    }
+
+    /// Fills the empty fields a scan found values for, then asks before replacing any others.
+    private func scanned(_ card: ScannedCard) {
+        let clashes = cardFields.filter { field in
+            guard let value = field.kind.value(in: card), !field.value.isEmpty else { return false }
+            return Self.comparable(field.value) != Self.comparable(value)
+        }
+        fill(from: card, replacing: false)
+        guard !clashes.isEmpty else { return }
+        let pending = PendingScan(card: card, labels: clashes.map(\.label))
+        // After the scanner has gone, so the question isn't lost in its dismissal.
+        Task {
+            try? await Task.sleep(for: .milliseconds(450))
+            pendingScan = pending
+        }
+    }
+
+    private func fill(from card: ScannedCard, replacing: Bool) {
+        for field in group?.fields ?? [] {
+            guard let kind = CardField(label: field.label), let value = kind.value(in: card) else { continue }
+            if replacing || (draft.values[field.id] ?? "").isEmpty { draft.values[field.id] = value }
+        }
+        for index in draft.extraFields.indices {
+            guard let kind = CardField(label: draft.extraFields[index].label), let value = kind.value(in: card)
+            else { continue }
+            if replacing || draft.extraFields[index].value.isEmpty { draft.extraFields[index].value = value }
+        }
+    }
+
+    /// A value without spacing or case, so "4111111111111111" matches "4111 1111 1111 1111".
+    private static func comparable(_ value: String) -> String {
+        value.filter { !$0.isWhitespace }.uppercased()
     }
 
     /// Changing the group carries every value across (`VaultEntry.moved(from:to:)`).

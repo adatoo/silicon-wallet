@@ -113,6 +113,14 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   warning; Save still works. `PaymentCard` (SiliconWalletKit) works it all out from the value
   each time; nothing extra is stored, and there's no card-number `FieldKind`, since a kind an
   older build doesn't know would stop it decoding the group.
+- Card scanning (ADR-0009): in the editor of an entry with a Card Number field, Scan Card (and
+  Scan Back, when there's a security code field) reads the card on the device. On iPhone and
+  iPad, VisionKit's live scanner shows what it has found so far, and Use hands it back. On the
+  Mac, Scan Card with iPhone… takes a Continuity Camera photo, Vision reads it in memory, and
+  a review sheet shows the result before Use. `CardTextParser` (SiliconWalletKit) finds the
+  number (Luhn-checked, with common recognition slips mended), the latest expiry, the
+  cardholder, and from the back a suggested security code. Fields are matched by label
+  (`CardField`). Empty ones are filled; replacing a filled one asks first. No image is saved.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
   Letter" (on by default) is in the list's View Options menu and the Mac View menu; it's a

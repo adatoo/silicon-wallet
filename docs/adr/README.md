@@ -10,6 +10,7 @@
 | [0006](./0006-swift-sodium-argon2id.md) | Argon2id from libsodium, through swift-sodium | Accepted |
 | [0007](./0007-public-repo-ci.md) | Once public, CI runs on GitHub-hosted runners only; shared workflows are vendored | Accepted |
 | [0008](./0008-export-format.md) | Export as a password-protected backup or plaintext JSON, from one schema | Accepted |
+| [0009](./0009-on-device-card-scanning.md) | Card scanning reads on the device and keeps no image | Accepted |
 
 ## How to add or change an ADR
 
