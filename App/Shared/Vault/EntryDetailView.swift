@@ -202,7 +202,7 @@ struct FieldValueRow: View {
                 .font(.body.monospaced())
                 .accessibilityLabel("Concealed")
         } else {
-            Text(row.value)
+            Text(SortCode.display(row.value, label: row.label))
                 .font(row.isMonospaced ? .body.monospaced() : .body)
                 .textSelection(.enabled)
         }

@@ -216,7 +216,9 @@ extension VaultEntry {
     /// shown monospaced.
     func firstVisibleValue(in group: VaultGroup?) -> (text: String, isMonospaced: Bool)? {
         for field in group?.fields ?? [] where !field.isConcealed {
-            if let value = values[field.id], !value.isEmpty { return (value, field.isMonospaced) }
+            if let value = values[field.id], !value.isEmpty {
+                return (SortCode.display(value, label: field.label), field.isMonospaced)
+            }
         }
         return nil
     }
