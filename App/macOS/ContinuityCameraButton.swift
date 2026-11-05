@@ -9,7 +9,8 @@ struct ContinuityCameraButton: NSViewRepresentable {
     let onPhoto: (CGImage) -> Void
 
     func makeNSView(context: Context) -> PhotoRequestButton {
-        let button = PhotoRequestButton(title: title, target: nil, action: nil)
+        let button = PhotoRequestButton(frame: .zero)
+        button.title = title
         button.bezelStyle = .rounded
         button.image = NSImage(systemSymbolName: "camera", accessibilityDescription: nil)
         button.imagePosition = .imageLeading
@@ -22,19 +23,56 @@ struct ContinuityCameraButton: NSViewRepresentable {
         button.onPhoto = onPhoto
     }
 
-    final class PhotoRequestButton: NSButton, @preconcurrency NSServicesMenuRequestor {
+    /// Not final, so a test can watch what AppKit asks it.
+    class PhotoRequestButton: NSButton, @preconcurrency NSServicesMenuRequestor {
         var onPhoto: ((CGImage) -> Void)?
         override var acceptsFirstResponder: Bool { true }
 
-        override func mouseDown(with event: NSEvent) {
-            // AppKit fills a menu item with this identifier with the nearby devices and their
-            // Take Photo commands, and sends the photo to the first responder that asks for images.
-            window?.makeFirstResponder(self)
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            // Space or Return on a focused button, which doesn't come through mouseDown.
+            target = self
+            action = #selector(activate)
+        }
+
+        required init?(coder: NSCoder) {
+            super.init(coder: coder)
+            target = self
+            action = #selector(activate)
+        }
+
+        override func mouseDown(with event: NSEvent) { presentMenu(makeMenu()) }
+
+        @objc private func activate(_ sender: Any?) { presentMenu(makeMenu()) }
+
+        /// AppKit adds its Import from iPhone or iPad items (Take Photo, Scan Documents) to a
+        /// context menu whose view accepts images (`validRequestor`). It doesn't fill them into a
+        /// pop-up menu, which is why this is a context menu.
+        func makeMenu() -> NSMenu {
             let menu = NSMenu()
-            let item = NSMenuItem(title: "Take Photo", action: nil, keyEquivalent: "")
-            item.identifier = NSMenuItem.importFromDeviceIdentifier
-            menu.addItem(item)
-            menu.popUp(positioning: nil, at: NSPoint(x: 0, y: bounds.height + 4), in: self)
+            for note in [
+                "Choose Take Photo or Scan Documents below.", "Not listed? Unlock your iPhone and keep it nearby.",
+            ] {
+                let item = NSMenuItem(title: note, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                menu.addItem(item)
+            }
+            menu.autoenablesItems = false
+            return menu
+        }
+
+        /// Shows `menu` under the button, as a context menu for it.
+        func presentMenu(_ menu: NSMenu) {
+            guard let window else { return }
+            window.makeFirstResponder(self)
+            let location = convert(NSPoint(x: 0, y: isFlipped ? bounds.maxY + 4 : -4), to: nil)
+            guard
+                let event = NSEvent.mouseEvent(
+                    with: .rightMouseDown, location: location, modifierFlags: [],
+                    timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil,
+                    eventNumber: 0, clickCount: 1, pressure: 1)
+            else { return }
+            NSMenu.popUpContextMenu(menu, with: event, for: self)
         }
 
         override func validRequestor(
