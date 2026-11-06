@@ -17,6 +17,7 @@ public enum StarterGroups {
                 fields: [
                     FieldTemplate(label: "Cardholder"),
                     FieldTemplate(label: "Card Number", kind: .number, isConcealed: true),
+                    FieldTemplate(label: "Valid From"),
                     FieldTemplate(label: "Expiry"),
                     FieldTemplate(label: "Security Code", kind: .number, isConcealed: true),
                     FieldTemplate(label: "PIN", kind: .number, isConcealed: true),
