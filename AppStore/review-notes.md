@@ -31,8 +31,10 @@ next try (doubling up to an hour); the countdown is shown. Face ID and Touch ID 
 app, if the person has one. It isn't needed to use the app.
 
 Card scanning (in a Credit Cards entry's editor, Scan Card) uses the camera on iPhone and iPad
-to read a card's number, expiry and name on the device; on the Mac it uses a photo taken with
-a nearby iPhone through Continuity Camera. Frames and photos stay in memory and are never saved
+to read a card's number, dates and name on the device. On the Mac it uses the Mac's camera, a
+connected camera, or a nearby iPhone as a Continuity Camera webcam; Take Photo with iPhone… in
+the scan uses a photo from a nearby iPhone instead, and is the way to scan on a Mac with no
+camera. Frames and photos stay in memory and are never saved
 or sent anywhere. Any card works for testing, including a printed example card.
 
 The app collects no data, has no analytics, and makes no network requests other than

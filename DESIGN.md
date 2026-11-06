@@ -137,13 +137,19 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   Scan Back, when there's a security code field) reads the card on the device.
   `CardImageAnalyzer` finds the card's edge (Vision rectangle detection, an ID-1 card's shape),
   straightens it (`CIPerspectiveCorrection`) and reads its lines, each with its box.
-  - iPhone and iPad: the app's own camera view (`AVCaptureSession`, about three frames a
-    second). A card-shaped guide shows until the card's edge is found; then the edge and the
-    text boxes are drawn over the picture. The frame is captured by itself, with a haptic, once
-    the card's edge is in view and the same number (front) or code (back) reads twice in a row.
-    The shutter captures by hand, and the torch button lights the card.
-  - Mac: Scan Card with iPhone… takes a Continuity Camera photo (Take Photo, or Scan Documents,
-    which finds the card's edge on the iPhone; its PDF is drawn at three times its size).
+  - The app's own camera view on every platform (`LiveCardScanSheet`, `AVCaptureSession`,
+    about three frames a second). A card-shaped guide shows until the card's edge is found; the
+    text boxes are drawn over the picture from the start (faintly, every line in view), and
+    once the edge is found, the edge and the boxes on the card. The frame is captured by itself,
+    with a haptic, once the card's edge is in view and the same number (front) or code (back)
+    reads twice in a row. The shutter captures by hand; the torch button lights the card where
+    the camera has one. The picture isn't mirrored, so text reads the right way round.
+  - Cameras: iPhone and iPad use the back camera. A Mac uses a nearby iPhone as a Continuity
+    Camera webcam first, then a connected camera, then its own (`CardCamera.rank`), with a
+    camera menu when there's more than one. **Take Photo with iPhone…** in the scan (and in
+    place of the camera when the Mac has none) takes a Continuity Camera photo instead: Take
+    Photo, or Scan Documents, which finds the card's edge on the iPhone; its PDF is drawn at
+    three times its size.
   - Both then show the review: the straightened card with a box over each line read, tinted
     and labelled by the field it gave. Choosing a box uses it for another field
     (`CardTextParser.value(for:fromLine:)`), each value can be cleared, and Use hands them

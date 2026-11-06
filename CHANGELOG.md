@@ -5,6 +5,21 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-11-06
+
+### Added
+
+- Scan a card live on the Mac. Scan Card and Scan Back open a camera view, like the iPhone's,
+  using a nearby iPhone as the camera when it's on a stand or held still (Continuity Camera),
+  or a connected or built-in camera. A menu chooses between them. Take Photo with iPhone… is
+  still there in the scan, and is how to scan on a Mac with no camera.
+
+### Changed
+
+- While scanning, the text being read is outlined on the camera picture from the start, not
+  only once the card's edge is found. The picture is no longer mirrored, so the card's text
+  reads the right way round.
+
 ## [1.12.0] - 2026-11-06
 
 ### Added
