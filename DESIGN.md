@@ -149,9 +149,12 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
     (`CardTextParser.value(for:fromLine:)`), each value can be cleared, and Use hands them
     back. `CardTextParser.sources(of:in:)` ties each value to its lines.
   `CardTextParser` (SiliconWalletKit) finds the
-  number (Luhn-checked, with common recognition slips mended), the latest expiry, the
-  cardholder, and from the back a suggested security code. Fields are matched by label
-  (`CardField`). Empty ones are filled; replacing a filled one asks first. Frames and the
+  number (Luhn-checked, with common recognition slips mended), the dates (with two or more,
+  the earliest is Valid From and the latest the expiry; one date is the expiry unless its line
+  only says it's a start), the cardholder, and from the back a suggested security code. Fields
+  are matched by label (`CardField`). Empty ones are filled; replacing a filled one asks
+  first; a value with no field to go in (a start date on a card group made before Valid From
+  joined the starter Credit Cards group) is added as an extra field. Frames and the
   captured image are only in memory, and go when the scan closes; no image is saved.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
