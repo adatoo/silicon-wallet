@@ -25,6 +25,8 @@ struct ScannedCardSummary: View {
             row("Expiry", card.expiry, monospaced: true)
             row("Cardholder", card.cardholder, monospaced: false)
             row("Security Code", card.securityCode, monospaced: true)
+            row("Sort Code", card.sortCode, monospaced: true)
+            row("Account Number", card.accountNumber, monospaced: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
