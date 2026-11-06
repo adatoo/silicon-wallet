@@ -7,7 +7,6 @@ import SwiftUI
 struct CardScanReview: View {
     /// The image the boxes are drawn over: the straightened card, or the photo as it came.
     let image: CGImage
-    let side: CardScanSide
     @Binding var lines: [RecognisedLine]
     @Binding var card: ScannedCard
     @State private var choosing: RecognisedLine?
@@ -33,8 +32,10 @@ struct CardScanReview: View {
             )
             .font(.footnote)
             .foregroundStyle(.secondary)
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 10) {
-                ForEach(fields, id: \.self) { field in
+            VStack(alignment: .leading, spacing: 10) {
+                // Every field with a value, whichever side was scanned: a box chosen for a field
+                // that side doesn't usually give still shows here.
+                ForEach(CardField.allCases, id: \.self) { field in
                     if let value = card[field] {
                         row(field, value)
                     }
@@ -56,29 +57,29 @@ struct CardScanReview: View {
         }
     }
 
-    /// The fields this side can give.
-    private var fields: [CardField] {
-        side == .front ? [.number, .expiry, .cardholder, .securityCode] : [.securityCode, .number]
-    }
-
+    /// The field's name over its value, so a long number keeps the row's width; a card number's
+    /// scheme sits at the end of the name's line.
     private func row(_ field: CardField, _ value: String) -> some View {
-        GridRow {
-            HStack(spacing: 6) {
-                RoundedRectangle(cornerRadius: 2).fill(field.colour).frame(width: 10, height: 10)
-                Text(field.name).foregroundStyle(.secondary)
-            }
-            HStack(spacing: 6) {
-                if field == .number, let scheme = PaymentCard.scheme(for: value) {
-                    CardSchemeBadge(scheme: scheme)
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 2).fill(field.colour).frame(width: 10, height: 10)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(field.name)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    if field == .number, let scheme = PaymentCard.scheme(for: value) {
+                        CardSchemeBadge(scheme: scheme)
+                    }
                 }
-                Text(value).fontDesign(field == .cardholder ? nil : .monospaced)
+                Text(value)
+                    .fontDesign(field == .cardholder ? nil : .monospaced)
                     .textSelection(.enabled)
             }
             Button("Clear \(field.name)", systemImage: "xmark.circle.fill") { clear(field) }
                 .labelStyle(.iconOnly)
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
-                .gridColumnAlignment(.trailing)
         }
     }
 
