@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		039F395BAD38DA75F977E530 /* RelatedGraphFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0F3F53A01B44CF934243D7 /* RelatedGraphFitTests.swift */; };
 		061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */; };
 		09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C60B119316E39F124349191 /* GroupEditorView.swift */; };
 		0CDFEBB9C287D0A8BA174D33 /* PasswordStrengthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB992B63CBD5BB12C83E8174 /* PasswordStrengthView.swift */; };
@@ -135,6 +136,7 @@
 		EF419223A81F08132A022785 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F4AA743C303F6A4BA4050A97 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedGraphView.swift; sourceTree = "<group>"; };
+		FC0F3F53A01B44CF934243D7 /* RelatedGraphFitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedGraphFitTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -268,6 +270,7 @@
 			children = (
 				3F51302D6483AB048B06C884 /* CardScanTests.swift */,
 				7BEEA27E8F9EF53AA0B68A4C /* ContinuityCameraTests.swift */,
+				FC0F3F53A01B44CF934243D7 /* RelatedGraphFitTests.swift */,
 				C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */,
 			);
 			path = SiliconWalletTests;
@@ -476,6 +479,7 @@
 			files = (
 				C9771FF340427DA1856D281D /* CardScanTests.swift in Sources */,
 				7BF6FD45429C997D7330850A /* ContinuityCameraTests.swift in Sources */,
+				039F395BAD38DA75F977E530 /* RelatedGraphFitTests.swift in Sources */,
 				BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

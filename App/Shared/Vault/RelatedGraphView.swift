@@ -129,7 +129,8 @@ struct RelatedGraphCanvas: View {
         let rings = graph.nodes.map(\.depth).max() ?? 0
         let depths = Dictionary(graph.nodes.map { ($0.id, $0.depth) }) { first, _ in first }
         GeometryReader { proxy in
-            let frame = Frame(size: proxy.size, rings: rings, zoom: zoom, offset: offset, isCompact: isCompact)
+            let fit = isCompact ? CompactFit(points: points.values, size: proxy.size) : nil
+            let frame = Frame(size: proxy.size, rings: rings, zoom: zoom, offset: offset, fit: fit)
             ZStack {
                 ForEach(graph.edges) { edge in
                     let isTree = graph.isTreeEdge(edge)
@@ -172,29 +173,74 @@ private struct Frame {
     let rings: Int
     let zoom: CGFloat
     let offset: CGSize
-    let isCompact: Bool
+    let fit: CompactFit?
 
     func place(_ point: RelatedGraph.Point?) -> CGPoint {
+        if let fit { return fit.place(point) }
+        // The full graph keeps its rings round, sized to the shorter side.
         let rings = CGFloat(max(rings, 1))
-        // The full graph keeps its rings round; the compact one stretches them to the row, and
-        // leaves room below the bottom ring for its titles.
-        let unitX: CGFloat
-        let unitY: CGFloat
-        if isCompact {
-            unitX = max(44, (size.width / 2 - 56) / rings)
-            unitY = max(28, (size.height / 2 - 40) / rings)
-        } else {
-            let unit: CGFloat = max(70, (min(size.width, size.height) / 2 - 64) / rings) * zoom
-            (unitX, unitY) = (unit, unit)
-        }
+        let unit: CGFloat = max(70, (min(size.width, size.height) / 2 - 64) / rings) * zoom
         // The layout puts the first ring's first entry at the top; in a wide view it goes to the
         // right instead, so the graph spreads along the longer side.
         let isWide = size.width > size.height
-        let gx: CGFloat = CGFloat(isWide ? -(point?.y ?? 0) : (point?.x ?? 0))
-        let gy: CGFloat = CGFloat(isWide ? (point?.x ?? 0) : (point?.y ?? 0))
-        let x: CGFloat = size.width / 2 + offset.width + gx * unitX
-        let y: CGFloat = size.height / 2 + offset.height + gy * unitY
-        return CGPoint(x: x, y: y)
+        let drawn = point.map { isWide ? CompactFit.drawn($0) : CGPoint(x: $0.x, y: $0.y) } ?? .zero
+        return CGPoint(
+            x: size.width / 2 + offset.width + drawn.x * unit,
+            y: size.height / 2 + offset.height + drawn.y * unit)
+    }
+}
+
+/// Fits the inline graph to its entries (DESIGN.md §3): the box round them, titles included,
+/// is stretched to the row, no more than `maxUnit` per ring so a small graph stays together,
+/// and centred in it. The graph always spreads along the row.
+struct CompactFit {
+    /// The most points per ring unit, across or down.
+    static let maxUnit: CGFloat = 150
+    /// The height each ring unit gets when the row is sized to the graph.
+    static let unitHeight: CGFloat = 70
+    /// Room round the circles for what hangs off them: half a title across, the circle's radius
+    /// above, and the radius plus a two-line title below.
+    static let side: CGFloat = 60
+    static let top: CGFloat = 24
+    static let bottom: CGFloat = 58
+    static let heights: ClosedRange<CGFloat> = 110...300
+
+    let size: CGSize
+    private let box: CGRect
+
+    init(points: some Collection<RelatedGraph.Point>, size: CGSize) {
+        self.size = size
+        box = Self.box(points)
+    }
+
+    func place(_ point: RelatedGraph.Point?) -> CGPoint {
+        let drawn = point.map(Self.drawn) ?? .zero
+        let width = max(0, size.width - 2 * Self.side)
+        let height = max(0, size.height - Self.top - Self.bottom)
+        let unitX = box.width > 0 ? min(width / box.width, Self.maxUnit) : 0
+        let unitY = box.height > 0 ? min(height / box.height, Self.maxUnit) : 0
+        return CGPoint(
+            x: size.width / 2 + (drawn.x - box.midX) * unitX,
+            y: Self.top + height / 2 + (drawn.y - box.midY) * unitY)
+    }
+
+    /// The row height for these points: a graph on one line gets the shortest row.
+    static func height(for points: some Collection<RelatedGraph.Point>) -> CGFloat {
+        (top + bottom + box(points).height * unitHeight).clamped(to: heights)
+    }
+
+    /// A layout point as drawn in a wide view: the first ring's first entry to the right.
+    static func drawn(_ point: RelatedGraph.Point) -> CGPoint {
+        CGPoint(x: -point.y, y: point.x)
+    }
+
+    private static func box(_ points: some Collection<RelatedGraph.Point>) -> CGRect {
+        let xs = points.map { Self.drawn($0).x }
+        let ys = points.map { Self.drawn($0).y }
+        guard let minX = xs.min(), let maxX = xs.max(), let minY = ys.min(), let maxY = ys.max() else {
+            return .zero
+        }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 }
 
@@ -281,15 +327,12 @@ private struct GraphNode: View {
         Text(title)
             .font(isCentre ? .caption.weight(.semibold) : .caption)
             .multilineTextAlignment(.center)
-            .lineLimit(isCompact ? 1 : 2)
+            .lineLimit(2)
             .truncationMode(.tail)
-            .padding(.horizontal, isCompact ? 0 : 4)
-            // Full size, a dashed cycle line can pass under a title; keep it readable.
-            .background(
-                isCompact ? AnyShapeStyle(.clear) : AnyShapeStyle(.background.opacity(0.9)),
-                in: .rect(cornerRadius: 4)
-            )
-            .frame(width: isCompact ? 84 : 120)
+            .padding(.horizontal, 4)
+            // A line can pass under a title; keep it readable.
+            .background(.background.opacity(0.9), in: .rect(cornerRadius: 4))
+            .frame(width: 120)
             .fixedSize(horizontal: false, vertical: true)
             // Below the circle; an offset doesn't change the node's size or centre.
             .offset(y: diameter + 3)
