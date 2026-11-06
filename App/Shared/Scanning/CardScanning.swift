@@ -7,23 +7,6 @@ enum CardScanSide: String, Identifiable {
     var id: String { rawValue }
 }
 
-extension ScannedCard {
-    /// Keeps what this already has and adds what `other` found, for a live scan that sees a
-    /// little more with each frame.
-    func merged(with other: ScannedCard) -> ScannedCard {
-        ScannedCard(
-            number: number ?? other.number, expiry: Self.later(expiry, other.expiry),
-            cardholder: cardholder ?? other.cardholder, securityCode: securityCode ?? other.securityCode)
-    }
-
-    /// The later of two `MM/YY` dates, so a start date seen first gives way to the expiry.
-    private static func later(_ a: String?, _ b: String?) -> String? {
-        func key(_ date: String) -> String { String(date.suffix(2)) + date.prefix(2) }
-        guard let a, let b else { return a ?? b }
-        return key(b) > key(a) ? b : a
-    }
-}
-
 /// What a scan found, for the person to check before using it.
 struct ScannedCardSummary: View {
     let card: ScannedCard
@@ -38,6 +21,7 @@ struct ScannedCardSummary: View {
                 .foregroundStyle(.secondary)
             }
             row("Card Number", card.number, monospaced: true)
+            row("Valid From", card.validFrom, monospaced: true)
             row("Expiry", card.expiry, monospaced: true)
             row("Cardholder", card.cardholder, monospaced: false)
             row("Security Code", card.securityCode, monospaced: true)

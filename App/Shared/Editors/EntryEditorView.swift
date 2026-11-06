@@ -202,6 +202,22 @@ struct EntryEditorView: View {
             else { continue }
             if replacing || draft.extraFields[index].value.isEmpty { draft.extraFields[index].value = value }
         }
+        // A value with no field to go in, such as a start date on a card group made before
+        // Valid From, is kept as an extra field rather than dropped.
+        let kinds = Set(cardFields.map(\.kind))
+        for kind in CardField.allCases where !kinds.contains(kind) {
+            guard let value = kind.value(in: card) else { continue }
+            draft.extraFields.append(Self.extraField(for: kind, value: value))
+        }
+    }
+
+    private static func extraField(for kind: CardField, value: String) -> CustomField {
+        switch kind {
+        case .number, .securityCode:
+            CustomField(label: kind.name, kind: .number, isConcealed: true, value: value)
+        case .validFrom, .expiry, .cardholder:
+            CustomField(label: kind.name, value: value)
+        }
     }
 
     /// A value without spacing or case, so "4111111111111111" matches "4111 1111 1111 1111".

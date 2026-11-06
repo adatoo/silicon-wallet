@@ -9,7 +9,10 @@ import Testing
         "EXAMPLE BANK", "DEBIT", "4111 1111 1111 1111", "VALID FROM 01/24", "EXPIRES END 12/30", "JANE APPLESEED",
         "VISA",
     ])
-    #expect(card == ScannedCard(number: "4111 1111 1111 1111", expiry: "12/30", cardholder: "JANE APPLESEED"))
+    #expect(
+        card
+            == ScannedCard(
+                number: "4111 1111 1111 1111", validFrom: "01/24", expiry: "12/30", cardholder: "JANE APPLESEED"))
 }
 
 @Test func aNumberSplitOverLinesOrMisreadIsStillFound() {
@@ -101,4 +104,49 @@ import Testing
     card[.number] = nil
     #expect(card == ScannedCard(expiry: "09/29"))
     #expect(card[.expiry] == "09/29")
+}
+
+// MARK: - Valid From (#154)
+
+@Test func aCardWithTwoDatesGivesItsStartAndItsExpiry() {
+    let card = CardTextParser.front(["4111 1111 1111 1111", "VALID FROM 01/22", "EXPIRES END 12/27"])
+    #expect(card.validFrom == "01/22")
+    #expect(card.expiry == "12/27")
+    let oneLine = CardTextParser.front(["4111 1111 1111 1111", "01/2022 12/2027"])
+    #expect(oneLine.validFrom == "01/22")
+    #expect(oneLine.expiry == "12/27")
+}
+
+@Test func oneDateIsTheExpiryUnlessItsLineSaysItsAStart() {
+    #expect(CardTextParser.dates(in: ["12/27"]) == (nil, "12/27"))
+    #expect(CardTextParser.dates(in: ["VALID THRU 12/27"]) == (nil, "12/27"))
+    #expect(CardTextParser.dates(in: ["VALID FROM 01/22"]) == ("01/22", nil))
+    #expect(CardTextParser.dates(in: ["MEMBER SINCE 05/19"]) == ("05/19", nil))
+    // The same date twice is still one date.
+    #expect(CardTextParser.dates(in: ["12/27", "EXPIRES 12/27"]) == (nil, "12/27"))
+    #expect(CardTextParser.dates(in: ["EXAMPLE BANK"]) == (nil, nil))
+}
+
+@Test func theStartDateIsBoxedAndCanBeChosen() {
+    let lines = ["4111 1111 1111 1111", "VALID FROM 01/22", "EXPIRES END 12/27"]
+    let card = CardTextParser.front(lines)
+    let sources = CardTextParser.sources(of: card, in: lines)
+    #expect(sources[1] == .validFrom)
+    #expect(sources[2] == .expiry)
+    #expect(CardTextParser.value(for: .validFrom, fromLine: "FROM 01/22 END 12/27") == "01/22")
+    #expect(CardTextParser.value(for: .expiry, fromLine: "FROM 01/22 END 12/27") == "12/27")
+    #expect(CardField(label: "Valid From") == .validFrom)
+    #expect(CardField(label: "Start Date") == .validFrom)
+    #expect(ScannedCard(validFrom: "01/22").isEmpty == false)
+}
+
+@Test func liveReadingsMergeIntoTheEarliestStartAndLatestExpiry() {
+    // A frame that read only the start took it for the expiry; the next read both.
+    let first = ScannedCard(expiry: "01/22")
+    let merged = first.merged(with: ScannedCard(validFrom: "01/22", expiry: "12/27"))
+    #expect(merged.validFrom == "01/22")
+    #expect(merged.expiry == "12/27")
+    // A start that isn't before the expiry is dropped.
+    #expect(ScannedCard(validFrom: "12/27").merged(with: ScannedCard(expiry: "12/27")).validFrom == nil)
+    #expect(ScannedCard(number: "4111").merged(with: ScannedCard(number: "5555")).number == "4111")
 }

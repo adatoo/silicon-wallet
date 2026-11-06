@@ -4,20 +4,26 @@ import Foundation
 /// not at all.
 public struct ScannedCard: Equatable, Sendable {
     public var number: String?
+    /// `MM/YY`, the start date on a card that prints two dates.
+    public var validFrom: String?
     /// `MM/YY`.
     public var expiry: String?
     public var cardholder: String?
     /// Only from the back, and only a suggestion: the person confirms it (DESIGN.md §3).
     public var securityCode: String?
 
-    public init(number: String? = nil, expiry: String? = nil, cardholder: String? = nil, securityCode: String? = nil) {
+    public init(
+        number: String? = nil, validFrom: String? = nil, expiry: String? = nil, cardholder: String? = nil,
+        securityCode: String? = nil
+    ) {
         self.number = number
+        self.validFrom = validFrom
         self.expiry = expiry
         self.cardholder = cardholder
         self.securityCode = securityCode
     }
 
-    public var isEmpty: Bool { number == nil && expiry == nil && cardholder == nil && securityCode == nil }
+    public var isEmpty: Bool { CardField.allCases.allSatisfy { $0.value(in: self) == nil } }
 
     /// One field's value, for a review that reassigns or clears it.
     public subscript(field: CardField) -> String? {
@@ -25,17 +31,33 @@ public struct ScannedCard: Equatable, Sendable {
         set {
             switch field {
             case .number: number = newValue
+            case .validFrom: validFrom = newValue
             case .expiry: expiry = newValue
             case .cardholder: cardholder = newValue
             case .securityCode: securityCode = newValue
             }
         }
     }
+
+    /// Keeps what this already has and adds what `other` found, for a live scan that sees a
+    /// little more with each frame. The expiry is the later date and the start the earlier, and
+    /// a start that isn't before the expiry is dropped: a frame that read only the start date
+    /// took it for the expiry.
+    public func merged(with other: ScannedCard) -> ScannedCard {
+        let expiry = CardTextParser.later(expiry, other.expiry)
+        var validFrom = CardTextParser.earlier(validFrom, other.validFrom)
+        if let start = validFrom, let end = expiry, CardTextParser.order(start) >= CardTextParser.order(end) {
+            validFrom = nil
+        }
+        return ScannedCard(
+            number: number ?? other.number, validFrom: validFrom, expiry: expiry,
+            cardholder: cardholder ?? other.cardholder, securityCode: securityCode ?? other.securityCode)
+    }
 }
 
 /// The card fields a scan can fill, found by their labels.
 public enum CardField: CaseIterable, Sendable {
-    case number, expiry, cardholder, securityCode
+    case number, validFrom, expiry, cardholder, securityCode
 
     public init?(label: String) {
         let folded = label.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
@@ -45,6 +67,8 @@ public enum CardField: CaseIterable, Sendable {
         case "expiry", "expiry date", "expires", "expiration", "expiration date", "exp", "valid thru",
             "valid until":
             self = .expiry
+        case "valid from", "valid since", "from", "start", "start date", "issued", "issue date":
+            self = .validFrom
         case "cardholder", "card holder", "cardholder name", "name on card", "name": self = .cardholder
         case "security code", "cvv", "cvc", "cvv2", "csc", "cid": self = .securityCode
         default: return nil
@@ -54,6 +78,7 @@ public enum CardField: CaseIterable, Sendable {
     public func value(in card: ScannedCard) -> String? {
         switch self {
         case .number: card.number
+        case .validFrom: card.validFrom
         case .expiry: card.expiry
         case .cardholder: card.cardholder
         case .securityCode: card.securityCode
@@ -69,7 +94,7 @@ public enum CardTextParser {
     public static func front(_ lines: [String]) -> ScannedCard {
         var card = ScannedCard()
         card.number = number(in: lines)
-        card.expiry = expiry(in: lines)
+        (card.validFrom, card.expiry) = dates(in: lines)
         card.cardholder = cardholder(in: lines)
         if let number = card.number, PaymentCard.scheme(for: number) == .amex {
             card.securityCode = code(in: lines, length: 4, cardNumber: number)
@@ -102,6 +127,8 @@ public enum CardTextParser {
                 found[index] = .number
             } else if let expiry = card.expiry, Self.expiry(in: [line]) == expiry {
                 found[index] = .expiry
+            } else if let start = card.validFrom, Self.dateValues(in: line).contains(start) {
+                found[index] = .validFrom
             } else if let code = card.securityCode, groups.contains(code) {
                 found[index] = .securityCode
             } else if let name = card.cardholder, line.trimmingCharacters(in: .whitespaces) == name {
@@ -119,6 +146,8 @@ public enum CardTextParser {
         case .number:
             let digits = groups.joined()
             return (12...19).contains(digits.count) ? PaymentCard.formatted(digits) : nil
+        case .validFrom:
+            return dateValues(in: line).min { order($0) < order($1) }
         case .expiry:
             return expiry(in: [line])
         case .cardholder:
@@ -172,21 +201,54 @@ public enum CardTextParser {
         "O": "0", "o": "0", "D": "0", "I": "1", "l": "1", "|": "1", "S": "5", "B": "8", "Z": "2",
     ]
 
-    // MARK: - Expiry
+    // MARK: - Dates
 
     /// The latest `MM/YY` or `MM/YYYY` date on the card, so "valid from" loses to "expires end".
     static func expiry(in lines: [String]) -> String? {
+        lines.flatMap(dateValues(in:)).max { order($0) < order($1) }
+    }
+
+    /// The start and expiry dates. With two or more dates, the earliest is the start and the
+    /// latest the expiry. One date is the expiry, unless its line says it's a start date and
+    /// says nothing of an end.
+    static func dates(in lines: [String]) -> (validFrom: String?, expiry: String?) {
+        let found = lines.flatMap { line in dateValues(in: line).map { (date: $0, line: line) } }
+        let distinct = Set(found.map(\.date))
+        guard let latest = distinct.max(by: { order($0) < order($1) }) else { return (nil, nil) }
+        if distinct.count > 1 { return (distinct.min { order($0) < order($1) }, latest) }
+        let words = Set(
+            found.flatMap { $0.line.uppercased().split(whereSeparator: { !$0.isLetter }).map(String.init) })
+        if words.isDisjoint(with: endWords), !words.isDisjoint(with: startWords) { return (latest, nil) }
+        return (nil, latest)
+    }
+
+    private static let startWords: Set<String> = ["FROM", "SINCE", "START", "STARTS", "ISSUED", "MEMBER"]
+    private static let endWords: Set<String> = [
+        "THRU", "THROUGH", "UNTIL", "TO", "EXP", "EXPIRES", "EXPIRY", "EXPIRATION", "END", "ENDS",
+    ]
+
+    /// Each valid `MM/YY` or `MM/YYYY` date in a line, as `MM/YY`.
+    static func dateValues(in line: String) -> [String] {
         let pattern = /(?:^|\D)(0[1-9]|1[0-2])\s?[\/\-.]\s?(\d{4}|\d{2})(?!\d)/
-        var latest: (year: Int, month: Int)?
-        for line in lines {
-            for match in line.matches(of: pattern) {
-                guard let month = Int(match.output.1), var year = Int(match.output.2) else { continue }
-                if year < 100 { year += 2000 }
-                guard (2000...2099).contains(year) else { continue }
-                if latest.map({ (year, month) > ($0.year, $0.month) }) ?? true { latest = (year, month) }
-            }
+        return line.matches(of: pattern).compactMap { match in
+            guard let month = Int(match.output.1), var year = Int(match.output.2) else { return nil }
+            if year < 100 { year += 2000 }
+            guard (2000...2099).contains(year) else { return nil }
+            return String(format: "%02d/%02d", month, year % 100)
         }
-        return latest.map { String(format: "%02d/%02d", $0.month, $0.year % 100) }
+    }
+
+    /// An `MM/YY` date as `YYMM`, which sorts by time.
+    static func order(_ date: String) -> String { String(date.suffix(2)) + date.prefix(2) }
+
+    static func later(_ a: String?, _ b: String?) -> String? {
+        guard let a, let b else { return a ?? b }
+        return order(b) > order(a) ? b : a
+    }
+
+    static func earlier(_ a: String?, _ b: String?) -> String? {
+        guard let a, let b else { return a ?? b }
+        return order(b) < order(a) ? b : a
     }
 
     // MARK: - Cardholder
