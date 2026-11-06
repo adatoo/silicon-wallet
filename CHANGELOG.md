@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.1] - 2026-11-06
+
+### Fixed
+
+- The related graph at the top of an entry's Related section is centred on all its entries,
+  is only as tall as it needs to be, and shows titles on up to two lines instead of cutting
+  them off.
+
 ## [1.11.0] - 2026-11-05
 
 ### Added

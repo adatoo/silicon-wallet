@@ -82,14 +82,13 @@ private struct InlineRelatedGraph: View {
         // Two rings need the width of a Mac or iPad detail column; a phone shows one.
         let depth = width >= 420 ? 2 : 1
         let graph = model.session?.relatedGraph(from: entryID, depth: depth, limit: Self.limit) ?? .empty
-        let rings = graph.nodes.map(\.depth).max() ?? 0
         VStack(spacing: 4) {
             RelatedGraphCanvas(graph: graph, isCompact: true) { node in
                 if node.depth > 0 { model.reveal(node.id) }
             } onOpen: { id in
                 model.reveal(id)
             }
-            .frame(height: rings > 1 ? 300 : 200)
+            .frame(height: CompactFit.height(for: graph.layout().values))
             if graph.isTruncated {
                 Text("Showing the nearest \(Self.limit); expand to see all.")
                     .font(.caption)

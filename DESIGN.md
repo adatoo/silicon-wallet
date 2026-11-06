@@ -100,7 +100,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   once. The Related section starts with a compact graph (`RelatedGraphCanvas`, compact): the
   entry in the middle and its related entries around it, two links out where the column is at
   least 420 pt wide and one link on a phone, at most 12 entries, with no zoom or pan so the
-  form still scrolls. Choosing an entry opens it, with its own graph; VoiceOver skips the graph
+  form still scrolls. It is fitted to its entries (`CompactFit`): centred on all of them and
+  their titles, spread along the row up to 150 pt a ring, and only as tall as the graph, with
+  titles on up to two lines as in the full graph. Choosing an entry opens it, with its own graph; VoiceOver skips the graph
   because the rows below list the same entries. The expand button in the Related header opens
   a sheet that draws the entries up to two links away (at most 30,
   `VaultSession.relatedGraph(from:)`) as a radial graph
