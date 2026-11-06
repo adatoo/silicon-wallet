@@ -104,12 +104,14 @@ struct LineBox: View {
     let line: RecognisedLine
     let size: CGSize
     var action: (() -> Void)?
+    /// The colour of a box that gave no field: grey on a photo, white over the camera.
+    var neutral: Color = .gray
 
     var body: some View {
         let rect = CGRect(
             x: line.box.minX * size.width - 3, y: line.box.minY * size.height - 3,
             width: line.box.width * size.width + 6, height: line.box.height * size.height + 6)
-        let colour = line.field?.colour ?? .gray
+        let colour = line.field?.colour ?? neutral
         let shape = RoundedRectangle(cornerRadius: 4)
         shape
             .fill(colour.opacity(line.field == nil ? 0.08 : 0.18))

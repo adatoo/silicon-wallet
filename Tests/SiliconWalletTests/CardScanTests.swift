@@ -1,3 +1,4 @@
+import AVFoundation
 import SiliconWalletKit
 import SwiftUI
 import Testing
@@ -98,4 +99,10 @@ private func photoOnATable(of lines: [String]) throws -> CGImage {
         first.merged(with: next)
             == ScannedCard(number: "4111 1111 1111 1111", expiry: "12/30", cardholder: "JANE APPLESEED"))
     #expect(next.merged(with: ScannedCard(expiry: "01/24")).expiry == "12/30")
+}
+
+/// A Mac reads with a nearby iPhone first, a plugged-in camera next and its own last (#156).
+@Test func theBestCameraForACardComesFirst() {
+    #expect(CardCamera.rank(.continuityCamera) < CardCamera.rank(.external))
+    #expect(CardCamera.rank(.external) < CardCamera.rank(.builtInWideAngleCamera))
 }

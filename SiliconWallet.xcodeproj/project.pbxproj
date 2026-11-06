@@ -28,7 +28,6 @@
 		6BA57D1106C8CF1CC0572EAC /* FieldKind+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E83D905AB1445D48029DFF2 /* FieldKind+UI.swift */; };
 		6C54A9BED366FC22CADC5694 /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93C6C8335A892BE3A593DE22 /* ExportView.swift */; };
 		6F92E058722F6FA885E5E611 /* EntryDragging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FF9B25616DB9B82EC3FAA6F /* EntryDragging.swift */; };
-		79C839AA7E789050796D3865 /* CardPhotoReviewSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECDDC1E9DDCCD071688E281A /* CardPhotoReviewSheet.swift */; platformFilters = (macos, ); };
 		7BF6FD45429C997D7330850A /* ContinuityCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BEEA27E8F9EF53AA0B68A4C /* ContinuityCameraTests.swift */; };
 		858B67E96A42176E064763CB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 879D2C05665CFAB075E7B8AA /* PrivacyInfo.xcprivacy */; };
 		8671B08EFBA87D86841B22B0 /* UnlockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C570E57F9DD7E0D13D581ECE /* UnlockView.swift */; };
@@ -44,7 +43,6 @@
 		A90B0C80261C98D37BDDCD63 /* AppLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20DB2732C95570E9BBC25DC5 /* AppLinks.swift */; };
 		B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */; };
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
-		B5D90B24903F2A3462EA43A2 /* CardScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F9EAAF9A73332CDF98C3BBD /* CardScannerView.swift */; platformFilters = (ios, ); };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
 		C9771FF340427DA1856D281D /* CardScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F51302D6483AB048B06C884 /* CardScanTests.swift */; };
 		CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */; };
@@ -58,6 +56,7 @@
 		EAA1FC2639482A11136C8E82 /* EntryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD892512A872BD9135E5CCB /* EntryListView.swift */; };
 		EE4177B0738E84A5DB84ABCB /* CloudEntitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A0F89173A566F2F8D1B12FD /* CloudEntitlement.swift */; };
 		EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */; };
+		F09D570F72996B043E8C2363 /* LiveCardScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12087D29F7B375C6C5DA7A5E /* LiveCardScan.swift */; };
 		F1F6D47F557D6BD6678C8F2D /* EntryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 772BFA3C071751268172F197 /* EntryDetailView.swift */; };
 		F2DE58000AA07BA74B2F56BD /* ActivityRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */; platformFilters = (ios, ); };
 		F6995663416907E2E067DCD9 /* ZoomableViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25A892AA93C34AB0DA7075BE /* ZoomableViews.swift */; };
@@ -79,6 +78,7 @@
 /* Begin PBXFileReference section */
 		0546C83D80D84C31BDA7A329 /* AttachmentPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentPreviewView.swift; sourceTree = "<group>"; };
 		05AAF8DA641C137E55BC0347 /* Clipboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clipboard.swift; sourceTree = "<group>"; };
+		12087D29F7B375C6C5DA7A5E /* LiveCardScan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveCardScan.swift; sourceTree = "<group>"; };
 		150E755B7E5B799C04F5B072 /* SetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupView.swift; sourceTree = "<group>"; };
 		17329ADEF2D57777E8BCC4BC /* Reordering.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reordering.swift; sourceTree = "<group>"; };
 		1C999E31F3061FBE1C25D0A5 /* PreviewGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewGeometry.swift; sourceTree = "<group>"; };
@@ -116,7 +116,6 @@
 		93C6C8335A892BE3A593DE22 /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		98444000E2A9EC613E31BAD8 /* DemoVault.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoVault.swift; sourceTree = "<group>"; };
 		9CB2125A7AC56544D3361520 /* EntryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryEditorView.swift; sourceTree = "<group>"; };
-		9F9EAAF9A73332CDF98C3BBD /* CardScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScannerView.swift; sourceTree = "<group>"; };
 		A401DDA8769A4A1A626C60F8 /* CardSchemeBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardSchemeBadge.swift; sourceTree = "<group>"; };
 		A66EC933A0C2F7CEBB604522 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		ACD892512A872BD9135E5CCB /* EntryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntryListView.swift; sourceTree = "<group>"; };
@@ -132,7 +131,6 @@
 		D4E82B9C5EED6B28D8C86A49 /* PushRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistration.swift; sourceTree = "<group>"; };
 		D52C311423E961E1F9CA85AB /* SiliconWalletTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SiliconWalletTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E01D039A8E7DBF0A040A5C2C /* LockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockController.swift; sourceTree = "<group>"; };
-		ECDDC1E9DDCCD071688E281A /* CardPhotoReviewSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardPhotoReviewSheet.swift; sourceTree = "<group>"; };
 		EF419223A81F08132A022785 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F4AA743C303F6A4BA4050A97 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		FBE21BD15DD648F77B6CEF08 /* RelatedGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelatedGraphView.swift; sourceTree = "<group>"; };
@@ -215,6 +213,7 @@
 				4266E3C1040523BF58616363 /* CardScanButtons.swift */,
 				459841ABE8974838A298AE03 /* CardScanning.swift */,
 				4FFCD4C9DC0CAFA749F626D7 /* CardScanReview.swift */,
+				12087D29F7B375C6C5DA7A5E /* LiveCardScan.swift */,
 			);
 			path = Scanning;
 			sourceTree = "<group>";
@@ -223,7 +222,6 @@
 			isa = PBXGroup;
 			children = (
 				71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */,
-				9F9EAAF9A73332CDF98C3BBD /* CardScannerView.swift */,
 			);
 			path = iOS;
 			sourceTree = "<group>";
@@ -295,7 +293,6 @@
 		AAF685259982F1536C85638A /* macOS */ = {
 			isa = PBXGroup;
 			children = (
-				ECDDC1E9DDCCD071688E281A /* CardPhotoReviewSheet.swift */,
 				540ED315C4F1D3AA5B087506 /* ContinuityCameraButton.swift */,
 			);
 			path = macOS;
@@ -496,10 +493,8 @@
 				5179B6CDF161A5D6A537F77A /* AttachmentPreviewView.swift in Sources */,
 				FB65D9A3B018BEC9A3E64CE7 /* AttachmentsSection.swift in Sources */,
 				D480EFF4503E898DC090082B /* CardImageAnalyzer.swift in Sources */,
-				79C839AA7E789050796D3865 /* CardPhotoReviewSheet.swift in Sources */,
 				9B85565C35ECE179F79FE07C /* CardScanButtons.swift in Sources */,
 				88B730B66B4C44EDCFF8A0AA /* CardScanReview.swift in Sources */,
-				B5D90B24903F2A3462EA43A2 /* CardScannerView.swift in Sources */,
 				4B361BC5E72724DF63A1505D /* CardScanning.swift in Sources */,
 				13D7D273C8B2C6ECAC623B96 /* CardSchemeBadge.swift in Sources */,
 				F91EF2CA1394969CFCCC9397 /* Clipboard.swift in Sources */,
@@ -516,6 +511,7 @@
 				8A8DBB140419FDE8EBE817E5 /* GeneratorView.swift in Sources */,
 				09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */,
 				A867F51DF68C1B4E5D301A6E /* HelpView.swift in Sources */,
+				F09D570F72996B043E8C2363 /* LiveCardScan.swift in Sources */,
 				99D61EAE32634493A8A75F68 /* LockController.swift in Sources */,
 				EFBC4276DBE398FE58DFEF43 /* LockSettings.swift in Sources */,
 				483EAEC8FFD84589086A15C7 /* PasswordReminderView.swift in Sources */,
