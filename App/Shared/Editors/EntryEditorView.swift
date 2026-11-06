@@ -422,6 +422,14 @@ struct FieldInput: View {
     @State private var isRevealed = false
     @State private var generating = false
 
+    #if os(iOS)
+        @Environment(\.horizontalSizeClass) private var sizeClass
+        /// On iPhone the label goes above the value, so the value has the row's full width.
+        private var isStacked: Bool { sizeClass == .compact }
+    #else
+        private let isStacked = false
+    #endif
+
     var body: some View {
         Group {
             if kind == .multiline {
@@ -432,46 +440,21 @@ struct FieldInput: View {
                         .fieldStyle(kind, isMonospaced: isMonospaced)
                         .returnAddsLine()
                 }
+            } else if isStacked {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        labelText
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        // On the label row, so the number keeps the width below.
+                        schemeBadge
+                    }
+                    valueInput
+                }
             } else {
                 LabeledContent {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Group {
-                                if isConcealed && !isRevealed {
-                                    SecureField(label, text: $value)
-                                } else {
-                                    TextField(label, text: $value, axis: .vertical)
-                                        .lineLimit(1...)
-                                }
-                            }
-                            .fieldStyle(kind, isMonospaced: isMonospaced)
-                            if isCardNumber, let scheme = PaymentCard.scheme(for: value) {
-                                CardSchemeBadge(scheme: scheme)
-                            }
-                            if isConcealed {
-                                Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
-                                    isRevealed.toggle()
-                                }
-                                .labelStyle(.iconOnly)
-                                .buttonStyle(.borderless)
-                            }
-                            if kind == .password {
-                                Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
-                                    .labelStyle(.iconOnly)
-                                    .buttonStyle(.borderless)
-                                    .help("Generate a password")
-                            }
-                        }
-                        // Only a warning: Save still works.
-                        if isCardNumber, PaymentCard.failsCheckDigit(value) {
-                            Label(
-                                "This number doesn't pass the card check digit; check for a typo.",
-                                systemImage: "exclamationmark.triangle"
-                            )
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                        }
-                    }
+                    valueInput
                 } label: {
                     labelText
                 }
@@ -496,6 +479,53 @@ struct FieldInput: View {
     private var labelText: some View {
         Text(label.isEmpty ? kind.displayName : label)
             .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder
+    private var schemeBadge: some View {
+        if isCardNumber, let scheme = PaymentCard.scheme(for: value) {
+            CardSchemeBadge(scheme: scheme)
+        }
+    }
+
+    /// The value with its buttons, and a card number's check-digit warning.
+    private var valueInput: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Group {
+                    if isConcealed && !isRevealed {
+                        SecureField(label, text: $value)
+                    } else {
+                        TextField(label, text: $value, axis: .vertical)
+                            .lineLimit(1...)
+                    }
+                }
+                .fieldStyle(kind, isMonospaced: isMonospaced)
+                if !isStacked { schemeBadge }
+                if isConcealed {
+                    Button(isRevealed ? "Hide" : "Reveal", systemImage: isRevealed ? "eye.slash" : "eye") {
+                        isRevealed.toggle()
+                    }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.borderless)
+                }
+                if kind == .password {
+                    Button("Generate Password", systemImage: "wand.and.stars") { generating = true }
+                        .labelStyle(.iconOnly)
+                        .buttonStyle(.borderless)
+                        .help("Generate a password")
+                }
+            }
+            // Only a warning: Save still works.
+            if isCardNumber, PaymentCard.failsCheckDigit(value) {
+                Label(
+                    "This number doesn't pass the card check digit; check for a typo.",
+                    systemImage: "exclamationmark.triangle"
+                )
+                .font(.caption)
+                .foregroundStyle(.orange)
+            }
+        }
     }
 }
 

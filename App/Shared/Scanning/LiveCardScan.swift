@@ -52,7 +52,7 @@ struct LiveCardScanSheet: View {
         if let capture = camera.capture {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    CardScanReview(image: capture.image, side: side, lines: $lines, card: $card)
+                    CardScanReview(image: capture.image, lines: $lines, card: $card)
                     if card.isEmpty { nothingFound }
                 }
                 .padding()

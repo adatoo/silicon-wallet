@@ -128,7 +128,9 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   the group or an entry's extra fields, shows the card's scheme as a badge, the scheme's name
   in a coloured capsule drawn by the app (`CardSchemeBadge`), never the schemes' logos, which
   are their trademarks. It shows in the entry view beside the label, on the entry's card, and
-  live in the editor, and comes from the first digits only, so it shows while the number is
+  live in the editor (on iPhone at the end of the label's line, since there each field's label
+  sits above its value so the value has the row's full width; iPad and Mac keep label and
+  value side by side), and comes from the first digits only, so it shows while the number is
   concealed. In the editor a full-length number that fails the Luhn check digit gets an inline
   warning; Save still works. `PaymentCard` (SiliconWalletKit) works it all out from the value
   each time; nothing extra is stored, and there's no card-number `FieldKind`, since a kind an
