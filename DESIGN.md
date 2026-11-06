@@ -162,7 +162,16 @@ Rule: **the app target never touches ciphertext or CloudKit directly**. It talks
   only says it's a start), the cardholder, and from the back a suggested security code. Fields
   are matched by label (`CardField`). Empty ones are filled; replacing a filled one asks
   first; a value with no field to go in (a start date on a card group made before Valid From
-  joined the starter Credit Cards group) is added as an extra field. Frames and the
+  joined the starter Credit Cards group) is added as an extra field.
+  - A debit card's sort code and account number (`CardTextParser.bankDetails`: labelled, or
+    a sort code written in pairs with eight digits beside it; never a helpline, a date or the
+    card number) belong to its bank account, not the card (`CardField.isBankAccount`,
+    `BankDetails`). The review boxes and lists them with a note saying so. The editor writes
+    them, with the card's Save, to the related bank account they plainly fit (its values
+    empty), says nothing if one already has them, and otherwise asks: which related account
+    (Replace in … where a different value is there), New Bank Account (in the Bank Accounts
+    group, titled after the card, related to it), or Don't Save. The Related section shows
+    what Save will do, which can be dropped; Cancel discards it. Frames and the
   captured image are only in memory, and go when the scan closes; no image is saved.
 - Entry list: A–Z sections by the title's first letter (accents removed, leading punctuation
   skipped, digits and symbols under "#", last), with the iOS section index. "Group by First
