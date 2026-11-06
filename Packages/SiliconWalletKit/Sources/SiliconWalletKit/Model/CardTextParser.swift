@@ -11,16 +11,23 @@ public struct ScannedCard: Equatable, Sendable {
     public var cardholder: String?
     /// Only from the back, and only a suggestion: the person confirms it (DESIGN.md §3).
     public var securityCode: String?
+    /// `12-34-56`, from a debit card that prints its account's details. It belongs to the bank
+    /// account the card is related to, not the card (`BankDetails`).
+    public var sortCode: String?
+    /// Digits only, like the sort code the bank account's.
+    public var accountNumber: String?
 
     public init(
         number: String? = nil, validFrom: String? = nil, expiry: String? = nil, cardholder: String? = nil,
-        securityCode: String? = nil
+        securityCode: String? = nil, sortCode: String? = nil, accountNumber: String? = nil
     ) {
         self.number = number
         self.validFrom = validFrom
         self.expiry = expiry
         self.cardholder = cardholder
         self.securityCode = securityCode
+        self.sortCode = sortCode
+        self.accountNumber = accountNumber
     }
 
     public var isEmpty: Bool { CardField.allCases.allSatisfy { $0.value(in: self) == nil } }
@@ -35,6 +42,8 @@ public struct ScannedCard: Equatable, Sendable {
             case .expiry: expiry = newValue
             case .cardholder: cardholder = newValue
             case .securityCode: securityCode = newValue
+            case .sortCode: sortCode = newValue
+            case .accountNumber: accountNumber = newValue
             }
         }
     }
@@ -51,13 +60,18 @@ public struct ScannedCard: Equatable, Sendable {
         }
         return ScannedCard(
             number: number ?? other.number, validFrom: validFrom, expiry: expiry,
-            cardholder: cardholder ?? other.cardholder, securityCode: securityCode ?? other.securityCode)
+            cardholder: cardholder ?? other.cardholder, securityCode: securityCode ?? other.securityCode,
+            sortCode: sortCode ?? other.sortCode, accountNumber: accountNumber ?? other.accountNumber)
     }
 }
 
-/// The card fields a scan can fill, found by their labels.
+/// The card fields a scan can fill, found by their labels. The sort code and account number are
+/// read from the card but belong to its bank account (`isBankAccount`).
 public enum CardField: CaseIterable, Sendable {
-    case number, validFrom, expiry, cardholder, securityCode
+    case number, validFrom, expiry, cardholder, securityCode, sortCode, accountNumber
+
+    /// Whether the value goes to the card's related bank account rather than the card entry.
+    public var isBankAccount: Bool { self == .sortCode || self == .accountNumber }
 
     public init?(label: String) {
         let folded = label.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: nil)
@@ -71,6 +85,8 @@ public enum CardField: CaseIterable, Sendable {
             self = .validFrom
         case "cardholder", "card holder", "cardholder name", "name on card", "name": self = .cardholder
         case "security code", "cvv", "cvc", "cvv2", "csc", "cid": self = .securityCode
+        case _ where SortCode.isSortCodeLabel(label): self = .sortCode
+        case "account number", "account no", "acc no", "account", "a/c number", "a/c no": self = .accountNumber
         default: return nil
         }
     }
@@ -82,6 +98,8 @@ public enum CardField: CaseIterable, Sendable {
         case .expiry: card.expiry
         case .cardholder: card.cardholder
         case .securityCode: card.securityCode
+        case .sortCode: card.sortCode
+        case .accountNumber: card.accountNumber
         }
     }
 }
@@ -99,6 +117,7 @@ public enum CardTextParser {
         if let number = card.number, PaymentCard.scheme(for: number) == .amex {
             card.securityCode = code(in: lines, length: 4, cardNumber: number)
         }
+        (card.sortCode, card.accountNumber) = bankDetails(in: lines, cardNumber: card.number)
         return card
     }
 
@@ -106,8 +125,9 @@ public enum CardTextParser {
     /// a phone number or of the card number, which signature strips often print beside it.
     public static func back(_ lines: [String], cardNumber: String?) -> ScannedCard {
         var card = ScannedCard(securityCode: code(in: lines, length: 3, cardNumber: cardNumber))
-        // Some cards print the number on the back.
+        // Some cards print the number on the back, and debit cards often the account's details.
         card.number = number(in: lines)
+        (card.sortCode, card.accountNumber) = bankDetails(in: lines, cardNumber: card.number ?? cardNumber)
         return card
     }
 
@@ -129,6 +149,10 @@ public enum CardTextParser {
                 found[index] = .expiry
             } else if let start = card.validFrom, Self.dateValues(in: line).contains(start) {
                 found[index] = .validFrom
+            } else if let sortCode = card.sortCode, digits == sortCode.filter(\.isASCIIDigitCharacter) {
+                found[index] = .sortCode
+            } else if let account = card.accountNumber, digits == account {
+                found[index] = .accountNumber
             } else if let code = card.securityCode, groups.contains(code) {
                 found[index] = .securityCode
             } else if let name = card.cardholder, line.trimmingCharacters(in: .whitespaces) == name {
@@ -155,6 +179,11 @@ public enum CardTextParser {
             return text.isEmpty || text.count > 40 ? nil : text
         case .securityCode:
             return groups.last { (3...4).contains($0.count) }
+        case .sortCode:
+            return SortCode.formatted(groups.joined())
+        case .accountNumber:
+            let digits = groups.joined()
+            return (6...10).contains(digits.count) ? digits : nil
         }
     }
 
@@ -249,6 +278,76 @@ public enum CardTextParser {
     static func earlier(_ a: String?, _ b: String?) -> String? {
         guard let a, let b else { return a ?? b }
         return order(b) < order(a) ? b : a
+    }
+
+    // MARK: - Bank details
+
+    /// A UK sort code and account number, as debit cards print them: on a line of their own,
+    /// after their labels ("SORT CODE", "ACC NO") or on the line after one. Unlabelled, a sort
+    /// code has to be written in pairs (`12-34-56`, `12 34 56`), and an account number is taken
+    /// only as eight digits together beside a sort code. Lines with other text, such as a
+    /// helpline, and digits from the card number, aren't taken.
+    static func bankDetails(in lines: [String], cardNumber: String?) -> (sortCode: String?, accountNumber: String?) {
+        let numberDigits = cardNumber.flatMap(PaymentCard.digits(in:)) ?? ""
+        var sortCode: String?
+        var account: String?
+        var unlabelledAccount: String?
+        var awaiting: CardField?
+        for line in lines.map(latin) {
+            let upper = line.uppercased()
+            let words = upper.split(whereSeparator: { !$0.isLetter }).map(String.init)
+            let isAccount = words.contains("ACC") || words.contains("ACCOUNT") || upper.contains("A/C")
+            let labelled: CardField? = words.contains("SORT") ? .sortCode : isAccount ? .accountNumber : nil
+            let label = labelled ?? awaiting
+            guard let value = bareDigits(line) else {
+                // A label on its own line names the value on the next.
+                awaiting = labelled.flatMap { words.allSatisfy(bankLabelWords.contains) ? $0 : nil }
+                continue
+            }
+            awaiting = nil
+            let digits = value.filter(\.isASCIIDigitCharacter)
+            guard !digits.isEmpty, !numberDigits.contains(digits) else { continue }
+            if sortCode == nil, digits.count == 6, label == .sortCode || isPaired(value) {
+                sortCode = SortCode.formatted(digits)
+            } else if account == nil, digits.count == 8, label == .accountNumber {
+                account = digits
+            } else if unlabelledAccount == nil, label == nil, digits.count == 8, value == digits {
+                unlabelledAccount = digits
+            }
+        }
+        return (sortCode, account ?? (sortCode == nil ? nil : unlabelledAccount))
+    }
+
+    /// The line with Cyrillic and Greek letters that look like Latin ones written as Latin: the
+    /// recogniser sometimes reads the C in "ACC NO" as a Cyrillic С.
+    static func latin(_ line: String) -> String {
+        String(line.map { lookalikes[$0] ?? $0 })
+    }
+
+    private static let lookalikes: [Character: Character] = [
+        "А": "A", "В": "B", "С": "C", "Е": "E", "Н": "H", "К": "K", "М": "M", "О": "O", "Р": "P", "Т": "T",
+        "Х": "X", "а": "a", "с": "c", "е": "e", "о": "o", "р": "p", "х": "x", "Α": "A", "Β": "B", "Ε": "E",
+        "Κ": "K", "Μ": "M", "Ν": "N", "Ο": "O", "Ρ": "P", "Τ": "T", "Χ": "X",
+    ]
+
+    private static let bankLabelWords: Set<String> = ["SORT", "CODE", "ACC", "ACCOUNT", "NO", "NUMBER", "A", "C"]
+
+    /// The line's digits and separators once its bank labels are taken away, if that's all it
+    /// has; nil if anything else is written on it.
+    private static func bareDigits(_ line: String) -> String? {
+        var rest = line.uppercased()
+        for word in ["ACCOUNT", "NUMBER", "SORT", "CODE", "A/C", "ACC", "NO.", "NO", ":"] {
+            rest = rest.replacingOccurrences(of: word, with: " ")
+        }
+        let value = rest.trimmingCharacters(in: .whitespaces)
+        guard !value.isEmpty, value.allSatisfy({ $0.isASCIIDigitCharacter || $0 == " " || $0 == "-" || $0 == "." })
+        else { return nil }
+        return value
+    }
+
+    /// Six digits written in pairs, `12-34-56` or `12 34 56`.
+    private static func isPaired(_ value: String) -> Bool {
+        value.wholeMatch(of: /\d{2}[ \-.]\d{2}[ \-.]\d{2}/) != nil
     }
 
     // MARK: - Cardholder

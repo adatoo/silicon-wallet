@@ -50,6 +50,15 @@ private func photo(of lines: [String]) throws -> CGImage {
     #expect(card.securityCode == "123")
 }
 
+/// A debit card's account details, read for its bank account (#161).
+@MainActor
+@Test func aPhotoOfTheBackReadsTheAccountDetails() async throws {
+    let image = try photo(of: ["AUTHORISED SIGNATURE", "SORT CODE 12 34 56", "ACC NO 12345678"])
+    let card = try await CardImageAnalyzer.analyse(image, side: .back, cardNumber: nil, detail: .still).card
+    #expect(card.sortCode == "12-34-56")
+    #expect(card.accountNumber == "12345678")
+}
+
 /// A photo of a card lying a little crooked on a dark table, as Take Photo would send it.
 @MainActor
 private func photoOnATable(of lines: [String]) throws -> CGImage {

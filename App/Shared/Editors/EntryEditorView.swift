@@ -25,6 +25,12 @@ struct EntryEditorView: View {
         let card: ScannedCard
         let labels: [String]
     }
+    /// A scan's sort code and account number, held until Save writes them to a bank account.
+    @State private var bankUpdate: BankUpdate?
+    /// A scan's sort code and account number, while the editor asks which account gets them.
+    @State private var choosingBankAccount: BankDetails?
+    /// The same, waiting for the question about replacing card values to go first.
+    @State private var queuedBankDetails: BankDetails?
     private let isNew: Bool
     /// The entry as it was opened; nil for a new one.
     private let original: VaultEntry?
@@ -159,15 +165,20 @@ struct EntryEditorView: View {
 
     // MARK: - Card scans (ADR-0009)
 
-    /// The template and extra fields that a scan can fill, with their current values.
+    /// The template and extra fields that a scan can fill, with their current values. A sort code
+    /// or account number goes to the card's bank account instead.
     private var cardFields: [(kind: CardField, label: String, value: String)] {
         let template = (group?.fields ?? []).compactMap { field in
-            CardField(label: field.label).map { ($0, field.label, draft.values[field.id] ?? "") }
+            Self.cardKind(field.label).map { ($0, field.label, draft.values[field.id] ?? "") }
         }
         let extra = draft.extraFields.compactMap { field in
-            CardField(label: field.label).map { ($0, field.label, field.value) }
+            Self.cardKind(field.label).map { ($0, field.label, field.value) }
         }
         return template + extra
+    }
+
+    private static func cardKind(_ label: String) -> CardField? {
+        CardField(label: label).flatMap { $0.isBankAccount ? nil : $0 }
     }
 
     private func hasCardField(_ kind: CardField) -> Bool { cardFields.contains { $0.kind == kind } }
@@ -176,36 +187,46 @@ struct EntryEditorView: View {
         cardFields.first { $0.kind == kind && !$0.value.isEmpty }?.value
     }
 
-    /// Fills the empty fields a scan found values for, then asks before replacing any others.
-    private func scanned(_ card: ScannedCard) {
+    /// Fills the empty fields a scan found values for, then asks before replacing any others. A
+    /// sort code and account number are offered to the card's bank account.
+    private func scanned(_ scan: ScannedCard) {
+        var card = scan
+        card.sortCode = nil
+        card.accountNumber = nil
+        let details = BankDetails(card: scan)
         let clashes = cardFields.filter { field in
             guard let value = field.kind.value(in: card), !field.value.isEmpty else { return false }
             return Self.comparable(field.value) != Self.comparable(value)
         }
         fill(from: card, replacing: false)
-        guard !clashes.isEmpty else { return }
-        let pending = PendingScan(card: card, labels: clashes.map(\.label))
+        let pending = clashes.isEmpty ? nil : PendingScan(card: card, labels: clashes.map(\.label))
+        // Asked about once the replace question, if any, has gone.
+        queuedBankDetails = details
         // After the scanner has gone, so the question isn't lost in its dismissal.
         Task {
             try? await Task.sleep(for: .milliseconds(450))
-            pendingScan = pending
+            if let pending {
+                pendingScan = pending
+            } else {
+                offerQueuedBankDetails()
+            }
         }
     }
 
     private func fill(from card: ScannedCard, replacing: Bool) {
         for field in group?.fields ?? [] {
-            guard let kind = CardField(label: field.label), let value = kind.value(in: card) else { continue }
+            guard let kind = Self.cardKind(field.label), let value = kind.value(in: card) else { continue }
             if replacing || (draft.values[field.id] ?? "").isEmpty { draft.values[field.id] = value }
         }
         for index in draft.extraFields.indices {
-            guard let kind = CardField(label: draft.extraFields[index].label), let value = kind.value(in: card)
+            guard let kind = Self.cardKind(draft.extraFields[index].label), let value = kind.value(in: card)
             else { continue }
             if replacing || draft.extraFields[index].value.isEmpty { draft.extraFields[index].value = value }
         }
         // A value with no field to go in, such as a start date on a card group made before
         // Valid From, is kept as an extra field rather than dropped.
         let kinds = Set(cardFields.map(\.kind))
-        for kind in CardField.allCases where !kinds.contains(kind) {
+        for kind in CardField.allCases where !kinds.contains(kind) && !kind.isBankAccount {
             guard let value = kind.value(in: card) else { continue }
             draft.extraFields.append(Self.extraField(for: kind, value: value))
         }
@@ -213,8 +234,10 @@ struct EntryEditorView: View {
 
     private static func extraField(for kind: CardField, value: String) -> CustomField {
         switch kind {
-        case .number, .securityCode:
+        case .number, .securityCode, .accountNumber:
             CustomField(label: kind.name, kind: .number, isConcealed: true, value: value)
+        case .sortCode:
+            CustomField(label: kind.name, kind: .number, value: value)
         case .validFrom, .expiry, .cardholder:
             CustomField(label: kind.name, value: value)
         }
@@ -283,6 +306,9 @@ struct EntryEditorView: View {
 
     private var relatedSection: some View {
         Section {
+            if let bankUpdate {
+                PendingBankDetailsRow(text: bankUpdateText(bankUpdate)) { self.bankUpdate = nil }
+            }
             ForEach(related) { entry in
                 HStack {
                     RelatedEntryLabel(entry: entry)
@@ -305,6 +331,24 @@ struct EntryEditorView: View {
             Text("Related")
         } footer: {
             Text("Entries that go with this one, such as a bank's login and its accounts. Each shows on the other.")
+        }
+        .confirmationDialog(
+            bankAccounts.isEmpty ? "Add a Bank Account for These?" : "Save the Sort Code and Account Number to…",
+            isPresented: Binding(
+                get: { choosingBankAccount != nil }, set: { if !$0 { choosingBankAccount = nil } }),
+            titleVisibility: .visible, presenting: choosingBankAccount
+        ) { details in
+            bankAccountChoices(details)
+        } message: { _ in
+            Text(bankDialogMessage)
+        }
+        .onChange(of: pendingScan == nil) { _, isGone in
+            guard isGone else { return }
+            // Once the replace question has gone, so the next one isn't lost in its dismissal.
+            Task {
+                try? await Task.sleep(for: .milliseconds(350))
+                offerQueuedBankDetails()
+            }
         }
     }
 
@@ -391,7 +435,8 @@ struct EntryEditorView: View {
         entry.title = entry.title.trimmingCharacters(in: .whitespaces)
         entry.extraFields.removeAll { $0.label.isEmpty && $0.value.isEmpty }
         do {
-            let relatedIDs = related.map(\.id)
+            var relatedIDs = related.map(\.id)
+            if let bankUpdate, let added = try write(bankUpdate, in: session) { relatedIDs.append(added) }
             if isNew {
                 entry.relatedIDs = relatedIDs
                 let saved = try session.addEntry(entry)
@@ -402,6 +447,124 @@ struct EntryEditorView: View {
             dismiss()
         } catch {
             model.errorMessage = AppModel.describe(error)
+        }
+    }
+}
+
+// MARK: - A card's bank account details (DESIGN.md §3)
+
+extension EntryEditorView {
+    /// Where Save writes a scan's sort code and account number: a related bank account, or a new
+    /// one in `groupID`, related to this card.
+    struct BankUpdate {
+        let details: BankDetails
+        let target: UUID?
+        let groupID: UUID
+    }
+
+    /// A related entry that can hold bank details.
+    fileprivate struct BankAccountChoice: Identifiable {
+        let entry: VaultEntry
+        let group: VaultGroup
+        var id: UUID { entry.id }
+    }
+
+    fileprivate var bankAccounts: [BankAccountChoice] {
+        related.compactMap { entry in
+            guard let group = model.session?.group(id: entry.groupID), BankDetails.isBankAccountGroup(group) else {
+                return nil
+            }
+            return BankAccountChoice(entry: entry, group: group)
+        }
+    }
+
+    /// The group a new bank account goes in.
+    fileprivate var bankAccountGroup: VaultGroup? {
+        groups.first { $0.name == "Bank Accounts" && BankDetails.isBankAccountGroup($0) }
+            ?? groups.first(where: BankDetails.isBankAccountGroup)
+    }
+
+    /// Writes queued details to the one account they plainly belong to, or asks.
+    fileprivate func offerQueuedBankDetails() {
+        guard let details = queuedBankDetails else { return }
+        queuedBankDetails = nil
+        let accounts = bankAccounts
+        let fits = accounts.map { details.fit($0.entry, in: $0.group) }
+        // Already there: nothing to do.
+        if fits.contains(.same) { return }
+        if fits.count(where: { $0 == .fills }) == 1, let index = fits.firstIndex(of: .fills) {
+            bankUpdate = BankUpdate(
+                details: details, target: accounts[index].entry.id, groupID: accounts[index].group.id)
+        } else {
+            choosingBankAccount = details
+        }
+    }
+
+    @ViewBuilder
+    fileprivate func bankAccountChoices(_ details: BankDetails) -> some View {
+        ForEach(bankAccounts) { choice in
+            let replaces = details.fit(choice.entry, in: choice.group) == .differs
+            Button(replaces ? "Replace in \(choice.entry.title)" : choice.entry.title) {
+                bankUpdate = BankUpdate(details: details, target: choice.entry.id, groupID: choice.group.id)
+            }
+        }
+        if let group = bankAccountGroup {
+            Button("New Bank Account") { bankUpdate = BankUpdate(details: details, target: nil, groupID: group.id) }
+        }
+        Button("Don't Save", role: .cancel) {}
+    }
+
+    fileprivate var bankDialogMessage: String {
+        if bankAccounts.isEmpty {
+            return bankAccountGroup == nil
+                ? "The card shows a sort code and account number, but there's no group for bank accounts to keep them in."
+                : "The card shows a sort code and account number. A new bank account, related to this card, keeps them when you save."
+        }
+        return "The card shows a sort code and account number. They're saved to the account you choose when you save."
+    }
+
+    /// Names what will be saved, not the values, which the account keeps concealed.
+    fileprivate func bankUpdateText(_ update: BankUpdate) -> String {
+        let what =
+            switch (update.details.sortCode, update.details.accountNumber) {
+            case (.some, .some): "the sort code and account number"
+            case (.some, nil): "the sort code"
+            default: "the account number"
+            }
+        if let target = update.target, let entry = model.session?.entry(id: target) {
+            return "Saving also saves \(what) to \(entry.title)."
+        }
+        return "Saving also adds a bank account with \(what), related to this card."
+    }
+
+    /// Writes the details; returns a new account's ID, for this card to relate to.
+    fileprivate func write(_ update: BankUpdate, in session: VaultSession) throws -> UUID? {
+        guard let group = session.group(id: update.groupID) else { return nil }
+        if let target = update.target {
+            guard let entry = session.entry(id: target) else { return nil }
+            try session.updateEntry(update.details.applied(to: entry, in: group))
+            return nil
+        }
+        let title = draft.title.trimmingCharacters(in: .whitespaces)
+        let account = update.details.newAccount(in: group, title: title.isEmpty ? "Bank Account" : "\(title) Account")
+        return try session.addEntry(account).id
+    }
+}
+
+/// What Save will do with a scan's bank details, with a way to drop it.
+private struct PendingBankDetailsRow: View {
+    let text: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack {
+            Label(text, systemImage: "building.columns")
+                .font(.callout)
+            Spacer()
+            Button("Don't Save Bank Details", systemImage: "xmark.circle.fill", action: onRemove)
+                .labelStyle(.iconOnly)
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
         }
     }
 }

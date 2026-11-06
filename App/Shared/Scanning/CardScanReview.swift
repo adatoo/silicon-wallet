@@ -40,6 +40,14 @@ struct CardScanReview: View {
                         row(field, value)
                     }
                 }
+                if card.sortCode != nil || card.accountNumber != nil {
+                    Label(
+                        "The sort code and account number go to the card's bank account, not the card.",
+                        systemImage: "building.columns"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
             }
         }
         .confirmationDialog(
@@ -148,6 +156,8 @@ extension CardField {
         case .expiry: "Expiry"
         case .cardholder: "Cardholder"
         case .securityCode: "Security Code"
+        case .sortCode: "Sort Code"
+        case .accountNumber: "Account Number"
         }
     }
 
@@ -158,6 +168,8 @@ extension CardField {
         case .expiry: "Expiry"
         case .cardholder: "Name"
         case .securityCode: "Code"
+        case .sortCode: "Sort Code"
+        case .accountNumber: "Account"
         }
     }
 
@@ -168,6 +180,8 @@ extension CardField {
         case .expiry: .orange
         case .cardholder: .green
         case .securityCode: .purple
+        case .sortCode: .brown
+        case .accountNumber: .indigo
         }
     }
 }

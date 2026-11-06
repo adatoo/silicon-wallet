@@ -5,6 +5,15 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-11-06
+
+### Added
+
+- Scanning a debit card also reads the sort code and account number it prints. They're
+  saved to the bank account the card is related to, not to the card, when you save the card.
+  If it isn't clear which account they belong to, you're asked; with no related account,
+  you can add one, related to the card.
+
 ## [1.13.1] - 2026-11-06
 
 ### Fixed
