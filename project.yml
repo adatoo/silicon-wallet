@@ -62,6 +62,8 @@ targets:
         NSFaceIDUsageDescription: Face ID unlocks your vault without typing your master password.
         # The card scanner (ADR-0009). Read on the device; no photo is kept.
         NSCameraUsageDescription: Silicon Wallet uses the camera only to read a card's details on this device. No photo is kept.
+        # The Mac's live scan can use a nearby iPhone as its camera (Continuity Camera webcam).
+        NSCameraUseContinuityCameraDeviceType: true
         NSHumanReadableCopyright: "Copyright © 2026 Arif Datoo. MIT Licence."
         # A row dragged to a new place in an editor on the Mac (App/Shared/Editors/Reordering.swift),
         # and an entry dragged onto a group (App/Shared/Vault/EntryDragging.swift). Both carry an ID only.
