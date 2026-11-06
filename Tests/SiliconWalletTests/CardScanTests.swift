@@ -34,6 +34,7 @@ private func photo(of lines: [String]) throws -> CGImage {
     ])
     let card = try await CardImageAnalyzer.analyse(image, side: .front, cardNumber: nil, detail: .still).card
     #expect(card.number == "4111 1111 1111 1111")
+    #expect(card.validFrom == "01/24")
     #expect(card.expiry == "12/30")
     #expect(card.cardholder == "JANE APPLESEED")
     #expect(card.securityCode == nil)

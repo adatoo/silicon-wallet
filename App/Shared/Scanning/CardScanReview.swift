@@ -141,6 +141,7 @@ extension CardField {
     var name: String {
         switch self {
         case .number: "Card Number"
+        case .validFrom: "Valid From"
         case .expiry: "Expiry"
         case .cardholder: "Cardholder"
         case .securityCode: "Security Code"
@@ -150,6 +151,7 @@ extension CardField {
     var shortName: String {
         switch self {
         case .number: "Number"
+        case .validFrom: "From"
         case .expiry: "Expiry"
         case .cardholder: "Name"
         case .securityCode: "Code"
@@ -159,6 +161,7 @@ extension CardField {
     var colour: Color {
         switch self {
         case .number: .blue
+        case .validFrom: .teal
         case .expiry: .orange
         case .cardholder: .green
         case .securityCode: .purple
