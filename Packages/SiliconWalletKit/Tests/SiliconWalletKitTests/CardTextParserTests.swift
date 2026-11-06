@@ -150,3 +150,51 @@ import Testing
     #expect(ScannedCard(validFrom: "12/27").merged(with: ScannedCard(expiry: "12/27")).validFrom == nil)
     #expect(ScannedCard(number: "4111").merged(with: ScannedCard(number: "5555")).number == "4111")
 }
+
+// MARK: - Sort code and account number (#161)
+
+@Test func aDebitCardsAccountDetailsAreRead() {
+    let card = CardTextParser.back(
+        [
+            "Card Helpline 0800 000 0000 International +44 20 0000 0000", "YOUR SIGNATURE", "CVV2", "123",
+            "MS JANE APPLESEED", "SORT CODE 12 34 56", "ACC NO 12345678", "EXP END 12/30", "4111 1111 1111 1111",
+        ], cardNumber: nil)
+    #expect(card.sortCode == "12-34-56")
+    #expect(card.accountNumber == "12345678")
+    #expect(card.securityCode == "123")
+}
+
+@Test func labelsOnTheirOwnLineNameTheNext() {
+    #expect(
+        CardTextParser.bankDetails(in: ["SORT CODE", "123456", "ACC NO", "12345678"], cardNumber: nil)
+            == ("12-34-56", "12345678"))
+    #expect(
+        CardTextParser.bankDetails(in: ["A/C NO: 12345678", "S0RT CODE 12-34-56"], cardNumber: nil).1 == "12345678")
+    // The recogniser can read a Latin C as a Cyrillic one.
+    #expect(CardTextParser.bankDetails(in: ["A\u{0421}C NO 12345678"], cardNumber: nil).1 == "12345678")
+}
+
+@Test func unlabelledDetailsNeedTheirUsualShape() {
+    // Pairs make a sort code; eight digits together beside one make an account number.
+    #expect(CardTextParser.bankDetails(in: ["12-34-56", "12345678"], cardNumber: nil) == ("12-34-56", "12345678"))
+    // Six digits together, or eight with no sort code, could be anything.
+    #expect(CardTextParser.bankDetails(in: ["123456", "12345678"], cardNumber: nil) == (nil, nil))
+    // Helplines, dates and the card number aren't taken.
+    #expect(
+        CardTextParser.bankDetails(
+            in: ["Call 0800 11 22 33", "12/30", "4111 1111", "1111 1111"], cardNumber: "4111 1111 1111 1111")
+            == (nil, nil))
+}
+
+@Test func bankDetailsAreBoxedAndCanBeChosen() {
+    let lines = ["SORT CODE 12 34 56", "ACC NO 12345678"]
+    let card = CardTextParser.back(lines, cardNumber: nil)
+    let sources = CardTextParser.sources(of: card, in: lines)
+    #expect(sources[0] == .sortCode)
+    #expect(sources[1] == .accountNumber)
+    #expect(CardTextParser.value(for: .sortCode, fromLine: "12 34 56") == "12-34-56")
+    #expect(CardTextParser.value(for: .accountNumber, fromLine: "12345678") == "12345678")
+    #expect(CardField(label: "Sort Code") == .sortCode)
+    #expect(CardField(label: "Account Number") == .accountNumber)
+    #expect(CardField.accountNumber.isBankAccount && !CardField.number.isBankAccount)
+}
