@@ -5,6 +5,16 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.1] - 2026-11-06
+
+### Fixed
+
+- On iPhone, a field's label now sits above its value in the editor, so long values aren't
+  cut off; a card number's scheme sits at the end of the label's line.
+- The scan review lists every field it has a value for: a box chosen as the name or expiry on
+  the back of a card, and Valid From, now show below the card. Each field's name sits above
+  its value, so a card number fits on one line.
+
 ## [1.13.0] - 2026-11-06
 
 ### Added
