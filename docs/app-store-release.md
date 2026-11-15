@@ -129,7 +129,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
 
 ## B5. Build step 8: settings, polish and App Store assets → **external TestFlight**
 - **App icon:** done (v0.8.0): an original chip-and-keyhole design drawn by `scripts/make-icon.swift` (`task icon`), with light, dark and tinted iOS variants and the full macOS set. Optionally redo it later as a layered `.icon` in Icon Composer for Liquid Glass.
-- **Screenshots** (done, v0.12.0): `task screenshots` captures the iPhone and iPad sets from the simulators with the fake demo vault; Mac ones are taken by hand (AppStore/README.md). Sizes:
+- **Screenshots** (done, v0.12.0; refreshed for 1.14.0, issue #165): `task screenshots` captures the iPhone and iPad sets from the simulators with the fake demo vault, `task screenshots:mac` the Mac set, and `task screenshots:upload` puts them on an App Store version (AppStore/README.md). Sizes:
   - iPhone 6.3″ at 1206×2622 (required by App Store Connect since 2026; 6.9″ at 1320×2868 is optional);
   - iPad 13″ at 2064×2752 (required, because the app runs on iPad);
   - Mac at 2880×1800 (16:10).
@@ -166,7 +166,7 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   - 1.3.4, build 52: submitted and approved 2026-11-05 but never released. On 2026-11-15 it was
     withdrawn and its version reused as 1.14.0, so 1.14.0 is the second public release (issue #163).
   - 1.14.0, build 67: submitted 2026-11-15 for both platforms, released automatically after
-    approval.
+    approval. Taken out of review the same day for new screenshots, then submitted again.
 - **Release settings:**
   - automatic release after approval since 1.14.0 (manual for 1.0.0); choose manual instead
     when a release has to be timed, for example with an announcement;
