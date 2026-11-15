@@ -126,6 +126,35 @@ tasks:
         vars: {ACTION: build, DESTINATION: 'generic/platform=iOS Simulator'}
       - scripts/screenshots.sh "{{.DERIVED_DATA}}" AppStore/screenshots
 
+  screenshots:upload:
+    desc: Replace the App Store screenshots of VERSION (default the VERSION file) with AppStore/screenshots
+    summary: |
+      Uploads each folder `task screenshots` and `task screenshots:mac` write (iPhone 6.9",
+      iPhone 6.3", iPad 13" and Mac) to the en-GB listing of that App Store version, replacing
+      the set that's there. The version must be editable, so not waiting for or in review.
+      Reads ASC_KEY_PATH, ASC_KEY_ID and ASC_ISSUER_ID from .env.local.
+    vars:
+      VERSION: '{{.VERSION | default .APP_VERSION}}'
+    cmds:
+      - swift scripts/app-store-connect.swift screenshots {{.VERSION}} AppStore/screenshots
+
+  screenshots:mac:
+    desc: Capture the Mac App Store screenshots (2880x1800) from the demo vault into AppStore/screenshots/Mac
+    summary: |
+      Builds the Mac app ad-hoc signed, like `task dev`, then opens the fake demo vault on each
+      screen in a separate copy of the app, captures its window and puts it on the backdrop.
+      The terminal app needs Screen Recording permission (System Settings > Privacy & Security >
+      Screen & System Audio Recording). Your own vault and window are never touched.
+    cmds:
+      - >-
+        xcodebuild -scheme {{.SCHEME}} -configuration {{.CONFIGURATION}} build
+        -derivedDataPath "{{.DERIVED_DATA}}"
+        -destination 'platform=macOS,arch=arm64'
+        CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=
+        CODE_SIGN_ENTITLEMENTS=Config/Dev-macOS.entitlements
+        | {{.PRETTY}}
+      - scripts/mac-screenshots.sh "{{.DERIVED_DATA}}/Build/Products/{{.CONFIGURATION}}/SiliconWallet.app" AppStore/screenshots
+
   version:sync:
     desc: Write MARKETING_VERSION in Config/Version.xcconfig from VERSION
     cmds:

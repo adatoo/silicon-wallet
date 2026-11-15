@@ -5,8 +5,9 @@
 //   swift scripts/app-store-connect.swift status
 //   swift scripts/app-store-connect.swift changelog <version> <changelog path>
 //   swift scripts/app-store-connect.swift prune-certificates
+//   swift scripts/app-store-connect.swift screenshots <version> <screenshots dir>
 //
-// Run it through `task testflight:*` and `task release:prune-certificates`. It reads the API key from ASC_KEY_PATH, ASC_KEY_ID and
+// Run it through `task testflight:*`, `task release:prune-certificates` and `task screenshots:upload`. It reads the API key from ASC_KEY_PATH, ASC_KEY_ID and
 // ASC_ISSUER_ID, signs a short-lived token with CryptoKit, and prints nothing secret.
 
 import CryptoKit
@@ -325,6 +326,102 @@ func pruneCertificates() async throws {
     print("Revoked \(revoked) development certificate(s) created via the API.")
 }
 
+// MARK: - screenshots
+
+/// The folders `task screenshots` and `task screenshots:mac` write, and the App Store Connect
+/// screenshot set each one fills.
+let screenshotFolders: [(folder: String, platform: String, displayType: String)] = [
+    ("iPhone-6.9", "IOS", "APP_IPHONE_67"),
+    ("iPhone-6.3", "IOS", "APP_IPHONE_61"),
+    ("iPad-13", "IOS", "APP_IPAD_PRO_3GEN_129"),
+    ("Mac", "MAC_OS", "APP_DESKTOP"),
+]
+
+/// Replaces the en-GB screenshots of App Store version `version` with the PNGs in each folder of
+/// `directory`, in file-name order. The version must be editable: not waiting for or in review.
+func uploadScreenshots(version: String, directory: String) async throws {
+    let client = try Client()
+    let app = try await appID(client)
+    let versions = try await client.list(
+        "/v1/apps/\(app)/appStoreVersions", query: ["filter[versionString]": version])
+    guard !versions.isEmpty else { throw Failure("App Store Connect has no version \(version).") }
+
+    for (folder, platform, displayType) in screenshotFolders {
+        let path = (directory as NSString).appendingPathComponent(folder)
+        let files = ((try? FileManager.default.contentsOfDirectory(atPath: path)) ?? [])
+            .filter { $0.hasSuffix(".png") }.sorted()
+        guard !files.isEmpty else {
+            print("\(folder): no screenshots, skipped")
+            continue
+        }
+        guard let appStoreVersion = versions.first(where: { attributes($0)["platform"] as? String == platform }),
+            let localization = try await client.list(
+                "/v1/appStoreVersions/\(id(appStoreVersion))/appStoreVersionLocalizations"
+            ).first(where: { attributes($0)["locale"] as? String == notesLocale })
+        else { throw Failure("Version \(version) has no \(platform) \(notesLocale) listing.") }
+
+        let sets = try await client.list("/v1/appStoreVersionLocalizations/\(id(localization))/appScreenshotSets")
+        let setID: String
+        if let existing = sets.first(where: { attributes($0)["screenshotDisplayType"] as? String == displayType }) {
+            setID = id(existing)
+            for old in try await client.list("/v1/appScreenshotSets/\(setID)/appScreenshots", query: ["limit": "50"]) {
+                try await client.send("DELETE", "/v1/appScreenshots/\(id(old))")
+            }
+        } else {
+            let created = try await client.send(
+                "POST", "/v1/appScreenshotSets",
+                body: [
+                    "data": [
+                        "type": "appScreenshotSets", "attributes": ["screenshotDisplayType": displayType],
+                        "relationships": [
+                            "appStoreVersionLocalization": [
+                                "data": ["type": "appStoreVersionLocalizations", "id": id(localization)]
+                            ]
+                        ],
+                    ]
+                ])
+            setID = id(created?["data"] as? [String: Any] ?? [:])
+        }
+
+        for file in files {
+            let data = try Data(contentsOf: URL(fileURLWithPath: (path as NSString).appendingPathComponent(file)))
+            let reserved = try await client.send(
+                "POST", "/v1/appScreenshots",
+                body: [
+                    "data": [
+                        "type": "appScreenshots", "attributes": ["fileName": file, "fileSize": data.count],
+                        "relationships": ["appScreenshotSet": ["data": ["type": "appScreenshotSets", "id": setID]]],
+                    ]
+                ])?["data"] as? [String: Any] ?? [:]
+            for operation in attributes(reserved)["uploadOperations"] as? [[String: Any]] ?? [] {
+                guard let url = URL(string: operation["url"] as? String ?? ""),
+                    let offset = operation["offset"] as? Int, let length = operation["length"] as? Int
+                else { throw Failure("App Store Connect gave an unusable upload for \(file).") }
+                var request = URLRequest(url: url)
+                request.httpMethod = operation["method"] as? String ?? "PUT"
+                for header in operation["requestHeaders"] as? [[String: String]] ?? [] {
+                    request.setValue(header["value"], forHTTPHeaderField: header["name"] ?? "")
+                }
+                let (_, response) = try await URLSession.shared.upload(
+                    for: request, from: data.subdata(in: offset..<offset + length))
+                guard ((response as? HTTPURLResponse)?.statusCode ?? 0) < 300 else {
+                    throw Failure("Uploading \(file) failed.")
+                }
+            }
+            let checksum = Insecure.MD5.hash(data: data).map { String(format: "%02x", $0) }.joined()
+            try await client.send(
+                "PATCH", "/v1/appScreenshots/\(id(reserved))",
+                body: [
+                    "data": [
+                        "type": "appScreenshots", "id": id(reserved),
+                        "attributes": ["uploaded": true, "sourceFileChecksum": checksum],
+                    ]
+                ])
+        }
+        print("\(folder): uploaded \(files.count) screenshot(s) to \(platform) \(displayType)")
+    }
+}
+
 // MARK: - Main
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -338,10 +435,12 @@ do {
         try await status()
     case "prune-certificates" where arguments.count == 1:
         try await pruneCertificates()
+    case "screenshots" where arguments.count == 3:
+        try await uploadScreenshots(version: arguments[1], directory: arguments[2])
     case "changelog" where arguments.count == 3:
         print(try changelogNotes(version: arguments[1], path: arguments[2]))
     default:
-        throw Failure("Usage: app-store-connect.swift setup <group> <email> | notes <version> <build> <changelog> | status | changelog <version> <changelog> | prune-certificates")
+        throw Failure("Usage: app-store-connect.swift setup <group> <email> | notes <version> <build> <changelog> | status | changelog <version> <changelog> | prune-certificates | screenshots <version> <dir>")
     }
 } catch {
     FileHandle.standardError.write(Data("error: \(error)\n".utf8))
