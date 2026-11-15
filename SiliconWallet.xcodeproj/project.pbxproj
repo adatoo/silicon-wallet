@@ -44,6 +44,7 @@
 		B0A5005D1939DD02B3AE8A88 /* SiliconWalletApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D6150CFB54BEF03C52B6DB /* SiliconWalletApp.swift */; };
 		B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 381402974B9CD0061C4ADFF8 /* SettingsView.swift */; };
 		BF2F6FDCF41845608B422FCD /* SiliconWalletTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99758923DC435A4D5AC7D9D /* SiliconWalletTests.swift */; };
+		C2EC05FD4AAF3DA34B79C13D /* ScreenshotWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 484376494000C1D4C8B49488 /* ScreenshotWindow.swift */; platformFilters = (macos, ); };
 		C9771FF340427DA1856D281D /* CardScanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F51302D6483AB048B06C884 /* CardScanTests.swift */; };
 		CF56EEA7AED641C14B247933 /* RecentlyDeletedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */; };
 		D2E8F03BB82956CD144E8566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EF419223A81F08132A022785 /* Assets.xcassets */; };
@@ -93,6 +94,7 @@
 		4266E3C1040523BF58616363 /* CardScanButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScanButtons.swift; sourceTree = "<group>"; };
 		459841ABE8974838A298AE03 /* CardScanning.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardScanning.swift; sourceTree = "<group>"; };
 		47F90D8F7F2BD5F290163BD5 /* SiliconWalletKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SiliconWalletKit; path = Packages/SiliconWalletKit; sourceTree = SOURCE_ROOT; };
+		484376494000C1D4C8B49488 /* ScreenshotWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotWindow.swift; sourceTree = "<group>"; };
 		4A1A3AAD6D1E0902D6271691 /* CardImageAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardImageAnalyzer.swift; sourceTree = "<group>"; };
 		4AB4AAF3822AF3D4812C6CDE /* LockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSettings.swift; sourceTree = "<group>"; };
 		4E5977DDC5A1224BF2EE1912 /* VaultManagementViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VaultManagementViews.swift; sourceTree = "<group>"; };
@@ -294,6 +296,7 @@
 			isa = PBXGroup;
 			children = (
 				540ED315C4F1D3AA5B087506 /* ContinuityCameraButton.swift */,
+				484376494000C1D4C8B49488 /* ScreenshotWindow.swift */,
 			);
 			path = macOS;
 			sourceTree = "<group>";
@@ -523,6 +526,7 @@
 				1302FBE3310A0A6846BB4148 /* RelatedGraphView.swift in Sources */,
 				8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
+				C2EC05FD4AAF3DA34B79C13D /* ScreenshotWindow.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
 				4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */,
 				3030E383981EEB55D2FA3CDA /* SidebarView.swift in Sources */,

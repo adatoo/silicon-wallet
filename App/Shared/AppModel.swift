@@ -126,14 +126,18 @@ final class AppModel {
         }
     }
 
-    /// Picks the screen for App Store screenshots (`task screenshots`):
-    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`. With
-    /// `-entryLayout cards` (which sets that preference for the launch) the entry opens in a sheet.
+    /// Picks the screen for App Store screenshots (`task screenshots`, `task screenshots:mac`):
+    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`, and on the Mac
+    /// `-ScreenshotWindowSize <width>x<height>`. With `-entryLayout cards` (which sets that
+    /// preference for the launch) the entry opens in a sheet.
     private func applyScreenshotArguments(_ arguments: [String]) {
         func value(after flag: String) -> String? {
             guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
             return arguments[index + 1]
         }
+        #if os(macOS)
+            if let size = value(after: "-ScreenshotWindowSize") { ScreenshotWindow.resize(to: size) }
+        #endif
         if let sidebar = value(after: "-ScreenshotSidebar") {
             if sidebar == "favorites" {
                 sidebarSelection = .favorites

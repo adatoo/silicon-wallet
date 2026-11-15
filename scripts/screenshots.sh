@@ -21,8 +21,9 @@ shots=(
   "1-home|-ScreenshotHome"
   "2-entry|-ScreenshotSidebar;Logins;-ScreenshotEntry;Example Mail"
   "3-card|-ScreenshotSidebar;favorites;-ScreenshotEntry;Example Visa"
-  "4-notes|-ScreenshotSidebar;Secure Notes;-ScreenshotEntry;Wi-Fi at Home"
-  "5-locked|-Locked"
+  "4-related|-ScreenshotSidebar;Logins;-ScreenshotEntry;Example Bank Online"
+  "5-notes|-ScreenshotSidebar;Secure Notes;-ScreenshotEntry;Wi-Fi at Home"
+  "6-locked|-Locked"
 )
 
 for device in "${devices[@]}"; do

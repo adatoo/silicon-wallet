@@ -5,6 +5,18 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.2] - 2026-11-15
+
+### Fixed
+
+- The demo vault's card shows its Valid From and expiry dates in the right fields, and is
+  related to the demo bank account.
+
+### Changed
+
+- New App Store screenshots for iPhone, iPad and Mac, showing related entries and the card's
+  dates.
+
 ## [1.14.1] - 2026-11-15
 
 ### Changed
