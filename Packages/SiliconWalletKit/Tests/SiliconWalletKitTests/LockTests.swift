@@ -83,13 +83,24 @@ func passwordsHaveTheRequestedLength(length: Int) {
 // MARK: - Biometric errors
 
 @Test func touchIDCancelsAndFailuresFallBackToThePassword() {
-    for code in [LAError.Code.userCancel, .appCancel, .systemCancel, .userFallback, .authenticationFailed] {
+    for code in [LAError.Code.userCancel, .userFallback, .authenticationFailed] {
         #expect(BiometricKeychain.mapped(LAError(code)) as? BiometricError == .cancelled)
     }
     #expect(BiometricKeychain.mapped(LAError(.biometryNotEnrolled)) as? BiometricError == .unavailable)
     #expect(BiometricKeychain.mapped(LAError(.biometryLockout)) as? BiometricError == .lockedOut)
     #expect(BiometricKeychain.mapped(LAError(.invalidContext)) is LAError)
     #expect(BiometricKeychain.mapped(CryptoError.authenticationFailed) is CryptoError)
+}
+
+@Test func aPromptTheSystemStopsIsInterruptedNotCancelled() {
+    // The app went to the background, or the screen locked or slept: Touch ID should be offered
+    // again when the app is active, not swapped for the password field.
+    for code in [LAError.Code.appCancel, .systemCancel, .notInteractive] {
+        #expect(BiometricKeychain.mapped(LAError(code)) as? BiometricError == .interrupted)
+    }
+    #expect(BiometricKeychain.readFailure(errSecInteractionNotAllowed) == .interrupted)
+    #expect(BiometricKeychain.readFailure(-4) == .interrupted)
+    #expect(BiometricKeychain.readFailure(-9) == .interrupted)
 }
 
 @Test func biometricErrorsReadAsSentences() {
@@ -99,7 +110,7 @@ func passwordsHaveTheRequestedLength(length: Int) {
     #expect(!keychain.contains("BiometricError"))
 }
 
-@Test(arguments: [errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed, -1, -2, -3, -4, -9])
+@Test(arguments: [errSecUserCanceled, errSecAuthFailed, -1, -2, -3])
 func aFaceOrFingerThatIsNotRecognisedFallsBackQuietly(status: OSStatus) {
     #expect(BiometricKeychain.readFailure(status) == .cancelled)
 }

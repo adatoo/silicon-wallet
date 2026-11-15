@@ -11,6 +11,9 @@ public enum BiometricError: Error, Equatable, Sendable {
     case noStoredKey
     /// The person cancelled, or authentication failed.
     case cancelled
+    /// The system stopped the prompt, not the person: the app wasn't in front, or the screen
+    /// locked or slept. Try again once the app is active.
+    case interrupted
     /// Too many failed attempts; the device passcode or the master password is needed first.
     case lockedOut
     case keychain(OSStatus)
@@ -22,6 +25,7 @@ extension BiometricError: LocalizedError {
         case .unavailable: "Face ID or Touch ID isn't set up on this device."
         case .noStoredKey: "The saved key for Face ID or Touch ID is missing."
         case .cancelled: "Face ID or Touch ID was cancelled."
+        case .interrupted: "Face ID or Touch ID was interrupted. Try again."
         case .lockedOut: "Face ID or Touch ID is locked after too many attempts. Unlock with your password."
         case .keychain(let status):
             "The Keychain reported an error: \(SecCopyErrorMessageString(status, nil) as String? ?? "unknown") (\(status))."
@@ -131,25 +135,32 @@ public enum BiometricKeychain {
         return SymmetricKey(data: data)
     }
 
-    /// What a failed Keychain read means. A face or finger that isn't recognised, a cancel, the
-    /// password button and "not frontmost" all mean "use the password", quietly. The Keychain
-    /// reports Face ID and Touch ID outcomes either as its own codes or as `LAError` codes.
+    /// What a failed Keychain read means. A face or finger that isn't recognised, a cancel and the
+    /// password button mean "use the password", quietly; "not frontmost" means try again later.
+    /// The Keychain reports Face ID and Touch ID outcomes either as its own codes or as `LAError`
+    /// codes.
     static func readFailure(_ status: OSStatus) -> BiometricError {
         switch status {
-        case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed:
+        case errSecUserCanceled, errSecAuthFailed:
             return .cancelled
+        case errSecInteractionNotAllowed:
+            return .interrupted
         default:
             guard let code = LAError.Code(rawValue: Int(status)) else { return .keychain(status) }
             return mapped(LAError(code)) as? BiometricError ?? .keychain(status)
         }
     }
 
-    /// Cancelling, falling back to the password or failing too often all mean "use the password".
+    /// Cancelling, falling back to the password or a face or finger that isn't recognised mean
+    /// "use the password". The system stopping the prompt (the app went to the background, the
+    /// screen locked) isn't the person's choice, so it means "try again when the app is active".
     static func mapped(_ error: any Error) -> any Error {
         guard let error = error as? LAError else { return error }
         switch error.code {
-        case .userCancel, .appCancel, .systemCancel, .userFallback, .authenticationFailed:
+        case .userCancel, .userFallback, .authenticationFailed:
             return BiometricError.cancelled
+        case .appCancel, .systemCancel, .notInteractive:
+            return BiometricError.interrupted
         case .biometryNotAvailable, .biometryNotEnrolled:
             return BiometricError.unavailable
         case .biometryLockout:
