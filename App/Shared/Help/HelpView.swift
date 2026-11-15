@@ -125,7 +125,7 @@ struct HelpTopic: Identifiable, Hashable {
     #if os(macOS)
         private static let biometrics = "Touch ID"
         private static let autoLock =
-            "The vault locks itself after 5 minutes without use, and when the Mac sleeps, starts its screen saver or locks its screen. Change this in **Settings ▸ Locking**. To lock straight away, choose **Vault ▸ Lock** (⌃⌘L)."
+            "The vault locks itself once your Mac has gone 5 minutes without any use (typing, clicking or moving the pointer, in any app), and when the Mac sleeps, starts its screen saver or locks its screen. When you come back, Touch ID is ready as soon as Silicon Wallet is in front. Change this in **Settings ▸ Locking**. To lock straight away, choose **Vault ▸ Lock** (⌃⌘L)."
         private static let importSteps =
             "Choose **File ▸ Import from Acrylic Wallet…** (or **Settings ▸ Import from Acrylic Wallet…**). Wallet keeps its vault at `~/Library/Containers/com.acrylic.WalletMac/Data/Library/Application Support/Wallet/Database.wallet`: in the file picker, press ⇧⌘G and paste that path. A Dropbox copy or a \"Wallet Database\" export works too."
         private static let exportSteps =

@@ -5,6 +5,21 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-11-15
+
+### Changed
+
+- On the Mac, auto-lock waits until the whole Mac has been idle: working in another app, or
+  reading an entry without clicking, no longer locks the vault. Sleep, the screen saver and
+  locking the screen still lock it at once. Settings calls it "Lock when the Mac is idle for".
+
+### Fixed
+
+- When the vault locked while Silicon Wallet wasn't in front, or the screen was locked, coming
+  back showed the password field instead of Touch ID. Touch ID is now ready as soon as the app
+  is in front or the screen is unlocked; the password field shows only when you choose it or
+  Touch ID fails.
+
 ## [1.14.2] - 2026-11-15
 
 ### Fixed

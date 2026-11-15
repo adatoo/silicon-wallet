@@ -10,4 +10,6 @@ Export your vault as an encrypted Silicon Wallet backup, protected by a password
 
 After five wrong master passwords in a row, the lock screen makes you wait before trying again, and the wait grows with each further wrong password, up to an hour. Face ID and Touch ID still work.
 
+On the Mac, auto-lock now waits until your whole Mac has been idle, so working in another app no longer locks the vault, and Touch ID is ready when you come back instead of the password field.
+
 Also: card numbers show their scheme (Visa, Mastercard and others) and warn about a likely typo, UK sort codes read as 12-34-56, and the lock screen, list rows and iPhone editor lay out better.
