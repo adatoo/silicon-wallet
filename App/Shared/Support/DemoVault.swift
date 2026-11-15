@@ -39,19 +39,20 @@ enum DemoVault {
                 groupID: logins.id, title: "Example Streaming",
                 values: values(logins, ["jane@example.com", "s7r3am!ng-demo", "watch.example.com"]),
                 notes: "Family plan renews in March."))
-        try session.addEntry(
+        let visa = try session.addEntry(
             VaultEntry(
                 groupID: cards.id, title: "Example Visa",
-                values: values(cards, ["Jane Appleseed", "4111 1111 1111 1111", "12/30", "123", "0000"]),
+                values: values(cards, ["Jane Appleseed", "4111 1111 1111 1111", "01/26", "12/30", "123", "0000"]),
                 isFavorite: true))
-        // One login giving access to two accounts, linked as related entries.
+        // One login giving access to two accounts, linked as related entries, and the current
+        // account's card.
         let current = try session.addEntry(
             VaultEntry(
                 groupID: banks.id, title: "Example Bank",
                 values: values(
                     banks,
-                    ["Example Bank plc", "00000000", "00-00-00", "GB00 EXMP 0000 0000 0000 00", "+44 20 0000 0000"]))
-        )
+                    ["Example Bank plc", "00000000", "00-00-00", "GB00 EXMP 0000 0000 0000 00", "+44 20 0000 0000"]),
+                relatedIDs: [visa.id]))
         let savings = try session.addEntry(
             VaultEntry(
                 groupID: banks.id, title: "Example Bank Savings",
