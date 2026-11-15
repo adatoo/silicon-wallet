@@ -9,8 +9,9 @@ import SiliconWalletKit
     import AppKit
 #endif
 
-/// Locks the vault when it should be (DESIGN.md §5): after inactivity, on sleep, screensaver and
-/// screen lock on the Mac, and after time in the background on iOS. It also runs biometric
+/// Locks the vault when it should be (DESIGN.md §5): after the Mac has been idle (on iOS, after
+/// the app has gone unused), on sleep, screensaver and screen lock on the Mac, and after time in
+/// the background on iOS. It also runs biometric
 /// unlock, offers it once on a device where it's off, and reminds people of their password.
 @MainActor
 @Observable
@@ -97,9 +98,23 @@ final class LockController {
 
     private func checkInactivity() {
         guard model.session?.isUnlocked == true, settings.autoLockMinutes > 0 else { return }
-        if Date.now.timeIntervalSince(lastActivity) >= TimeInterval(settings.autoLockMinutes * 60) {
+        if idleSeconds >= TimeInterval(settings.autoLockMinutes * 60) {
             lockNow()
         }
+    }
+
+    /// How long the vault has gone unused. On the Mac that's how long since any keyboard, mouse or
+    /// trackpad input anywhere, so working in another app or reading an entry keeps it open; it
+    /// needs no permission. On iOS only the app's own use counts, as it locks in the background.
+    private var idleSeconds: TimeInterval {
+        let sinceAppActivity = Date.now.timeIntervalSince(lastActivity)
+        #if os(macOS)
+            let anyInput = CGEventType(rawValue: ~0)!
+            return min(
+                sinceAppActivity, CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: anyInput))
+        #else
+            return sinceAppActivity
+        #endif
     }
 
     private func systemWillSleep() {
@@ -149,12 +164,21 @@ final class LockController {
             && BiometricKeychain.hasStoredKey(in: model.biometricItem)
     }
 
+    /// What a Face ID or Touch ID attempt came to.
+    enum BiometricOutcome {
+        case unlocked
+        /// The person chose the password, or biometrics failed: show the password field.
+        case usePassword
+        /// The system stopped the prompt (the app wasn't in front, or the screen locked or
+        /// slept): offer Face ID or Touch ID again when the app is active.
+        case interrupted
+    }
+
     /// Unlocks with Face ID or Touch ID. With a `context`, the prompt shows wherever that context
     /// is displayed (the Mac lock screen's inline Touch ID); without one, the system shows its own.
-    /// Returns whether the vault unlocked.
     @discardableResult
-    func unlockWithBiometrics(context: LAContext? = nil) async -> Bool {
-        guard let session = model.session else { return false }
+    func unlockWithBiometrics(context: LAContext? = nil) async -> BiometricOutcome {
+        guard let session = model.session else { return .usePassword }
         let reason = "unlock your vault"
         do {
             let key =
@@ -170,9 +194,11 @@ final class LockController {
                 settings.nextPasswordReminder = PasswordReminder.next(afterConfirmingAt: .now)
             }
             isRemindingPassword = PasswordReminder.isDue(next: settings.nextPasswordReminder, now: .now)
-            return true
+            return .unlocked
         } catch BiometricError.cancelled {
             // Fall back to the password field.
+        } catch BiometricError.interrupted {
+            return .interrupted
         } catch BiometricError.noStoredKey, VaultError.wrongPassword {
             // Biometrics stay on: the next password unlock stores a fresh key.
             BiometricKeychain.delete(model.biometricItem)
@@ -181,7 +207,7 @@ final class LockController {
         } catch {
             notice = AppModel.describe(error)
         }
-        return false
+        return .usePassword
     }
 
     /// Turns biometric unlock on or off. Turning it on needs the vault unlocked.

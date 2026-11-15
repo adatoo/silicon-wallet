@@ -28,13 +28,19 @@ struct SettingsView: View {
     private static let autoLockChoices = [1, 2, 5, 10, 15, 30, 60, 0]
     private static let clipboardChoices = [15, 30, 60, 120, 300, 0]
     private static let graceChoices = [0, 30, 60, 300, 900]
+    #if os(macOS)
+        /// Auto-lock counts any use of the Mac, not only of this app (`LockController`).
+        private static let autoLockLabel = "Lock when the Mac is idle for"
+    #else
+        private static let autoLockLabel = "Lock after inactivity"
+    #endif
 
     var body: some View {
         @Bindable var settings = lock.settings
         let isUnlocked = model.session?.isUnlocked == true
         Form {
             Section("Locking") {
-                Picker("Lock after inactivity", selection: $settings.autoLockMinutes) {
+                Picker(Self.autoLockLabel, selection: $settings.autoLockMinutes) {
                     ForEach(Self.autoLockChoices, id: \.self) { minutes in
                         Text(minutes == 0 ? "Never" : "\(minutes) min").tag(minutes)
                     }

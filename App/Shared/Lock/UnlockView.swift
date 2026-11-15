@@ -3,8 +3,10 @@ import SiliconWalletKit
 import SwiftUI
 
 /// The locked screen: Face ID / Touch ID or the master password unlocks the vault. With biometrics
-/// on, it leads with them and shows the password field only on request, or when the prompt is
-/// cancelled. On the Mac, Touch ID is shown inside the window (DESIGN.md §5). The form sits on a
+/// on, it leads with them and shows the password field only on request, or when the person cancels
+/// the prompt or it fails. A prompt the system stops, because the app isn't in front or the screen
+/// locked, is offered again when the app is active. On the Mac, Touch ID is shown inside the
+/// window (DESIGN.md §5). The form sits on a
 /// frosted card over the backdrop.
 struct UnlockView: View {
     @Environment(AppModel.self) private var model
@@ -75,6 +77,16 @@ struct UnlockView: View {
             if phase == .active { startBiometricsOnce() }
         }
         #if os(macOS)
+            // The vault usually locks while the app is in the background or the screen is locked;
+            // offer Touch ID as soon as the app comes to the front or the screen is unlocked.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                startBiometricsOnce()
+            }
+            .onReceive(
+                DistributedNotificationCenter.default().publisher(for: Notification.Name("com.apple.screenIsUnlocked"))
+            ) { _ in
+                startBiometricsOnce()
+            }
             .onChange(of: password) { _, new in
                 // Typing the password takes over from Touch ID.
                 if !new.isEmpty { stopBiometrics() }
@@ -223,13 +235,16 @@ struct UnlockView: View {
         }
     #endif
 
-    /// Offers Face ID or Touch ID once, as the screen appears. On iPhone and iPad it waits until
-    /// the app is active: a prompt asked for while it's still coming to the front fails.
+    /// Offers Face ID or Touch ID once, as the screen appears or the app comes to the front. It
+    /// waits until the app is active: a prompt asked for in the background is stopped by the
+    /// system.
     private func startBiometricsOnce() {
         #if os(iOS)
             guard scenePhase == .active else { return }
+        #else
+            guard NSApp.isActive else { return }
         #endif
-        guard !triedBiometrics, lock.canUnlockWithBiometrics else { return }
+        guard !triedBiometrics, !wantsPassword, lock.canUnlockWithBiometrics else { return }
         triedBiometrics = true
         startBiometrics()
     }
@@ -240,18 +255,28 @@ struct UnlockView: View {
             context.localizedCancelTitle = "Use Password"
             biometricContext = context
             Task {
-                let unlocked = await lock.unlockWithBiometrics(context: context)
+                let outcome = await lock.unlockWithBiometrics(context: context)
                 if biometricContext === context {
                     biometricContext = nil
-                    if !unlocked { usePassword() }
+                    handle(outcome)
                 }
             }
         #else
-            Task {
-                // Cancelling the prompt ("Use Password") or failing brings up the password field.
-                if !(await lock.unlockWithBiometrics()) { usePassword() }
-            }
+            Task { handle(await lock.unlockWithBiometrics()) }
         #endif
+    }
+
+    /// Cancelling the prompt ("Use Password") or failing brings up the password field. When the
+    /// system stopped it instead, Face ID or Touch ID is offered again once the app is active.
+    private func handle(_ outcome: LockController.BiometricOutcome) {
+        switch outcome {
+        case .unlocked: break
+        case .usePassword: usePassword()
+        case .interrupted:
+            // Not straight away, which could loop while the system keeps refusing: when the app
+            // or the screen comes back. Until then the Mac shows its Use Touch ID button.
+            triedBiometrics = false
+        }
     }
 
     #if os(macOS)

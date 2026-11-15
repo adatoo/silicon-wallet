@@ -293,7 +293,11 @@ do; it can't be made to win conflicts or pass as another kind of record.
   With biometrics on, the lock screen leads with them: an "Unlock with Face ID" button (iOS) or
   the inline Touch ID view (Mac), and "Use Password". The password field shows only after "Use
   Password", or when the prompt is cancelled or fails; without biometrics it shows at once.
-  From the password field, "Use Touch ID" (Mac) goes back to Touch ID.
+  From the password field, "Use Touch ID" (Mac) goes back to Touch ID. A prompt the system
+  stops (`BiometricError.interrupted`: the app wasn't in front, or the screen locked or slept)
+  isn't the person's choice, so it doesn't bring up the password field: biometrics are offered
+  again when the app becomes active or the screen is unlocked. The prompt only starts while the
+  app is active.
   On the Mac, Touch ID is part of the lock screen (`LocalAuthenticationView`), not a floating
   panel: the screen's `LAContext` is approved with Touch ID, then reused for the Keychain read so
   there's no second prompt. Typing the password stops it. iOS uses the system Face ID prompt.
@@ -307,8 +311,11 @@ do; it can't be made to win conflicts or pass as another kind of record.
   back. A clock set back can't shorten a wait; one set forward can, which is accepted: this only
   slows guessing in the app, and a copy of the vault's files is protected by Argon2id instead.
   There's no wipe after failures: it wouldn't touch iCloud, and would let anyone erase the vault.
-- Auto-lock: after inactivity (default 5 min). On macOS also on sleep, screensaver and
-  screen lock. On iOS when backgrounded (configurable grace period).
+- Auto-lock: after inactivity (default 5 min). On macOS inactivity means the whole Mac has
+  been idle (no keyboard, mouse or trackpad input in any app, from
+  `CGEventSource.secondsSinceLastEventType`), so working in another app or reading an entry
+  keeps the vault open; it also locks on sleep, screensaver and screen lock. On iOS it counts
+  the app's own use, and locks when backgrounded (configurable grace period).
 - On lock: discard decrypted models, zero key material where possible, delete temporary
   preview files, clear our own clipboard items.
 - Attachments: images, PDFs and text preview from memory. An image or PDF preview is decrypted
