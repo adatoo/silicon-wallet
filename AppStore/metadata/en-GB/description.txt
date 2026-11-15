@@ -9,6 +9,7 @@ ORGANISED YOUR WAY
 • Drag entries between groups, or move them from their menu; every value comes along
 • Fast search that ignores case and accents, and never looks inside hidden fields
 • Attachments such as scans and PDFs, previewed in the app and each encrypted with its own key
+• Related entries, such as a bank's login and its accounts, with a map of how they connect
 
 SAFE TO USE EVERY DAY
 • Unlock with Face ID or Touch ID, with a gentle check of your master password every 30 days so you don't forget it
@@ -18,6 +19,12 @@ SAFE TO USE EVERY DAY
 • A generator for strong passwords and easy-to-type passphrases
 • After repeated wrong master passwords, longer and longer waits before the next try
 • An access log of unlocks and failed attempts on each device
+
+SCAN YOUR CARDS
+Hold a card up to the camera on your iPhone, iPad or Mac and its number, dates and name are read on the device, with a debit card's sort code and account number saved to its bank account. Check every value before it's used. No photo is kept. Card numbers show their scheme and warn you about a likely typo.
+
+WORKS WITH APPLE PASSWORDS
+Prefer to keep a login's password in Apple Passwords? Mark it as kept there, and Silicon Wallet holds everything else: memorable information, passcodes and notes.
 
 ON ALL YOUR DEVICES
 Your vault syncs through your own iCloud account, end-to-end encrypted. Change an entry on your Mac and it's on your iPhone moments later.

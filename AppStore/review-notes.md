@@ -31,11 +31,17 @@ next try (doubling up to an hour); the countdown is shown. Face ID and Touch ID 
 app, if the person has one. It isn't needed to use the app.
 
 Card scanning (in a Credit Cards entry's editor, Scan Card) uses the camera on iPhone and iPad
-to read a card's number, dates and name on the device. On the Mac it uses the Mac's camera, a
+to read a card's number, dates, name and, on a debit card, sort code and account number, on the
+device. On the Mac it uses the Mac's camera, a
 connected camera, or a nearby iPhone as a Continuity Camera webcam; Take Photo with iPhone… in
 the scan uses a photo from a nearby iPhone instead, and is the way to scan on a Mac with no
 camera. Frames and photos stay in memory and are never saved
 or sent anywhere. Any card works for testing, including a printed example card.
+
+Related entries: edit an entry and choose Add Related Entry to link it to another; both then
+list each other under Related, with a small map of linked entries. "Password Kept in Apple
+Passwords" in a login's editor leaves its password out of the vault; on the Mac, Open Passwords
+opens Apple's Passwords app and nothing is read from it.
 
 The app collects no data, has no analytics, and makes no network requests other than
 CloudKit sync.

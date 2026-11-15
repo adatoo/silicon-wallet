@@ -1,7 +1,13 @@
+Scan a card. In a card's editor, Scan Card reads the number, expiry, Valid From date and name, and Scan Back suggests the security code. On iPhone and iPad, hold the card in the frame and it's captured by itself; on a Mac, use its camera or a nearby iPhone. Check the result before it's used: each piece of text read is boxed, and you can reassign or clear any of them. A debit card's sort code and account number go to the bank account it belongs to. Everything is read on the device and no photo is kept.
+
+Related entries. Link entries that go together, such as a bank's login and its accounts. Each entry lists the others under Related, with a small map of the entries around it; expand it to explore the whole graph.
+
+Keep a login's password in Apple Passwords and everything else here: turn on Password Kept in Apple Passwords and the password isn't stored in Silicon Wallet.
+
 Move entries between groups: drag an entry onto a group in the sidebar on Mac and iPad, or choose Move to Group from its menu on any device. Every value comes with it.
 
 Export your vault as an encrypted Silicon Wallet backup, protected by a password you choose, or as plain JSON for moving to another app. Import either one back; nothing already in your vault is changed.
 
 After five wrong master passwords in a row, the lock screen makes you wait before trying again, and the wait grows with each further wrong password, up to an hour. Face ID and Touch ID still work.
 
-Also fixed: moving a card into Credit Cards no longer warns that its PIN will be deleted, the lock screen keeps its size as warnings appear, and a list row on the Mac is no longer cut off.
+Also: card numbers show their scheme (Visa, Mastercard and others) and warn about a likely typo, UK sort codes read as 12-34-56, and the lock screen, list rows and iPhone editor lay out better.
