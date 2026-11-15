@@ -161,9 +161,15 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   - **5.1.1 (privacy):** no account means account deletion doesn't apply. The privacy policy matches the app's behaviour.
   - **2.5.x:** only public APIs, the background mode used only for CloudKit pushes, and the sandbox justified.
 - Marketing version **1.0.0**, made by a major bump PR that updates `VERSION` and the CHANGELOG (done 2026-10-22).
-- Choose the build for iOS and for macOS in App Store Connect and submit both platforms together (done 2026-10-23: build 42 submitted for both, manual release; waiting for review).
+- Choose the build for iOS and for macOS in App Store Connect and submit both platforms together:
+  - 1.0.0, build 42: submitted 2026-10-23 with manual release, approved and live.
+  - 1.3.4, build 52: submitted and approved 2026-11-05 but never released. On 2026-11-15 it was
+    withdrawn and its version reused as 1.14.0, so 1.14.0 is the second public release (issue #163).
+  - 1.14.0, build 67: submitted 2026-11-15 for both platforms, released automatically after
+    approval.
 - **Release settings:**
-  - manual release after approval;
+  - automatic release after approval since 1.14.0 (manual for 1.0.0); choose manual instead
+    when a release has to be timed, for example with an announcement;
   - **phased release** on iOS;
   - "Keep all attachments offline" and similar defaults reviewed.
 
@@ -180,6 +186,10 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   5. When a tested build is worth shipping, create the App Store version for its marketing
      version, choose that build for iOS and macOS, and submit. Builds in between stay on
      TestFlight only; each expires after 90 days.
+     App Store Connect takes only one new version at a time: release an approved version
+     (Pending Developer Release) or withdraw it before creating the next. The listing texts
+     are in `AppStore/metadata/en-GB/`; What's New covers everything since the last released
+     version.
 - Phase 2 and 3 work, starting only when you ask: Acrylic import, export, AutoFill extension.
 
 ## Milestone summary
