@@ -43,6 +43,10 @@ final class AppModel {
     var entrySelection: VaultEntry.ID?
     /// The entry open in a sheet, from the card view.
     var openedEntry: OpenedEntry?
+    /// Screenshots only (`-ScreenshotScrollToEnd`): an entry opens scrolled to its end.
+    var screenshotScrollsToEnd = false
+    /// Screenshots only (`-ScreenshotCardScan`): shows `ScreenshotCardScan` over the vault.
+    var showsScreenshotCardScan = false
     var searchText = ""
     /// Whether the Acrylic Wallet import sheet is showing.
     var isImportingAcrylic = false
@@ -127,7 +131,8 @@ final class AppModel {
     }
 
     /// Picks the screen for App Store screenshots (`task screenshots`, `task screenshots:mac`):
-    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`, and on the Mac
+    /// `-ScreenshotSidebar favorites|<group name>`, `-ScreenshotEntry <title>`,
+    /// `-ScreenshotScrollToEnd` (the entry opens scrolled to its end), and on the Mac
     /// `-ScreenshotWindowSize <width>x<height>`. With `-entryLayout cards` (which sets that
     /// preference for the launch) the entry opens in a sheet.
     private func applyScreenshotArguments(_ arguments: [String]) {
@@ -138,6 +143,8 @@ final class AppModel {
         #if os(macOS)
             if let size = value(after: "-ScreenshotWindowSize") { ScreenshotWindow.resize(to: size) }
         #endif
+        screenshotScrollsToEnd = arguments.contains("-ScreenshotScrollToEnd")
+        showsScreenshotCardScan = arguments.contains("-ScreenshotCardScan")
         if let sidebar = value(after: "-ScreenshotSidebar") {
             if sidebar == "favorites" {
                 sidebarSelection = .favorites
