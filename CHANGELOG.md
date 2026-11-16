@@ -5,6 +5,14 @@ All notable changes to Silicon Wallet are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.1] - 2026-11-16
+
+### Added
+
+- Screenshot options for the launch article: an entry can open scrolled to its end, and the
+  card-scan review can be shown with an example card read on the device, since a simulator
+  has no camera. Neither is part of normal use.
+
 ## [1.15.0] - 2026-11-15
 
 ### Changed
