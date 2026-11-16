@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02348F9C6E2D4C8AA1FED4F2 /* ScreenshotCardScan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C397D8EF01875515557E81 /* ScreenshotCardScan.swift */; };
 		039F395BAD38DA75F977E530 /* RelatedGraphFitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0F3F53A01B44CF934243D7 /* RelatedGraphFitTests.swift */; };
 		061A06E9F70645E4CBE8060B /* AcrylicImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */; };
 		09F61F9E4E2A5E4CF99C4F53 /* GroupEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C60B119316E39F124349191 /* GroupEditorView.swift */; };
@@ -103,6 +104,7 @@
 		540ED315C4F1D3AA5B087506 /* ContinuityCameraButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContinuityCameraButton.swift; sourceTree = "<group>"; };
 		5C60B119316E39F124349191 /* GroupEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupEditorView.swift; sourceTree = "<group>"; };
 		6008CED2FC39605327C4C2D7 /* RecentlyDeletedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentlyDeletedView.swift; sourceTree = "<group>"; };
+		60C397D8EF01875515557E81 /* ScreenshotCardScan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotCardScan.swift; sourceTree = "<group>"; };
 		62E9F6D654653D0C889EFEEE /* AcrylicImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcrylicImportView.swift; sourceTree = "<group>"; };
 		6D5528B40E5E1A59EAD2552B /* ApplePasswordsRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplePasswordsRow.swift; sourceTree = "<group>"; };
 		71BF5BC9B096EEB03F725FEE /* ActivityRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityRecognizer.swift; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				459841ABE8974838A298AE03 /* CardScanning.swift */,
 				4FFCD4C9DC0CAFA749F626D7 /* CardScanReview.swift */,
 				12087D29F7B375C6C5DA7A5E /* LiveCardScan.swift */,
+				60C397D8EF01875515557E81 /* ScreenshotCardScan.swift */,
 			);
 			path = Scanning;
 			sourceTree = "<group>";
@@ -526,6 +529,7 @@
 				1302FBE3310A0A6846BB4148 /* RelatedGraphView.swift in Sources */,
 				8BE8A280FA08A7BE6DA232C0 /* Reordering.swift in Sources */,
 				50655948D274569F8CA7A5EB /* RootView.swift in Sources */,
+				02348F9C6E2D4C8AA1FED4F2 /* ScreenshotCardScan.swift in Sources */,
 				C2EC05FD4AAF3DA34B79C13D /* ScreenshotWindow.swift in Sources */,
 				B237AB5975C9AC80B4D0F99F /* SettingsView.swift in Sources */,
 				4162C66EEDC10192C0C808FD /* SetupView.swift in Sources */,

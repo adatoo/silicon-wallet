@@ -14,83 +14,95 @@ struct EntryDetailView: View {
         model.session?.group(id: entry.groupID) ?? model.session?.deletedGroup(id: entry.groupID)
     }
 
+    /// The last row, which `-ScreenshotScrollToEnd` scrolls to.
+    private static let endID = "entry-end"
+
     var body: some View {
-        Form {
-            if let deleted = entry.deleted {
-                Section {
-                    Label {
-                        Text(
-                            "Deleted \(deleted.formatted(date: .abbreviated, time: .shortened)). It will be deleted for good on \(purgeDate(deleted).formatted(date: .abbreviated, time: .omitted))."
-                        )
-                    } icon: {
-                        Image(systemName: "trash")
+        ScrollViewReader { proxy in
+            Form {
+                if let deleted = entry.deleted {
+                    Section {
+                        Label {
+                            Text(
+                                "Deleted \(deleted.formatted(date: .abbreviated, time: .shortened)). It will be deleted for good on \(purgeDate(deleted).formatted(date: .abbreviated, time: .omitted))."
+                            )
+                        } icon: {
+                            Image(systemName: "trash")
+                        }
+                        .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.secondary)
                 }
-            }
 
-            Section {
-                HStack(spacing: 14) {
-                    GroupSymbol(group?.icon)
-                        .font(.title)
-                        .foregroundStyle(.tint)
-                        .frame(width: 44, height: 44)
-                        .background(.tint.opacity(0.12), in: .rect(cornerRadius: 10))
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.title.isEmpty ? "Untitled" : entry.title)
-                            .font(.title2.bold())
+                Section {
+                    HStack(spacing: 14) {
+                        GroupSymbol(group?.icon)
+                            .font(.title)
+                            .foregroundStyle(.tint)
+                            .frame(width: 44, height: 44)
+                            .background(.tint.opacity(0.12), in: .rect(cornerRadius: 10))
+                            .accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.title.isEmpty ? "Untitled" : entry.title)
+                                .font(.title2.bold())
+                                .textSelection(.enabled)
+                            Text(group?.name ?? "No group")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                let rows = fieldRows
+                let passwordField = group?.fields.first { $0.kind == .password }
+                let inApplePasswords = entry.passwordInApplePasswords && passwordField != nil
+                if !rows.isEmpty || inApplePasswords {
+                    Section {
+                        ForEach(rows) { row in
+                            FieldValueRow(row: row)
+                        }
+                        if let passwordField, inApplePasswords {
+                            ApplePasswordsRow(label: passwordField.label.isEmpty ? "Password" : passwordField.label)
+                        }
+                    } header: {
+                        Text("Details")
+                    } footer: {
+                        if inApplePasswords {
+                            Text(
+                                "Open the website and AutoFill offers the password, or find it in the Passwords app."
+                            )
+                        }
+                    }
+                }
+
+                if !entry.notes.isEmpty {
+                    Section("Notes") {
+                        Text(entry.notes)
                             .textSelection(.enabled)
-                        Text(group?.name ?? "No group")
-                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(.vertical, 4)
-            }
 
-            let rows = fieldRows
-            let passwordField = group?.fields.first { $0.kind == .password }
-            let inApplePasswords = entry.passwordInApplePasswords && passwordField != nil
-            if !rows.isEmpty || inApplePasswords {
+                RelatedEntriesSection(entry: entry)
+
+                AttachmentsSection(
+                    entry: entry, presentation: $attachmentPresentation, isReadOnly: entry.deleted != nil)
+
                 Section {
-                    ForEach(rows) { row in
-                        FieldValueRow(row: row)
-                    }
-                    if let passwordField, inApplePasswords {
-                        ApplePasswordsRow(label: passwordField.label.isEmpty ? "Password" : passwordField.label)
-                    }
-                } header: {
-                    Text("Details")
-                } footer: {
-                    if inApplePasswords {
-                        Text(
-                            "Open the website and AutoFill offers the password, or find it in the Passwords app."
-                        )
-                    }
+                    LabeledContent("Created", value: entry.created.formatted(date: .abbreviated, time: .shortened))
+                    LabeledContent("Modified", value: entry.modified.formatted(date: .abbreviated, time: .shortened))
+                        .id(Self.endID)
                 }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             }
-
-            if !entry.notes.isEmpty {
-                Section("Notes") {
-                    Text(entry.notes)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+            .formStyle(.grouped)
+            .task(id: entry.id) {
+                // Screenshots only: show the end of the entry (`AppModel.screenshotScrollsToEnd`).
+                guard model.screenshotScrollsToEnd else { return }
+                try? await Task.sleep(for: .milliseconds(300))
+                proxy.scrollTo(Self.endID, anchor: .bottom)
             }
-
-            RelatedEntriesSection(entry: entry)
-
-            AttachmentsSection(
-                entry: entry, presentation: $attachmentPresentation, isReadOnly: entry.deleted != nil)
-
-            Section {
-                LabeledContent("Created", value: entry.created.formatted(date: .abbreviated, time: .shortened))
-                LabeledContent("Modified", value: entry.modified.formatted(date: .abbreviated, time: .shortened))
-            }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
         }
-        .formStyle(.grouped)
         .attachmentPresentations(for: entry, $attachmentPresentation)
         .navigationTitle(entry.title)
         #if os(iOS)

@@ -37,6 +37,7 @@ struct RootView: View {
                 }
             }
         #endif
+        .sheet(isPresented: Bindable(model).showsScreenshotCardScan) { ScreenshotCardScan() }
         .task { await model.prepareDemoIfRequested() }
         .alert(
             "Something Went Wrong",

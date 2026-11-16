@@ -1,5 +1,5 @@
 # Xcode and SwiftPM
-DerivedData/
+DerivedData*/
 build/
 xcuserdata/
 *.xcuserstate
