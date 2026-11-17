@@ -228,7 +228,7 @@ struct HelpTopic: Identifiable, Hashable {
                 exportSteps,
                 "A **Silicon Wallet backup** holds everything, attachments included, encrypted with an export password you choose. You need that password to import it, so keep it safe; nobody can recover it.",
                 "**JSON** is the same content as readable text, for moving to another app. It isn't encrypted: anyone with the file can read every password in it. Delete it as soon as you've finished with it.",
-                "To restore, choose **Import…** and pick the file. Anything already in your vault is left as it is, so importing the same backup twice adds nothing.",
+                "To import, choose **Import…** and pick the file. Anything already in your vault is left as it is, so importing the same backup twice adds nothing.",
             ]
         ),
         HelpTopic(
