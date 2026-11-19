@@ -168,8 +168,9 @@ On the Mac mini, the Linux runner container is stopped; the Mac runner's LaunchD
   - 1.14.0, build 67: submitted 2026-11-15 for both platforms. Taken out of review the same day
     for new screenshots and submitted again, then withdrawn once more so the launch version has
     the Mac lock-screen fix (issue #167).
-  - 1.15.0: replaces 1.14.0 in review, with the same listing plus the lock fix in What's New;
-    released automatically after approval. This is the second public release.
+  - 1.15.0, build 70: replaced 1.14.0 in review on 2026-11-15, with the same listing plus the
+    lock fix in What's New. Approved and released automatically; live by 2026-11-19. This is
+    the second public release.
 - **Release settings:**
   - automatic release after approval since 1.14.0 (manual for 1.0.0); choose manual instead
     when a release has to be timed, for example with an announcement;
